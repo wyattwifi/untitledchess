@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html>
+<script src="pieceData.js"></script>
+<script src="getStartingState.js"></script>
+<script src="ui.js"></script>
+<script src="parseChessLang.js"></script>
+<script>
+
+const CONGLOMERATE_STARTING_STATE = `
+
+MISC_GETS_PUT_HERE
+UTILS_GETS_PUT_HERE
+PIECE_DATA_GETS_PUT_HERE
+
+
+`
+
+/*
+// takes state
+// returns state or a string of the ending result of the game
+function overarchingConstantFunctionNewTest( state){
+	
+	{
+		
+		STATE_STUFFbreak_GETS_PUT_HERE
+		MISC_GETS_breakPUT_HERE
+		UTILS_GETS_PUTbreak_HERE
+		PIECE_DATA_GETS_PUTbreak_HERE
+		
+		for( let i = 0; i < RAW_PIECE_DATA.length; i++){
+			RAW_PIECE_DATA[i].effect
+		}
+		
+		let possibilities = []
+		for( let i = 0; i < state.piecePositions.length; i++){
+			if( isPieceOnBoard(i, state)){
+				console.log()
+				let loc = pieceIDToLoc( i, state)
+				possibilities.push( ...eval("(function(){return RAW_PIECE_DATA[i].action})()"))
+			}
+		}
+		console.log(possibilities)
+		
+		
+		}
+		
+	}
+	
+	let codeToRun ="{" + CONGLOMERATE_STARTING_STATE + ";"
+	
+	codeToRun += "let state = " + JSON.stringify(state) + ";"
+	
+	
+	codeToRun += `
+	for( let i = 0; i < RAW_PIECE_DATA.length; i++){
+		eval(RAW_PIECE_DATA[i].effect)
+	}
+	
+	let possibilities = []
+	for( let i = 0; i < state.piecePositions.length; i++){
+		if( isPieceOnBoard(i, state)){
+			console.log()
+			let loc = pieceIDToLoc( i, state)
+			possibilities.push( ...eval("(function(){return RAW_PIECE_DATA[i].action})()"))
+// 			console.log( eval("(function(){return "+RAW_PIECE_DATA[i].action + "})()"))
+		}
+	}
+	console.log(possibilities)
+	
+	
+	}
+	`
+	
+// 	new Function(codeToRun)()
+	console.log(eval(codeToRun))
+	
+	
+	if(Math.random() < 1/6){
+		return "Stalemate"
+	}
+	
+	return state
+	
+}
+*/
+
+
+// takes state
+// returns all the possible states, but a bit more too. It returns an array of {state,startLocX,startLocY, endLocX, endLocY}. The start and end locs are so the UI can know where the person clicks to make that happen
+function overarchingConstantFunction( state){
+	
+	
+	let codeToRun ="(function(){" + CONGLOMERATE_STARTING_STATE + ";"
+	
+	codeToRun += "let state = " + JSON.stringify(state) + ";"
+	
+	
+	codeToRun += `
+	let scope = getDefaultScope()
+	
+	scope = applyEffects(scope)
+	
+	
+	let possibilities = []
+	for( let i = 0; i < state.piecePositions.length; i++){
+		if( scope.isPieceOnBoard( scope, state, i)){
+			
+			let loc = scope.pieceIDToLoc( scope, state, i)
+			possibilities.push( ...eval(RAW_PIECE_DATA[i].action))
+			
+		}
+	}
+	
+	return possibilities
+	})()
+	`
+	
+	possibilities = eval(codeToRun)
+	
+	/*
+	if(Math.random() < 1/6){
+		return "Stalemate"
+	}*/
+	
+	
+	return possibilities
+	
+}
+
+
+// MAIN THING
+
+let state = getStartingState()
+/*
+
+while(true){
+	let possibilities = overarchingConstantFunction(state)
+	let result = possibilities[0].state
+	if( result.piecePositions ){ // check if it returned a state
+		state = result
+		printState( state)
+	} else {
+		printResult( result)
+		break
+	}
+}*/
+
+let getPossibilities = overarchingConstantFunction
+
+function printState( state){
+	let grid = []
+	for( let i = 0; i < 8; i++){
+		grid[i] = []
+		for( let j = 0; j < 8; j++){
+			grid[i][j] = ""
+		}	
+	}
+	
+	for( let i = 0; i < state.piecePositions.length; i++){
+		let data = JSON.parse(state.piecePositions[i])
+		
+		if( data.onBoard){
+			grid[data.x][data.y] = RAW_PIECE_DATA[i].name
+		}
+	}
+	console.log(grid)
+}
+
+function printResult( state){
+	console.log(state)
+}
+
+</script>
+</body>
+</html>

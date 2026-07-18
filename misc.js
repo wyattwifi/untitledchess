@@ -1,4 +1,266 @@
 
+
+
+//STUFF ORIGINALLY FROM GETSTARTINGSTATE.JS
+
+/*
+
+This commented-out section is from when I was trying to do it with JS and is now obsolete but might be handy for something still
+
+//NOTE this function is NOT deterministic, it uses randomness to shuffle the cards
+function getStartingState(){
+	
+	
+	
+	// INITIALIZE STATE
+	let state = {
+		piecePositions:[],
+		tokens:[],
+		whiteTurn:true,
+		coinPositions:[],
+	}
+	
+	
+	
+	
+	function deepCopy( obj){
+		return JSON.parse(JSON.stringify(obj))
+	}
+	
+	
+	// now, the 2 kings start on the board an all the rest of the cards start in the deck. 0 will be the bottom card of the deck. The last 8 cards in the deck will still be counted as in the deck but will actually be part of the market. TODO The code needs updated to reflect these things
+	
+	
+	
+	function shuffle(array) {
+		let currentIndex = array.length;
+
+		// While there remain elements to shuffle...
+		while (currentIndex != 0) {
+
+			// Pick a remaining element...
+			let randomIndex = Math.floor(Math.random() * currentIndex);
+			currentIndex--;
+
+			// And swap it with the current element.
+			[array[currentIndex], array[randomIndex]] = [
+			array[randomIndex], array[currentIndex]];
+		}
+	}
+
+
+	//TODO take out king from stack properly
+	
+	let piecesBesideKings = RAW_PIECE_DATA.filter( e => e.name != "White King" && e.name != "Black King")
+	
+	let positions = []
+	for( let i = 0; i < piecesBesideKings.length; i++){
+		positions[i] = i
+	}
+	
+	shuffle( positions)
+	
+
+	const MARKET_SIZE = 2
+	for( let i = 0; i < piecesBesideKings.length; i++){
+		let position = positions[i]
+		// the [i + 2] is because the kings are at the first
+		if( position >= piecesBesideKings.length - MARKET_SIZE){//TODO see if i did the math right
+			state.piecePositions[i + 2] = JSON.stringify({marketPosition:position - (piecesBesideKings.length - MARKET_SIZE)})
+		} else {
+			state.piecePositions[i + 2] = JSON.stringify({stackPosition:position})
+		}
+		
+	}
+	
+	// now all the other pieces are taken care of, take care of the kings
+	state.piecePositions[0] = JSON.stringify({onBoard:true, x:0, y:0, color:"white"})
+	state.piecePositions[1] = JSON.stringify({onBoard:true, x:0, y:7, color:"black"})
+	
+	
+	return state
+
+}
+
+*/
+
+
+
+
+//STUFF ORIGINALLY FROM INDEX.HTML
+
+/*
+const CONGLOMERATE_STARTING_STATE = `
+
+MISC_GETS_PUT_HERE
+UTILS_GETS_PUT_HERE
+PIECE_DATA_GETS_PUT_HERE
+
+
+`
+
+// takes state
+// returns state or a string of the ending result of the game
+function overarchingConstantFunctionNewTest( state){
+	
+	{
+		
+		STATE_STUFFbreak_GETS_PUT_HERE
+		MISC_GETS_breakPUT_HERE
+		UTILS_GETS_PUTbreak_HERE
+		PIECE_DATA_GETS_PUTbreak_HERE
+		
+		for( let i = 0; i < RAW_PIECE_DATA.length; i++){
+			RAW_PIECE_DATA[i].effect
+		}
+		
+		let possibilities = []
+		for( let i = 0; i < state.piecePositions.length; i++){
+			if( isPieceOnBoard(i, state)){
+				console.log()
+				let loc = pieceIDToLoc( i, state)
+				possibilities.push( ...eval("(function(){return RAW_PIECE_DATA[i].action})()"))
+			}
+		}
+		console.log(possibilities)
+		
+		
+		}
+		
+	}
+	
+	let codeToRun ="{" + CONGLOMERATE_STARTING_STATE + ";"
+	
+	codeToRun += "let state = " + JSON.stringify(state) + ";"
+	
+	
+	codeToRun += `
+	for( let i = 0; i < RAW_PIECE_DATA.length; i++){
+		eval(RAW_PIECE_DATA[i].effect)
+	}
+	
+	let possibilities = []
+	for( let i = 0; i < state.piecePositions.length; i++){
+		if( isPieceOnBoard(i, state)){
+			console.log()
+			let loc = pieceIDToLoc( i, state)
+			possibilities.push( ...eval("(function(){return RAW_PIECE_DATA[i].action})()"))
+// 			console.log( eval("(function(){return "+RAW_PIECE_DATA[i].action + "})()"))
+		}
+	}
+	console.log(possibilities)
+	
+	
+	}
+	`
+	
+// 	new Function(codeToRun)()
+	console.log(eval(codeToRun))
+	
+	
+	if(Math.random() < 1/6){
+		return "Stalemate"
+	}
+	
+	return state
+	
+}
+
+
+// takes state
+// returns all the possible states, but a bit more too. It returns an array of {state,startLocX,startLocY, endLocX, endLocY}. The start and end locs are so the UI can know where the person clicks to make that happen
+function overarchingConstantFunction( state){
+	
+	
+	let codeToRun ="(function(){" + CONGLOMERATE_STARTING_STATE + ";"
+	
+	codeToRun += "let state = " + JSON.stringify(state) + ";"
+	
+	
+	codeToRun += `
+	let scope = getDefaultScope()
+	
+	scope = applyEffects(scope)
+	
+	
+	let possibilities = []
+	for( let i = 0; i < state.piecePositions.length; i++){
+		if( scope.isPieceOnBoard( scope, state, i)){
+			
+			let loc = scope.pieceIDToLoc( scope, state, i)
+			possibilities.push( ...eval(RAW_PIECE_DATA[i].action))
+			
+		}
+	}
+	
+	return possibilities
+	})()
+	`
+	
+	possibilities = eval(codeToRun)
+	
+	
+	
+	return possibilities
+	
+}
+
+
+// MAIN THING
+
+let state = getStartingState()
+/*
+
+while(true){
+	let possibilities = overarchingConstantFunction(state)
+	let result = possibilities[0].state
+	if( result.piecePositions ){ // check if it returned a state
+		state = result
+		printState( state)
+	} else {
+		printResult( result)
+		break
+	}
+}* /
+
+let getPossibilities = overarchingConstantFunction
+
+function printState( state){
+	let grid = []
+	for( let i = 0; i < 8; i++){
+		grid[i] = []
+		for( let j = 0; j < 8; j++){
+			grid[i][j] = ""
+		}	
+	}
+	
+	for( let i = 0; i < state.piecePositions.length; i++){
+		let data = JSON.parse(state.piecePositions[i])
+		
+		if( data.onBoard){
+			grid[data.x][data.y] = RAW_PIECE_DATA[i].name
+		}
+	}
+	console.log(grid)
+}
+
+function printResult( state){
+	console.log(state)
+}
+*/
+
+
+
+
+//ORIGINAL CONTENTS OF UTILS.JS
+/*
+function deepCopy( obj){
+	return JSON.parse(JSON.stringify(obj))
+}*/
+
+
+
+//ORIGINAL CONTENTS OF MISC.JS
 /*
 let externalScope = {
 	getUserChoice(playerNum,range),

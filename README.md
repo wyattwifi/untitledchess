@@ -30,11 +30,10 @@ The API of built-in functions for the language.
 simulateAllChoicesUpToTurnBoundary()
 uiUpdateState()
 endTurnUiUpdateState() // this is basically the same as UI update state but also signals the end of a turn. That is needed so that simulateAllChoicesUpToTurnBoundary knows where to start
-That is all the things that can't be replicated and actually add new stuff. However, there is also then functions provided that the user could have made them themselves, they are just there for convenience. An example is string parsing
 getUserChoice( userID, numOfOptions) there are probably only 2 user ids for the 2 players, but that is left unspecified. Assumably there is a one-to-one correspondence between user ids and real entities playing the game, but once again that is unspecified
 throwError() // use this if this should not be reached. For example, if the user chooses to move a knight up 2 and then there are pieces on the right and left of it, throw an error. That is why all the possibilities need simulated beforehand so that it can know to then not let the user choose to move it up. For simplicity, in the piece description let it move up and throw an error if it gets stuck, and then simulate it so you know to avoid any errors
 endGame(resultString)
-
+That is all the things that can't be replicated and actually add new stuff. However, there is also then functions provided that the user could have made them themselves, they are just there for convenience. An example is string parsing
 
 The Program:
 def doTurn:

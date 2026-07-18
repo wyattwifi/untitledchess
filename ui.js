@@ -3,8 +3,8 @@
 
 
 
-
-
+/*
+It is possible that a lot of this code is still usable, but I commented it all out while switching from js to chesslang
 
 
 
@@ -210,5 +210,5 @@ function drawMarket( state){
 	
 }
 
-
+*/
 

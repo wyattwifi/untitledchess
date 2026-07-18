@@ -1,5 +1,10 @@
 # untitledchess
 
+
+
+
+
+
 This is a work in progress
 
 This is the coded version of a chess variant game. In this chess game, there are many different pieces. There is a simple money system where people get a bit of money each turn and can buy new pieces from a market, which gets refilled from a deck.
@@ -8,7 +13,7 @@ This is a coded, digital version of that game (ideally, for now it is not there 
 
 So, if you write the rules in a coding language, which language do you use? I am trying to make a coding language specifically for this game. (Why? I'll expmlain more later.)
 
-
+Most of the current code is for a previous attempt where I tried doing it in javascript instead of the custom language
 
 
 Part of the language is the built-in, always there, "state" variable.
@@ -16,6 +21,9 @@ Part of the language is the built-in, always there, "state" variable.
 Types: boolean, pieceHandle, playerID, integer, string, objects, arrays, maybe that's it??
 
 When writting code in UntitledChessLang, try to break up the steps into the steps that people think of it as, and have each of those steps be its own function. That way effects can work more intuitively
+
+
+Also, one of the rules of this chess game (unless someone else says no, I just made this up) is that you are allowed to do somethnig different than what the rules say as long as it is functionally the same.
 
 
 The API of built-in functions for the language.

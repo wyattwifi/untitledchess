@@ -1,11 +1,62 @@
 "use strict"
 
 //WARNING for now I'm trying to have this parse correct code correctly. No guarantees about what incorrect code will do
-
+// some of the comments are inaccurate. This could use some work
 
 
 // the piece descriptions in this chess game are written in their own coding language. That provides extra structure and clarity
 
+
+//I'm afraid the AST is not very polished yet.
+
+
+
+/*
+
+
+STRUCTURE OF THE AST:
+
+The main thing is an array of functions
+ each function is: {
+		name:name,
+		params:[param, param, param, ...],
+		statements:[statement, statement, ...],
+	}
+each param is {
+				type: "identifier",
+				contents: array or string, im not sure which
+			}
+
+
+each statement is one of these 3 things for now:
+1: {type:"assignment", lVal:tokens[0].contents, rVal: expression}
+2: {type:"if",condition: expression, contents:[statements]}
+3: {type:"while",condition: expression, contents:[statements]}
+
+
+
+each expression is: { type:"addition/subtraction", terms:[term]}
+
+each term is: { contents:thingA, isPositive: bool} // for simplicity the parser always treats an expression of any sort as a list of terms, just often there will be only one term
+// for now multiplication and division are not supported
+
+each thingA is:
+1:{type:"arrayOrFncall", firstName: string or array I'm not sure which, callChain: [thingB]}
+2: { type: "string", contents: string or array I'm not sure which }
+3:{ type: "integer", contents: a normal JS number }
+4:{ type: "identifier", contents: string or array I'm not sure which }
+
+each thingB is:
+1: {type:"arrayLookup", index: expression}
+2: {type:"functionCall",args: [expressions] }
+
+
+A function/array lookup chain is something like (in JS) thing[3][6]( aVariable, "some text")["key based array lookup"]("yet another function call")
+
+
+
+
+*/
 
 // this is the main overarching function that takes the source code string and returns the AST
 function parseChessLang( sourceCode){
@@ -263,6 +314,10 @@ function getIndexOfFirstLowestLevelOccurenceOfSymbol( symbol, tokens){
 	throw "error the symbol wasnt found"
 }
 
+
+
+
+
 // there can be these in a chain (of length 1 or more) because you can have functions that return arrays, or you can have arrays of arrays or arrays of functions
 
 // this is a helper function that instead of returning the properly nested structure just returns an array of the things from left to right
@@ -404,55 +459,6 @@ function parseExpressionWithoutLowestLevelAdditionSubtraction( tokens){
 	
 }
 
-/*
-
-// this does what it says it does. It handles 2d (and 3d, 4d, etc) array accesses properly
-function parseArrayAccess( tokens){}
-
-// this does what it says it does. It handles 2d (and 3d, 4d, etc) array accesses properly. It does not return the properly nested AST, instead it returns an array of the AST nodes in left to right order.
-function parseArrayAccessHelper( tokens){
-	
-	// this is recursive. Each time it parses off the rightmost access of the (potentially) multidimensional acces and then recursively calls to parse the rest of it
-	// because of the recursion, it is possible that this will be passed a raw identifier
-	if( tokens.length == 1){
-		// it was passed an identifier as the last step of the recursion
-		return tokens // still needs to return an array
-	}
-	
-	
-	// now we know it has at least one array access in there
-	
-	let depth = 0
-	let lastLowestLevelStartBracketIndex = undefined
-	
-	
-	for (let i = 0; i < tokens.length; i++) {
-		let t = tokens[i];
-
-		// update depth
-		if (t.type === "symbol") {
-			if (t.contents === "(") depth++;
-			if (t.contents === ")") depth--;
-
-			if (t.contents === "["){
-				if( depth == 0){
-					lastLowestLevelStartBracketIndex = i // if this is not actually the last one it will get overwritten
-				}
-				depth++
-			}
-			if (t.contents === "]") depth--;
-		}
-	}
-	let firstPart = tokens.slice(0, lastLowestLevelStartBracketIndex)
-	let lastPartIncludingEndBracketButNotFirstBracket = tokens.slice( lastLowestLevelStartBracketIndex + 1)
-	let lastPartInsides = lastPartIncludingEndBracketButNotFirstBracket.slice(0, lastPartIncludingEndBracketButNotFirstBracket.length - 1)
-	
-	return [...parseArrayAccessHelper(firstPart),parseExpression(lastPartInsides)]
-	
-	
-	
-}*/
-
 
 //WARNING this currently does not support using parentheses to set order of operations
 // things supported in expressions: array lookups(expr), strings, function calls with parameters, variables,addition, subtraction, integers
@@ -474,7 +480,17 @@ function a()
 			a = a - 1
 function b()
 `
+
+
+
+
 let testCodeParseResult = '[{"name":"a","params":[],"statements":[{"type":"assignment","lVal":"null","rVal":{"type":"addition/subtraction","terms":[{"contents":{"type":"arrayOrFncall","firstName":"b","callChain":[{"type":"functionCall","args":[]},{"type":"arrayLookup","index":{"type":"addition/subtraction","terms":[{"contents":{"type":"string","contents":"hohoho"},"isPositive":true}]}},{"type":"arrayLookup","index":{"type":"addition/subtraction","terms":[{"contents":{"type":"identifier","contents":"a"},"isPositive":true},{"contents":{"type":"arrayOrFncall","firstName":"c","callChain":[{"type":"functionCall","args":[{"type":"addition/subtraction","terms":[{"contents":{"type":"arrayOrFncall","firstName":"d","callChain":[{"type":"arrayLookup","index":{"type":"addition/subtraction","terms":[{"contents":{"type":"integer","contents":2},"isPositive":true}]}},{"type":"arrayLookup","index":{"type":"addition/subtraction","terms":[{"contents":{"type":"identifier","contents":"e"},"isPositive":true}]}}]},"isPositive":true}]}]}]},"isPositive":true},{"contents":{"type":"integer","contents":3},"isPositive":false}]}},{"type":"functionCall","args":[{"type":"addition/subtraction","terms":[{"contents":{"type":"integer","contents":7},"isPositive":true}]},{"type":"addition/subtraction","terms":[{"contents":{"type":"arrayOrFncall","firstName":"a","callChain":[{"type":"arrayLookup","index":{"type":"addition/subtraction","terms":[{"contents":{"type":"integer","contents":5},"isPositive":true}]}}]},"isPositive":true}]}]}]},"isPositive":true}]}},{"type":"if","condition":{"type":"addition/subtraction","terms":[{"contents":{"type":"identifier","contents":"null"},"isPositive":true}]},"contents":[{"type":"assignment","lVal":"d","rVal":{"type":"addition/subtraction","terms":[{"contents":{"type":"identifier","contents":"e"},"isPositive":true}]}}]},{"type":"assignment","lVal":"a","rVal":{"type":"addition/subtraction","terms":[{"contents":{"type":"integer","contents":100},"isPositive":true}]}},{"type":"while","condition":{"type":"addition/subtraction","terms":[{"contents":{"type":"identifier","contents":"a"},"isPositive":true}]},"contents":[{"type":"while","condition":{"type":"addition/subtraction","terms":[{"contents":{"type":"identifier","contents":"a"},"isPositive":true}]},"contents":[{"type":"assignment","lVal":"a","rVal":{"type":"addition/subtraction","terms":[{"contents":{"type":"identifier","contents":"a"},"isPositive":true},{"contents":{"type":"integer","contents":1},"isPositive":false}]}}]}]}]},{"name":"b","params":[],"statements":[]}]'
+
+
+
+
+
+
 
 // some program written in chessLang
 let c = `

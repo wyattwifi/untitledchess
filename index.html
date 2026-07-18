@@ -1,11 +1,71 @@
 <!DOCTYPE html>
 <html>
-<script src="pieceData.js"></script>
+<!--script src="pieceData.js"></script>
 <script src="getStartingState.js"></script>
 <script src="ui.js"></script>
-<script src="parseChessLang.js"></script>
+<script src="parseChessLang.js"></script-->
 <script>
 
+
+// this is the main whole program of the rules of the chess game, written in chessLang
+// basically everything else is just the UI and the interpreter for chessLang
+const THE_PROGRAM_SOURCE_CODE = `
+
+def doTurn:
+    
+    simulateAllChoicesUpToTurnBoundary() // returns a tree. Each node can be a user choice that has one child node for each choice, a state node that may
+    
+    uiUpdateState() // takes the current state variable and prints it to the console
+    
+    doTurn()
+
+
+
+doTurn()
+
+
+`
+let ast = parseChessLang( THE_PROGRAM_SOURCE_CODE)
+
+let bytecode = astToBytecode( ast)
+
+
+
+
+
+function getUserInput() {// this is an AI thing showing how to pause and get user input
+	return new Promise(resolve => {
+		const input = document.querySelector("#name");
+		const button = document.querySelector("#submit");
+		
+		function done() {
+			button.removeEventListener("click", done);
+			resolve(input.value);
+		}
+		
+		button.addEventListener("click", done);
+	});
+}
+
+async function main() {
+	
+	// this is the main thing that interprets the bytecode
+	// it is an async function so it can easily pause and wait for input from the user
+	
+	console.log("Waiting...");
+	const name = await getUserInput(); // execution "pauses" here
+	console.log("Hello,", name);
+}
+
+main();
+
+
+
+
+
+
+
+/*
 const CONGLOMERATE_STARTING_STATE = `
 
 MISC_GETS_PUT_HERE
@@ -15,7 +75,6 @@ PIECE_DATA_GETS_PUT_HERE
 
 `
 
-/*
 // takes state
 // returns state or a string of the ending result of the game
 function overarchingConstantFunctionNewTest( state){
@@ -82,7 +141,6 @@ function overarchingConstantFunctionNewTest( state){
 	return state
 	
 }
-*/
 
 
 // takes state
@@ -117,10 +175,6 @@ function overarchingConstantFunction( state){
 	
 	possibilities = eval(codeToRun)
 	
-	/*
-	if(Math.random() < 1/6){
-		return "Stalemate"
-	}*/
 	
 	
 	return possibilities
@@ -143,7 +197,7 @@ while(true){
 		printResult( result)
 		break
 	}
-}*/
+}* /
 
 let getPossibilities = overarchingConstantFunction
 
@@ -169,6 +223,7 @@ function printState( state){
 function printResult( state){
 	console.log(state)
 }
+*/
 
 </script>
 </body>

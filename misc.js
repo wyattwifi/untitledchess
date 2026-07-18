@@ -5,8 +5,8 @@ let externalScope = {
 	uiHint(string)
 }
 
+This stuff is from the JS version instead of the chesslang version, so I think it is obsolete but I am keeping it as reference for now
 
-*/
 
 // pass the scope to everything since it could be overwritten in a way that uses the scope
 // when the perameter comes to you, copy it if you will change it at all
@@ -316,7 +316,7 @@ function getDefaultScope(){
 		tokens:[],
 		whiteTurn:true,
 		coinPositions:[]
-	}*/
+	}* /
 
 	// piecePositions possibilities:
 	//onBoard:true,x:5,y:5,color:"white"
@@ -354,6 +354,7 @@ function applyEffects( defaultScope){
 	}
 }
 
+*/
 
 
 

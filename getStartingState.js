@@ -2,8 +2,63 @@
 
 
 
+// this file, unlike what the title says, takes an AST of chessLang and turns it into chessLang bytecode.
+// I am doing bytecode instead of just interepreting the AST because I need to do the stack and instruction pointer myself to easily handle duplicating programs
 
 
+
+
+class AFunction{
+	constructor( name, params, statements){
+		this.name = name
+		this.paramNames = paramNames
+		this.statements = statements
+	}
+}
+
+
+/* here are the possible bytecode operations:
+
+assign( lVal variable, rVal variable, array access, function call, or literal value, maybe anything im forgetting too)
+assignMath( lVal variable, rVal variable operation variable those 3 in that order)
+jumpIf(variable)// jump if it is not 0
+
+basically it can be the same as the AST but you cant have multiple function calls on the same line maybe? this needs more thinking through
+
+the compiled byetcode is a list of functions, wich is in turn a name, the param names, and an array of the byetcode statements
+
+*/
+
+
+class Frame{
+	constructor(){
+		this.functionName = ""
+		this.instructionPointer = 0
+		this.localVariables = [] // use key
+	}
+}
+
+class Thread{
+	constructor(){
+		this.stack = []// array of Frame objects
+	}
+}
+
+
+function astToByetcode( ast){
+	// this does it for the whole thing
+	
+	
+}
+
+function astToByetcode(){
+	// this does it just for the contents of a function, not the whole thing
+	
+}
+
+/*
+
+This commented-out section is from when I was trying to do it with JS and is now obsolete but might be handy for something still
 
 //NOTE this function is NOT deterministic, it uses randomness to shuffle the cards
 function getStartingState(){
@@ -80,7 +135,7 @@ function getStartingState(){
 
 }
 
-
+*/
 
 
 

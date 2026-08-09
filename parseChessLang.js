@@ -123,8 +123,14 @@ function parseFunction( lines){ // param is an array of strings
 	let name = firstLineTokens[1].contents
 	
 	let paramTokens = firstLineTokens.slice(3, firstLineTokens.length - 1)
-	let params = splitByLowestLevelCommas( paramTokens) //TODO this only works if the token format is the same as the AST format
-	
+	let params = []
+	let paramSections = splitByLowestLevelCommas( paramTokens) //TODO this only works if the token format is the same as the AST format
+	for( let i = 0; i < paramSections.length; i++){
+		if( paramSections.length != 1){
+			throw new Error("what is this parameter?")
+		}
+		params[i] = paramSections[i][0]
+	}
 	
 	let bodyLines = lines.slice(1)
 	
@@ -469,86 +475,3 @@ function parseExpression( tokens){
 	let terms = parseLowestLevelAdditionSubtraction( tokens)
 	return terms
 }
-let testCode = `
-function a()
-	null = b()["hohoho"][a+c(d[2][e])-3](7,a[5])
-	if null
-		d = e
-	a = 100
-	while a
-		while a
-			a = a - 1
-function b()
-`
-
-
-
-
-let testCodeParseResult = '[{"name":"a","params":[],"statements":[{"type":"assignment","lVal":"null","rVal":{"type":"addition/subtraction","terms":[{"contents":{"type":"arrayOrFncall","firstName":"b","callChain":[{"type":"functionCall","args":[]},{"type":"arrayLookup","index":{"type":"addition/subtraction","terms":[{"contents":{"type":"string","contents":"hohoho"},"isPositive":true}]}},{"type":"arrayLookup","index":{"type":"addition/subtraction","terms":[{"contents":{"type":"identifier","contents":"a"},"isPositive":true},{"contents":{"type":"arrayOrFncall","firstName":"c","callChain":[{"type":"functionCall","args":[{"type":"addition/subtraction","terms":[{"contents":{"type":"arrayOrFncall","firstName":"d","callChain":[{"type":"arrayLookup","index":{"type":"addition/subtraction","terms":[{"contents":{"type":"integer","contents":2},"isPositive":true}]}},{"type":"arrayLookup","index":{"type":"addition/subtraction","terms":[{"contents":{"type":"identifier","contents":"e"},"isPositive":true}]}}]},"isPositive":true}]}]}]},"isPositive":true},{"contents":{"type":"integer","contents":3},"isPositive":false}]}},{"type":"functionCall","args":[{"type":"addition/subtraction","terms":[{"contents":{"type":"integer","contents":7},"isPositive":true}]},{"type":"addition/subtraction","terms":[{"contents":{"type":"arrayOrFncall","firstName":"a","callChain":[{"type":"arrayLookup","index":{"type":"addition/subtraction","terms":[{"contents":{"type":"integer","contents":5},"isPositive":true}]}}]},"isPositive":true}]}]}]},"isPositive":true}]}},{"type":"if","condition":{"type":"addition/subtraction","terms":[{"contents":{"type":"identifier","contents":"null"},"isPositive":true}]},"contents":[{"type":"assignment","lVal":"d","rVal":{"type":"addition/subtraction","terms":[{"contents":{"type":"identifier","contents":"e"},"isPositive":true}]}}]},{"type":"assignment","lVal":"a","rVal":{"type":"addition/subtraction","terms":[{"contents":{"type":"integer","contents":100},"isPositive":true}]}},{"type":"while","condition":{"type":"addition/subtraction","terms":[{"contents":{"type":"identifier","contents":"a"},"isPositive":true}]},"contents":[{"type":"while","condition":{"type":"addition/subtraction","terms":[{"contents":{"type":"identifier","contents":"a"},"isPositive":true}]},"contents":[{"type":"assignment","lVal":"a","rVal":{"type":"addition/subtraction","terms":[{"contents":{"type":"identifier","contents":"a"},"isPositive":true},{"contents":{"type":"integer","contents":1},"isPositive":false}]}}]}]}]},{"name":"b","params":[],"statements":[]}]'
-
-
-
-
-
-
-
-// some program written in chessLang
-let c = `
-function getUserChoiceOfArray( arrayIn, playerID)
-	return arrayIn[getUserChoice( playerID, arrayIn.length)]
-	
-
-
-function canPieceMoveThroughLocation( piece, location)
-
-
-function getForwardDirection( piece)
-	#this returns the direction that is forward for a piece. This varies piece-to-piece because the different colors head in opposite directions
-
-function jumpForwardOne( piece)
-	# this is a very simple piece that just jumps forward one space, capturing if able
-	
-	let location = getPieceLocation( piece)
-	let newLocation = getLocationInDirectionFromLocation( location, getForwardDirection(piece))
-	let canMove = canPieceMoveToLocation(newLocation)
-	if( canMove){
-		movePiece( piece, newLocation)
-	}
-	if( not(canMove)){
-		throwError()
-	}
-
-
-//TODO this function is incomplete
-// this assumes that the piece is on the board
-function doLeaperMove( theMovingPiece, firstAmount, secondAmount)
-	
-	let firstDirection = getUserChoiceOfArray(getTheFourPerpendicularDirections())
-	let secondDirection = getUserChoiceOfArray(getThePerpendicularDirections( firstDirection))
-	# walk along the path, making sure that each space is either empty, itself (because when it moves in it will also move out), or (on the last space only) a capturable enemy piece
-	
-	for( unused in range(firstAmount)){
-		let location = getPieceLocation( theMovingPiece)
-		let newLocation = getLocationInDirectionFromLocation( location, firstDirection)
-		if( !isLocationEmpty( newLocation)){//TODO what if it is being blocked by itself
-			throwError()
-		}
-		movePiece( theMovingPiece, newLocation)
-		firstAmount = firstAmount - 1
-	}
-	for( unused in range(secondAmount)){
-		let location = getPieceLocation( theMovingPiece)
-		let newLocation = getLocationInDirectionFromLocation( location, secondDirection)
-		if( !isLocationEmpty( newLocation)){//TODO what if it is being blocked by itself
-			// a piece is there. The only way this can move there is if that piece is itself, or if 
-			throwError()
-		}
-		movePiece( theMovingPiece, newLocation)
-		firstAmount = firstAmount - 1
-	}
-	
-
-
-
-`
-

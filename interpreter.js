@@ -2,15 +2,31 @@
 // the file names are really messed up for now, this is a start on the actual interpreter
 
 
-
+let BUILT_IN_API = [
+	{
+		name:"print",
+		argTypes:["string"],
+		effect:function(a){
+			console.log(a)
+		}
+	},
+	{
+		name:"getNewArray",
+		argTypes:[],
+		effect:function(a){
+			return [17]
+		}
+	},
+]
 
 
 // supported bytecode operations for now
 // assign( lval variable, rval variable, array access (based on a variable), function call( variable parameters), or literal value, maybe anything im forgetting too)
 //{type:"assignFromVariable", lval:stringName, rval:variableName }
-//{type:"assignFromArrayAcces", lval:stringName, arrayName:string,index:variableName}
-//{type:"assignFromFunctionCall", lval:stringName, functionName:string,parameters:[variableNames]}
+//{type:"assignFromArrayAcces", lval:stringName, varHoldingArrayName:string,index:variableName}
+//{type:"assignFromFunctionCall", lval:stringName, varHoldingFunctionName:string,parameters:[variableNames]}
 //{type:"assignFromLiteral", lval:stringName, rval:integer}
+//{type:"assignFromLiteralString", lval:varName, rval:string}
 // {type:"assignMath", lval:stringName, lOperand:variableName, operation:stringSymbol, rOperand:variableName}
 // {type:"jumpIf",condition:nameString,destination:integer} jumpIf(variable, destination)// jump if it is not 0
 
@@ -25,6 +41,7 @@ function interpretChessLang( bytecode){
 	
 	function jumpToFunction( functionName, parameterValues){
 		
+		
 		let localVariables = [] // indexed by strings of the name
 		
 		let a = getBytecodeWrapperOfFunction( functionName)
@@ -35,7 +52,7 @@ function interpretChessLang( bytecode){
 		
 		// add the parameters to the local variables
 		for( let i = 0; i < a.paramNames.length; i++){
-			localVariables[a.paramNames] = parameterValues[i]
+			localVariables[a.paramNames[i]] = parameterValues[i]
 		}
 		
 		stack.push({
@@ -45,30 +62,62 @@ function interpretChessLang( bytecode){
 		})
 	}
 	
-	jumpToFunction("main") // start running the program at "main"
+	jumpToFunction("main", []) // start running the program at "main"
 	
 	
-	while(true){//TODO
+	while(true){//TODO do this better. For now, it just throws an error when the end of the program is reached
 		
 		let thisFrame = stack[stack.length - 1] // the top function call in the stack
 		let instruction = getBytecodeWrapperOfFunction( thisFrame.functionName).statements[ thisFrame.instructionPointer] // look at the top frame in the stack to see the name of the function we are supposed to be in. Then, use that to get the bytecode stuff for that function, including the list of instructions. Then, look at the frame to see which instruction we are on, and get that from the bytecode
 		
+		
 		switch (instruction.type){
-			case "assignFromVariable":
+			case "assignFromVariable":{
 				let localVars = thisFrame.localVariables
 				localVars[instruction.lval] = localVars[instruction.rval]
 				thisFrame.instructionPointer++
-				break
-			case "assignFromArrayAcces":
-				//TODO
-				break
-			case "assignFromFunctionCall":
+				break}
+			case "assignFromArrayAcces":{
 				let localVars = thisFrame.localVariables
-				jumpToFunction(instruction.functionName, instruction.parameters.map(i=>localVars[i]))// jumpToFunction expects the literal values of the parameters, while the bytecode instruction gives the variable names
+				localVars[instruction.lval] = localVars[localVars[instruction.varHoldingArrayName]][localVars[instruction.index]]
+				thisFrame.instructionPointer++
+				break}
+				break
+			case "assignFromLiteral":{
+				let localVars = thisFrame.localVariables
+				localVars[instruction.lval] = instruction.rval
+				thisFrame.instructionPointer++
+				break}
+			case "assignFromLiteralString":{
+				let localVars = thisFrame.localVariables
+				localVars[instruction.lval] = instruction.rval
+				thisFrame.instructionPointer++
+				break}
+			case "assignFromFunctionCall":{
+				let localVars = thisFrame.localVariables
+				
+				let isDoneAlready = false
+				
+				// first, we need to check if it is one of the built-in API functions
+				for( let i = 0; i < BUILT_IN_API.length; i++){
+					if(BUILT_IN_API[i].name == localVars[instruction.varHoldingFunctionName]){
+						localVars[instruction.lval] = BUILT_IN_API[i].effect(...instruction.parameters.map(i=>localVars[i]))
+						thisFrame.instructionPointer++ // we need to do this now because there is not all that interesting instruction pointer stack stuff as with a normal function call. instead it is just like a normal statement
+						isDoneAlready = true
+					}
+				}
+				
+				if( isDoneAlready){
+					break
+				}
+				
+				// now we know that it is not a built in api function
+				
+				jumpToFunction(localVars[instruction.varHoldingFunctionName], instruction.parameters.map(i=>localVars[i]))// jumpToFunction expects the literal values of the parameters, while the bytecode instruction gives the variable names
 				// setting the variable to the return value will be handled when the function returns
 				// incrementing the instructionPointer will be handled when the function returns
-				break
-			case "assignMath":
+				break}
+			case "assignMath":{
 				let localVars = thisFrame.localVariables
 				switch( instruction.operation){
 					case "+":
@@ -83,8 +132,8 @@ function interpretChessLang( bytecode){
 				}
 				
 				thisFrame.instructionPointer++
-				break
-			case "jumpIf":
+				break}
+			case "jumpIf":{
 				// we jump to the location in the current function if the variable is not 0
 				// it simply sets the instructionPointer
 				// note that we should not increment the instructionPointer in this case
@@ -95,12 +144,13 @@ function interpretChessLang( bytecode){
 					// if we did not jump then we still need to increment the instruction pointer
 					thisFrame.instructionPointer++
 				}
-				break
+				break}
 			default:
 				throw new Error("invalid opcode instruction")
 		}
 		
 		
+		// if this returns "finished running program", the whole thing should exit
 		//check to see if we got to the end of the function (and return if needed)
 		function returnIfReachedEnd(){
 			
@@ -115,7 +165,7 @@ function interpretChessLang( bytecode){
 				
 				// first, check if there is even another function to return to. If not, we are done
 				if( stack.length == 1){
-					throw "finished running program" //TODO do this better
+					return "finished running program" //this tells the calling function that the program is done running
 				}
 				
 				// for now, just have the return value be whatever value is stored in the variable named "r"
@@ -132,15 +182,19 @@ function interpretChessLang( bytecode){
 				let instructionWeReturnTo = getBytecodeWrapperOfFunction( newFrame.functionName).statements[ newFrame.instructionPointer]
 				
 				
-				localVars[instruction.lval] = returnValue
+				localVars[instructionWeReturnTo.lval] = returnValue
 				
 				newFrame.instructionPointer++
 				
-				returnIfReachedEnd() // we need to call this again since we just incremented the instructionPointer again
+				if( returnIfReachedEnd() == "finished running program"){ // we need to call this again since we just incremented the instructionPointer again
+					return "finished running program" // propogate up the result
+				}
 			}
 		}
 		
-		returnIfReachedEnd()
+		if( returnIfReachedEnd() == "finished running program"){
+			return
+		}
 		
 		
 		

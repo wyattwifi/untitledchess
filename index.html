@@ -55,7 +55,7 @@ let testCodeParseResult = '[{"name":"a","params":[],"statements":[{"type":"assig
 // some program written in chessLang
 let c = `
 function getUserChoiceOfArray( arrayIn, playerID)
-	return arrayIn[getUserChoice( playerID, arrayIn.length)]
+	return arrayIn[getUserChoice( playerID, arrayIn["length"])]
 
 
 
@@ -79,8 +79,8 @@ function jumpForwardOne( piece)
 	}
 
 
-//TODO this function is incomplete
-// this assumes that the piece is on the board
+#TODO this function is incomplete
+# this assumes that the piece is on the board
 function doLeaperMove( theMovingPiece, firstAmount, secondAmount)
 	
 	let firstDirection = getUserChoiceOfArray(getTheFourPerpendicularDirections())
@@ -90,7 +90,7 @@ function doLeaperMove( theMovingPiece, firstAmount, secondAmount)
 	for( unused in range(firstAmount)){
 		let location = getPieceLocation( theMovingPiece)
 		let newLocation = getLocationInDirectionFromLocation( location, firstDirection)
-		if( !isLocationEmpty( newLocation)){//TODO what if it is being blocked by itself
+		if( !isLocationEmpty( newLocation)){#TODO what if it is being blocked by itself
 			throwError()
 		}
 		movePiece( theMovingPiece, newLocation)
@@ -99,8 +99,8 @@ function doLeaperMove( theMovingPiece, firstAmount, secondAmount)
 	for( unused in range(secondAmount)){
 		let location = getPieceLocation( theMovingPiece)
 		let newLocation = getLocationInDirectionFromLocation( location, secondDirection)
-		if( !isLocationEmpty( newLocation)){//TODO what if it is being blocked by itself
-			// a piece is there. The only way this can move there is if that piece is itself, or if 
+		if( !isLocationEmpty( newLocation)){#TODO what if it is being blocked by itself
+			# a piece is there. The only way this can move there is if that piece is itself, or if 
 			throwError()
 		}
 		movePiece( theMovingPiece, newLocation)
@@ -128,17 +128,6 @@ function main()
 
 
 
-
-
-
-
-
-
-
-
-
-
-
 let ast = parseChessLang(testCode)
 
 console.log( ast)
@@ -149,6 +138,7 @@ console.log(bytecode)
 
 interpretChessLang(bytecode)
 
+console.log(lexer(c))
 
 </script>
 <!--script>

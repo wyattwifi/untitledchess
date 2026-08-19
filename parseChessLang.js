@@ -7,11 +7,216 @@
 // the piece descriptions in this chess game are written in their own coding language. That provides extra structure and clarity
 
 
+
+class InternalCompilerError extends Error{
+	constructor(message){
+		super("Internal Compiler Error. User, this isn't your fault. Apparently the compiler is coded wrong. If you want it, here's the error message:" + message)
+	}
+}
+
 //I'm afraid the AST is not very polished yet.
+
+// I am trying to redo the parser
+
+let grammar = {
+	main:[{type:"repeatZeroOrMore",subrule:"functiondef"}],
+	functiondef:[{type:"token",contents:"IDENTIFIER"},{type:"token",contents:"LPAREN"},{type:"optional",subrule:"params"},{type:"token",contents:"RPAREN"},{type:"token",contents:"LBRACE"},{type:"repeatZeroOrMore",subrule:"statement"},{type:"token",contents:"RBRACE"}]
+}
+
+
+
+function parse(tokenList){
+	
+	
+	function parseRuleRaw(ruleName){
+		// this is the first step of parsing a rule. It returns the raw parse, not the AST
+		// More specifically, it returns {name:"ruleName",contents:[array of the parsed tokens/subrules. Each part of the rule is one element of the array. Tokens are just strings of their contents. repeatZeroOrMore is an array of the raw parses of each repitition. optional is the raw parse of the subrule if it exists, and null otherwise.]}
+		
+		
+		let rule = grammar[ruleName]
+		
+		if( !rule){
+			throw new InternalCompilerError("rule not exist")
+		}
+		
+		for( let i = 0; i < rule.length; i++){
+			switch( rule[i].type){
+				case "optional":{
+					let savedPosition = position
+					try{
+						parseRuleRaw(rule[i].subrule)
+					} catch(e){
+						position = savedPosition // it didn't work
+					}
+					break}
+				case "repeatZeroOrMore":{
+					let savedPosition = position
+					let done = false
+					while(!done){
+						savedPosition = position
+						try{
+							parseRuleRaw(rule[i].subrule)
+						} catch(e){
+							position = savedPosition // it didn't work
+							done = true
+						}
+					}
+					break}
+				case "token":{
+					consume(rule[i].contents)
+					break}
+			}
+		}
+	}
+	
+	
+	function parseRule(ruleName){
+		
+		let rule = grammar[ruleName]
+		
+		if( !rule){
+			throw new InternalCompilerError("rule not exist")
+		}
+		
+		for( let i = 0; i < rule.length; i++){
+			switch( rule[i].type){
+				case "optional":{
+					let savedPosition = position
+					try{
+						parseRule(rule[i].subrule)
+					} catch(e){
+						position = savedPosition // it didn't work
+					}
+					break}
+				case "repeatZeroOrMore":{
+					let savedPosition = position
+					let done = false
+					while(!done){
+						savedPosition = position
+						try{
+							parseRule(rule[i].subrule)
+						} catch(e){
+							position = savedPosition // it didn't work
+							done = true
+						}
+					}
+					break}
+				case "token":{
+					consume(rule[i].contents)
+					break}
+			}
+		}
+	}
+	
+	
+	parseRule("main") // this is always the main overall rule
+	
+	
+	
+	let position = 0
+	function consume(tokenType){
+		if( tokenList[position] != tokenType){
+			throw new Error("parse error")
+		}
+		position++
+	}
+}
+
+
+
+
+
+function lexer( stringIn){
+	//TODO lexer needs work
+	
+	
+	
+	
+	//WARNING the possible token regexes must start with the ^ char
+	let possibleTokens = [
+		{name:"IF",regex:/^if/},
+		{name:"FOR",regex:/^for/},
+		{name:"FUNCTIONDEF",regex:/^function/},
+		{name:"LET",regex:/^let/},
+		{name:"RETURN",regex:/^return/},
+		{name:"ELSE",regex:/^else/},
+		{name:"PLUS",regex:/^\+/},
+		{name:"MINUS",regex:/^-/},
+		{name:"ASTERISK",regex:/^\*/},
+		{name:"DOUBLEEQUALS",regex:/^==/},
+		{name:"EQUALS",regex:/^=/},
+		{name:"NOT",regex:/^!/},
+		{name:"AND",regex:/^&/},
+		{name:"OR",regex:/^\|/},
+		{name:"COLON",regex:/^:/},
+		{name:"COMMA",regex:/^,/},
+		{name:"LPAREN",regex:/^\(/},
+		{name:"RPAREN",regex:/^\)/},
+		{name:"LBRACE",regex:/^{/},
+		{name:"RBRACE",regex:/^}/},
+		{name:"LBRACKET",regex:/^\[/},
+		{name:"RBRACKET",regex:/^\]/},
+		{name:"WHITESPACE",regex:/^[\n\s\t]/},
+		{name:"NUMBER",regex:/^[0-9]+/},//NOTE currently not support decimals
+		{name:"IDENTIFIER",regex:/^[a-z][a-zA-Z_0-9]*/},
+		{name:"STRING",regex:/^"[^"]*"/},
+		{name:"COMMENT",regex:/^#.*\n/},
+		// {name:"",regex://},
+	]
+	
+	let index = 0
+	
+	let result = []
+	
+	function lexNextChar(){
+		// returns true if sucessful
+		// returns false when at end of file
+		
+		let stringInLeft = stringIn.substring(index)
+		
+		if( stringInLeft.length == 0){ return false}
+		
+		for( let i = 0; i < possibleTokens.length; i++){
+			
+			let match = stringInLeft.match(possibleTokens[i].regex)
+			if( match){
+				result.push({type:possibleTokens[i].name,contents:match[0]})
+				index += match[0].length
+				return true
+			}
+		}
+		throw new Error("lexer error this doesnt match any of the things:" +  stringInLeft.slice(0, 20) + "...")
+	}
+	
+	let indexLastTime = 0
+	while( lexNextChar()){}
+	
+	return result
+}
+
+
 
 
 
 /*
+
+
+whole thing = functiondef*
+functiondef = IDENTIFIER LPAREN params-optional RPAREN LBRACE statement* RBRACE
+params = IDENTIFIER ( COMMA IDENTIFIER)*
+statement = assignment | if | while
+assignment = IDENTIFIER EQUALS expression
+expression = 
+if =
+while =
+
+
+
+
+
+
+
+
 
 
 STRUCTURE OF THE AST:

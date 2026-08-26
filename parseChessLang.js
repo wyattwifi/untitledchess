@@ -19,8 +19,116 @@ class InternalCompilerError extends Error{
 // I am trying to redo the parser
 
 let grammar = {
-	main:[{type:"repeatZeroOrMore",subrule:"functiondef"}],
-	functiondef:[{type:"token",contents:"IDENTIFIER"},{type:"token",contents:"LPAREN"},{type:"optional",subrule:"params"},{type:"token",contents:"RPAREN"},{type:"token",contents:"LBRACE"},{type:"repeatZeroOrMore",subrule:"statement"},{type:"token",contents:"RBRACE"}]
+	main:{
+		raw:[
+			{type:"repeatZeroOrMore",subrule:"functiondef"}
+		],
+		polished: rawParse => {
+			return polishParse(rawParse.contents[0])
+		}
+	},
+	functiondef:{
+		raw:[
+			{type:"token",contents:"IDENTIFIER"},
+			{type:"token",contents:"LPAREN"},
+			{type:"optional",subrule:"params"},
+			{type:"token",contents:"RPAREN"},
+			{type:"token",contents:"NEWLINE"},
+			{type:"token",contents:"INCREASE_INDENT"},
+			{type:"repeatZeroOrMore",subrule:"statement"},
+			{type:"token",contents:"DECREASE_INDENT"}
+		],
+		polished: rawParse => {
+			return {
+				name:rawParse.contents[0],
+				params:polishParse(rawParse.contents[2]),
+				statements:polishParse(rawParse.contents[5]),
+			}
+		}
+	},
+	params:{
+		raw:[
+			{type:"token",contents:"IDENTIFIER"},
+			{type:"repeatZeroOrMore",subrule:"otherThanFirstParams"},
+		],
+		polished: rawParse => {
+			return {
+				name:rawParse.contents[0],
+				params:polishParse(rawParse.contents[2]),
+				statements:polishParse(rawParse.contents[5]),
+			}
+		}
+	},
+	otherThanFirstParams:{
+		raw:[
+			{type:"token",contents:"COMMA"},
+			{type:"token",contents:"IDENTIFIER"},
+		],
+		polished: rawParse => {
+			return {
+				name:rawParse.contents[0],
+				params:polishParse(rawParse.contents[2]),
+				statements:polishParse(rawParse.contents[5]),
+			}
+		}
+	},
+	statement:{
+		raw:[
+			{type:"oneOfChoices",options:["assignment","ifBlock","forBlock"]},
+		],
+		polished: rawParse => {
+			return {
+				name:rawParse.contents[0],
+				params:polishParse(rawParse.contents[2]),
+				statements:polishParse(rawParse.contents[5]),
+			}
+		}
+	},
+	assignment:{
+		raw:[
+			{type:"token",contents:"IDENTIFIER"},
+			{type:"token",contents:"EQUALS"},
+			{type:"optional",subrule:"expression"},
+		],
+		polished: rawParse => {
+			return {
+				name:rawParse.contents[0],
+				params:polishParse(rawParse.contents[2]),
+				statements:polishParse(rawParse.contents[5]),
+			}
+		}
+	},
+	ifBlock:{
+		raw:[
+			{type:"token",contents:"IF"},
+			{type:"token",contents:"LPAREN"},
+			{type:"required",subrule:"expression"},
+			{type:"token",contents:"RPAREN"},
+			{type:"token",contents:"INCREASE_INDENT"},
+			{type:"repeatZeroOrMore",subrule:"statement"},
+			{type:"token",contents:"DECREASE_INDENT"}
+		],
+		polished: rawParse => {
+			return {
+				name:rawParse.contents[0],
+				params:polishParse(rawParse.contents[2]),
+				statements:polishParse(rawParse.contents[5]),
+			}
+		}
+	},
+	expression:{
+		raw:[
+			{type:"required",subrule:"expressionTerm"},
+			{type:"optional",subrule:"params"},
+		],
+		polished: rawParse => {
+			return {
+				name:rawParse.contents[0],
+				params:polishParse(rawParse.contents[2]),
+				statements:polishParse(rawParse.contents[5]),
+			}
+		}
+	},
 }
 
 
@@ -70,42 +178,8 @@ function parse(tokenList){
 	}
 	
 	
-	function parseRule(ruleName){
-		
-		let rule = grammar[ruleName]
-		
-		if( !rule){
-			throw new InternalCompilerError("rule not exist")
-		}
-		
-		for( let i = 0; i < rule.length; i++){
-			switch( rule[i].type){
-				case "optional":{
-					let savedPosition = position
-					try{
-						parseRule(rule[i].subrule)
-					} catch(e){
-						position = savedPosition // it didn't work
-					}
-					break}
-				case "repeatZeroOrMore":{
-					let savedPosition = position
-					let done = false
-					while(!done){
-						savedPosition = position
-						try{
-							parseRule(rule[i].subrule)
-						} catch(e){
-							position = savedPosition // it didn't work
-							done = true
-						}
-					}
-					break}
-				case "token":{
-					consume(rule[i].contents)
-					break}
-			}
-		}
+	function polishParse(ruleRawParse){
+		return grammar[ruleRawParse.name].polish(ruleRawParse)
 	}
 	
 	
@@ -123,76 +197,6 @@ function parse(tokenList){
 }
 
 
-
-
-
-function lexer( stringIn){
-	//TODO lexer needs work
-	
-	
-	
-	
-	//WARNING the possible token regexes must start with the ^ char
-	let possibleTokens = [
-		{name:"IF",regex:/^if/},
-		{name:"FOR",regex:/^for/},
-		{name:"FUNCTIONDEF",regex:/^function/},
-		{name:"LET",regex:/^let/},
-		{name:"RETURN",regex:/^return/},
-		{name:"ELSE",regex:/^else/},
-		{name:"PLUS",regex:/^\+/},
-		{name:"MINUS",regex:/^-/},
-		{name:"ASTERISK",regex:/^\*/},
-		{name:"DOUBLEEQUALS",regex:/^==/},
-		{name:"EQUALS",regex:/^=/},
-		{name:"NOT",regex:/^!/},
-		{name:"AND",regex:/^&/},
-		{name:"OR",regex:/^\|/},
-		{name:"COLON",regex:/^:/},
-		{name:"COMMA",regex:/^,/},
-		{name:"LPAREN",regex:/^\(/},
-		{name:"RPAREN",regex:/^\)/},
-		{name:"LBRACE",regex:/^{/},
-		{name:"RBRACE",regex:/^}/},
-		{name:"LBRACKET",regex:/^\[/},
-		{name:"RBRACKET",regex:/^\]/},
-		{name:"WHITESPACE",regex:/^[\n\s\t]/},
-		{name:"NUMBER",regex:/^[0-9]+/},//NOTE currently not support decimals
-		{name:"IDENTIFIER",regex:/^[a-z][a-zA-Z_0-9]*/},
-		{name:"STRING",regex:/^"[^"]*"/},
-		{name:"COMMENT",regex:/^#.*\n/},
-		// {name:"",regex://},
-	]
-	
-	let index = 0
-	
-	let result = []
-	
-	function lexNextChar(){
-		// returns true if sucessful
-		// returns false when at end of file
-		
-		let stringInLeft = stringIn.substring(index)
-		
-		if( stringInLeft.length == 0){ return false}
-		
-		for( let i = 0; i < possibleTokens.length; i++){
-			
-			let match = stringInLeft.match(possibleTokens[i].regex)
-			if( match){
-				result.push({type:possibleTokens[i].name,contents:match[0]})
-				index += match[0].length
-				return true
-			}
-		}
-		throw new Error("lexer error this doesnt match any of the things:" +  stringInLeft.slice(0, 20) + "...")
-	}
-	
-	let indexLastTime = 0
-	while( lexNextChar()){}
-	
-	return result
-}
 
 
 

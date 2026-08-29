@@ -106,11 +106,11 @@ export function lexer( stringIn){
 	for( let i = 0; i < lines.length; i++){
 		let line = lines[i]
 		while( line.indentationLevel > lastIndentLevel){
-			result.push({type:"INCREASE_INDENT"})
+			result.push({type:"INCREASE_INDENT",contents:""}) // the empty string for the contents is needed for the parser to not throw an error
 			lastIndentLevel++
 		}
 		while( line.indentationLevel < lastIndentLevel){
-			result.push({type:"DECREASE_INDENT"})
+			result.push({type:"DECREASE_INDENT",contents:""})// the empty string for the contents is needed for the parser to not throw an error
 			lastIndentLevel--
 		}
 		for( let j = 0; j < line.contents.length; j++){
@@ -123,10 +123,85 @@ export function lexer( stringIn){
 	// now, we can go through and take out any spaces to finish getting it ready for the parser
 	result = result.filter(token => token.type != "SPACE")
 	
+	// also take out the comments
+	result = result.filter(t => t.type != "COMMENT")
+	
+	
+	
+	// now, go through and get rid of any extra newlines
+	// if there are multiple newlines in a row, only keep one of them
+	// also, get rid of any newlines at the start
+	let lastTokenType = "NEWLINE"
+	for( let i = 0; i < result.length; i++){
+		let thisType = result[i].type
+		if( thisType == "NEWLINE" && lastTokenType == "NEWLINE"){
+			result.splice( i, 1)
+			i--
+		}
+		lastTokenType = thisType
+	}
+	
+	
+	// now, filter out all newlines next to indent-changing, since the indent changing already implies a newline. This is what the parser expects
+	result = result.filter((item, index) => {
+		let amINextToAnIndentChanger = false
+		if(
+			result[index - 1]?.type == "INCREASE_INDENT" ||
+			result[index - 1]?.type == "DECREASE_INDENT" ||
+			result[index + 1]?.type == "INCREASE_INDENT" ||
+			result[index + 1]?.type == "DECREASE_INDENT"
+		){ amINextToAnIndentChanger = true}
+		return !(item.type == "NEWLINE" && amINextToAnIndentChanger)
+	})
+	
+	
+	// keep doing it over and over untill it doesnt remove anything
+	let numOfTokensLastPass = result.length
+	result = removeUselessIndentation(result)
+	while(numOfTokensLastPass != result.length){
+		numOfTokensLastPass = result.length
+		result = removeUselessIndentation(result)
+	}
+	
 	
 	
 	
 	return result
+}
+
+
+
+// also, we don't care about empty lines really so if there is an increase-indent directly followed by a decreasing indent, get rid of both of them
+// also do the other way around
+function removeUselessIndentation( tokenListIn){
+	let lastTokenType = "NOT_APPLICABLE"
+	for( let i = 0; i < tokenListIn.length; i++){
+		let thisType = tokenListIn[i].type
+		if( thisType == "DECREASE_INDENT" && lastTokenType == "INCREASE_INDENT"){
+			tokenListIn.splice( i, 1)
+			i--
+			tokenListIn.splice( i, 1)
+			i--
+			lastTokenType = "NOT_APPLICABLE"
+		} else {
+			lastTokenType = thisType
+		}
+	}
+	
+	lastTokenType = "NOT_APPLICABLE"
+	for( let i = 0; i < tokenListIn.length; i++){
+		let thisType = tokenListIn[i].type
+		if( thisType == "INCREASE_INDENT" && lastTokenType == "DECREASE_INDENT"){
+			tokenListIn.splice( i, 1)
+			i--
+			tokenListIn.splice( i, 1)
+			i--
+			lastTokenType = "NOT_APPLICABLE"
+		} else {
+			lastTokenType = thisType
+		}
+	}
+	return tokenListIn
 }
 
 
@@ -137,7 +212,8 @@ function lexerCore( stringIn){
 	
 	//WARNING the possible token regexes must start with the ^ char
 	let possibleTokens = [
-		{name:"IF",regex:/^if(?=\s|$)/},
+		//TODO for now a var named ifa will count as keyword "if"
+		{name:"IF",regex:/^if/},
 		{name:"FOR",regex:/^for/},
 		{name:"FUNCTIONDEF",regex:/^function/},
 		{name:"LET",regex:/^let/},

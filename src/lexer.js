@@ -4,7 +4,7 @@
 
 
 
-function lexer( stringIn){
+export function lexer( stringIn){
 	// this is the wrapper function for the lexer. It handles the indentation stuff
 	// chessLang uses python-style indentation
 	

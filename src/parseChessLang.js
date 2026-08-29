@@ -33,7 +33,6 @@ let grammar = {
 			{type:"token",contents:"LPAREN"},
 			{type:"optional",subrule:"params"},
 			{type:"token",contents:"RPAREN"},
-			{type:"token",contents:"NEWLINE"},
 			{type:"token",contents:"INCREASE_INDENT"},
 			{type:"repeatZeroOrMore",subrule:"statement"},
 			{type:"token",contents:"DECREASE_INDENT"}
@@ -88,7 +87,7 @@ let grammar = {
 		raw:[
 			{type:"token",contents:"IDENTIFIER"},
 			{type:"token",contents:"EQUALS"},
-			{type:"optional",subrule:"expression"},
+			{type:"required",subrule:"expression"},
 		],
 		polished: rawParse => {
 			return {
@@ -118,8 +117,161 @@ let grammar = {
 	},
 	expression:{
 		raw:[
-			{type:"required",subrule:"expressionTerm"},
-			{type:"optional",subrule:"params"},
+			{type:"required",subrule:"firstTerm"},
+			{type:"repeatZeroOrMore",subrule:"otherTerms"},
+		],
+		polished: rawParse => {
+			return {
+				name:rawParse.contents[0],
+				params:polishParse(rawParse.contents[2]),
+				statements:polishParse(rawParse.contents[5]),
+			}
+		}
+	},
+	firstTerm:{
+		raw:[
+			{type:"optional",subrule:"negationOrAddition"},
+			{type:"required",subrule:"thingA"},
+		],
+		polished: rawParse => {
+			return {
+				name:rawParse.contents[0],
+				params:polishParse(rawParse.contents[2]),
+				statements:polishParse(rawParse.contents[5]),
+			}
+		}
+	},
+	otherTerms:{
+		raw:[
+			{type:"required",subrule:"negationOrAddition"},
+			{type:"required",subrule:"thingA"},
+		],
+		polished: rawParse => {
+			return {
+				name:rawParse.contents[0],
+				params:polishParse(rawParse.contents[2]),
+				statements:polishParse(rawParse.contents[5]),
+			}
+		}
+	},
+	thingA:{
+		raw:[
+			{type:"oneOfChoices",options:["arrayOrFncall","aString","anIdentifier","anInteger"]},
+		],
+		polished: rawParse => {
+			return {
+				name:rawParse.contents[0],
+				params:polishParse(rawParse.contents[2]),
+				statements:polishParse(rawParse.contents[5]),
+			}
+		}
+	},
+	arrayOrFncall:{
+		raw:[
+			{type:"token",contents:"IDENTIFIER"},
+			{type:"repeatZeroOrMore",subrule:"arrayOrFncallArgument"},
+		],
+		polished: rawParse => {
+			return {
+				name:rawParse.contents[0],
+				params:polishParse(rawParse.contents[2]),
+				statements:polishParse(rawParse.contents[5]),
+			}
+		}
+	},
+	aString:{
+		raw:[
+			{type:"token",contents:"STRING"},
+		],
+		polished: rawParse => {
+			return {
+				name:rawParse.contents[0],
+				params:polishParse(rawParse.contents[2]),
+				statements:polishParse(rawParse.contents[5]),
+			}
+		}
+	},
+	anIdentifier:{
+		raw:[
+			{type:"token",contents:"IDENTIFIER"},
+		],
+		polished: rawParse => {
+			return {
+				name:rawParse.contents[0],
+				params:polishParse(rawParse.contents[2]),
+				statements:polishParse(rawParse.contents[5]),
+			}
+		}
+	},
+	anInteger:{
+		raw:[
+			{type:"token",contents:"NUMBER"},
+		],
+		polished: rawParse => {
+			return {
+				name:rawParse.contents[0],
+				params:polishParse(rawParse.contents[2]),
+				statements:polishParse(rawParse.contents[5]),
+			}
+		}
+	},
+	arrayOrFncallArgument:{
+		raw:[
+			{type:"oneOfChoices",options:["arrayBracketClause","funcallParenClause"]},
+		],
+		polished: rawParse => {
+			return {
+				name:rawParse.contents[0],
+				params:polishParse(rawParse.contents[2]),
+				statements:polishParse(rawParse.contents[5]),
+			}
+		}
+	},
+	arrayBracketClause:{
+		raw:[
+			{type:"token",contents:"LBRACKET"},
+			{type:"required",subrule:"expression"},
+			{type:"token",contents:"RBRACKET"},
+		],
+		polished: rawParse => {
+			return {
+				name:rawParse.contents[0],
+				params:polishParse(rawParse.contents[2]),
+				statements:polishParse(rawParse.contents[5]),
+			}
+		}
+	},
+	funcallParenClause:{
+		raw:[
+			{type:"token",contents:"LBRACKET"},
+			{type:"optional",subrule:"paramsToo"},
+			{type:"token",contents:"RBRACKET"},
+		],
+		polished: rawParse => {
+			return {
+				name:rawParse.contents[0],
+				params:polishParse(rawParse.contents[2]),
+				statements:polishParse(rawParse.contents[5]),
+			}
+		}
+	},
+	paramsToo:{
+		raw:[
+			{type:"required",subrule:"expression"},
+			{type:"repeatZeroOrMore",subrule:"paramsThree"},
+		],
+		polished: rawParse => {
+			return {
+				name:rawParse.contents[0],
+				params:polishParse(rawParse.contents[2]),
+				statements:polishParse(rawParse.contents[5]),
+			}
+		}
+	},
+	paramsThree:{
+		raw:[
+			{type:"token",contents:"COMMA"},
+			{type:"required",subrule:"expression"},
 		],
 		polished: rawParse => {
 			return {
@@ -133,13 +285,14 @@ let grammar = {
 
 
 
-function parse(tokenList){
+export function parse(tokenList){
 	
 	
 	function parseRuleRaw(ruleName){
 		// this is the first step of parsing a rule. It returns the raw parse, not the AST
 		// More specifically, it returns {name:"ruleName",contents:[array of the parsed tokens/subrules. Each part of the rule is one element of the array. Tokens are just strings of their contents. repeatZeroOrMore is an array of the raw parses of each repitition. optional is the raw parse of the subrule if it exists, and null otherwise.]}
 		
+		let result = []
 		
 		let rule = grammar[ruleName]
 		
@@ -149,12 +302,27 @@ function parse(tokenList){
 		
 		for( let i = 0; i < rule.length; i++){
 			switch( rule[i].type){
+				case "required":{
+					result.push(parseRuleRaw(rule[i].subrule))
+					break}
 				case "optional":{
 					let savedPosition = position
 					try{
-						parseRuleRaw(rule[i].subrule)
+						result.push(parseRuleRaw(rule[i].subrule))
 					} catch(e){
 						position = savedPosition // it didn't work
+					}
+					break}
+				case "oneOfChoices":{
+					for( let option of rule[i].options){
+						
+						let savedPosition = position
+						try{
+							result.push(parseRuleRaw(option))
+							break
+						} catch(e){
+							position = savedPosition // it didn't work
+						}
 					}
 					break}
 				case "repeatZeroOrMore":{
@@ -163,7 +331,7 @@ function parse(tokenList){
 					while(!done){
 						savedPosition = position
 						try{
-							parseRuleRaw(rule[i].subrule)
+							result.push(parseRuleRaw(rule[i].subrule))
 						} catch(e){
 							position = savedPosition // it didn't work
 							done = true
@@ -171,10 +339,11 @@ function parse(tokenList){
 					}
 					break}
 				case "token":{
-					consume(rule[i].contents)
+					result.push(consume(rule[i].contents)) //TODO change to .type
 					break}
 			}
 		}
+		return result
 	}
 	
 	
@@ -183,17 +352,21 @@ function parse(tokenList){
 	}
 	
 	
-	parseRule("main") // this is always the main overall rule
 	
 	
 	
 	let position = 0
 	function consume(tokenType){
-		if( tokenList[position] != tokenType){
+		if( tokenList[position].type != tokenType){
 			throw new Error("parse error")
 		}
 		position++
+		return tokenList[position].contents
 	}
+	
+	
+	// return polishParse(parseRuleRaw("main")) // this is always the main overall rule
+	return parseRuleRaw("main") // temp just return the raw thing
 }
 
 

@@ -47,6 +47,7 @@ export function parse(tokenList){
 					let attemptedParse = parseRuleRaw(rule[i].subrule)
 					if( attemptedParse.error){
 						position = savedPosition // it didn't work, undo that part
+						attemptedParse.stack.push(ruleName)
 						return attemptedParse
 					} else {
 						result.push( attemptedParse)
@@ -57,6 +58,7 @@ export function parse(tokenList){
 					let attemptedParse = parseRuleRaw(rule[i].subrule)
 					if( attemptedParse.error){
 						position = savedPosition // it didn't work, undo that part
+						attemptedParse.stack.push(ruleName)
 						result.push(null)
 					} else {
 						result.push( attemptedParse)
@@ -83,6 +85,7 @@ export function parse(tokenList){
 						const errorThatGotFurthest = errors.reduce((best, current) =>
 							current.position > best.position ? current : best
 						)
+						errorThatGotFurthest.stack.push(ruleName)
 						return errorThatGotFurthest
 					}
 					break}
@@ -94,6 +97,7 @@ export function parse(tokenList){
 						savedPosition = position
 						let r = parseRuleRaw(rule[i].subrule)
 						if( r.error){
+							r.stack.push(ruleName)
 							position = savedPosition // it didn't work
 							done = true
 						} else {
@@ -105,6 +109,7 @@ export function parse(tokenList){
 				case "token":{
 					let r = consume(rule[i].tokenType)
 					if( r.error){
+						r.stack.push(ruleName)
 						return r
 					} else {
 						result.push( r.contents)
@@ -214,7 +219,7 @@ export function parse(tokenList){
 			// let stack = new Error("").stack
 			// debugger
 			// console.trace()
-			let error = {error:true,position:position,message:"Parse Error: expected " + tokenType + " but got " + tokenList[position].type + " at position " + position }
+			let error = {error:true,position:position,message:"Parse Error: expected " + tokenType + " but got " + tokenList[position].type + " at position " + position,stack:[] }
 			if( position > furthestError.position){
 				// this is the new furthest error. We might need this later on
 				furthestError = error
@@ -252,7 +257,7 @@ export function parse(tokenList){
 		throw furthestError
 	}
 	
-	return parseRuleRaw("main") // temp just return the raw thing
+	return result // temp just return the raw thing
 }
 
 

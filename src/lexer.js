@@ -164,6 +164,12 @@ export function lexer( stringIn){
 	}
 	
 	
+	// now, finally, to make it easier for the parser we actually add a newline after each DECREASE_INDENT
+	for( let i = 0; i < result.length; i++){
+		if( result[i].type == "DECREASE_INDENT" ){
+			result.splice( i + 1, 0, {type:"NEWLINE", contents:""})
+		}
+	}
 	
 	
 	return result

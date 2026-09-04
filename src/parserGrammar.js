@@ -32,13 +32,20 @@ arrayOrFncallGroup = (LPAREN ( expression ( COMMA expression)* )? RPAREN) | (LBR
 ["assignment","declarationAssignment","ifBlock","forBlock","returnRule","expression"]
 
 
+this grammar json itself has the following syntax:
+the whole thing is a bunch of rules
+Each rule has raw and polished parts
+each raw part is an array of things
+each thing is an object, which has the type attribute of "token","subrule", "oneOfChoices", or "group". Each thing can also have the properties set to true of optional, repeatZeroOrMore, repeatOnceOrMore, or none of those (but only one of those options, not multiple combined)
+//TODO it currently uses an old format, update it to use this new format
+
 */
 //TODO this new grammar JSON syntax is nicer, but the parser needs to support it
 export let grammar = {
 	
 	main:{
 		raw:[
-			{type:"repeatZeroOrMore",subrule:"functiondef"}
+			{type:"subrule",subrule:"functiondef", repeatZeroOrMore:true}
 		],
 		polished: rawParse => {
 			return polishParse(rawParse.contents[0])
@@ -46,18 +53,18 @@ export let grammar = {
 	},
 	functiondef:{
 		raw:[
-			{type:"token",tokenType:"FUNCTIONDEF"},
-			{type:"token",tokenType:"IDENTIFIER"},
-			{type:"token",tokenType:"LPAREN"},
-			{type:"optional",subgroup:[
-				{type:"token",tokenType:"IDENTIFIER"},
-				{type:"repeatZeroOrMore",subrule:[
-					{type:"token",subrule:"COMMA"},
-					{type:"token",subrule:"IDENTIFIER"},
-				]}
-			]},
+			{type:"token", tokenType:"FUNCTIONDEF"},
+			{type:"token", tokenType:"IDENTIFIER"},
+			{type:"token", tokenType:"LPAREN"},
+			{type:"group", subgroup:[
+				{type:"token", tokenType:"IDENTIFIER"},
+				{type:"group", subgroup:[
+					{type:"token",tokenType:"COMMA"},
+					{type:"token",tokenType:"IDENTIFIER"},
+				], repeatZeroOrMore:true}
+			], optional:true},
 			{type:"token",tokenType:"RPAREN"},
-			{type:"optional",subrule:"block"},
+			{type:"subrule",subrule:"block", optional:true},
 			{type:"token",tokenType:"NEWLINE"},
 		],
 		polished: rawParse => {
@@ -71,7 +78,7 @@ export let grammar = {
 	block:{
 		raw:[
 			{type:"token",tokenType:"INCREASE_INDENT"},
-			{type:"repeatZeroOrMore",subrule:"statementOrSubblock"},
+			{type:"subrule", subrule:"statementOrSubblock", repeatZeroOrMore:true},
 			{type:"token",tokenType:"DECREASE_INDENT"}
 		],
 		polished: rawParse => {
@@ -84,7 +91,17 @@ export let grammar = {
 	},
 	statementOrSubblock:{
 		raw:[
-			{type:"oneOfChoices",options:["assignment","declarationAssignment","ifBlock","forBlock","returnRule","expression"]},//TODO the only type of expression that should be allowed is a functioncall
+			{type:"oneOfChoices",options:[
+				{type:"subrule", subrule:"assignment"},
+				{type:"subrule", subrule:"declarationAssignment"},
+				{type:"subrule", subrule:"ifBlock"},
+				{type:"subrule", subrule:"forBlock"},
+				{type:"subrule", subrule:"returnRule"},
+				{type:"group", subgroup:[
+					{type:"subrule", subrule:"expression"}, //TODO the only type of expression that should be allowed is a functioncall
+					{type:"token",tokenType:"NEWLINE"},
+				]},
+			]},
 		],
 		polished: rawParse => {
 			return {
@@ -98,7 +115,7 @@ export let grammar = {
 		raw:[
 			{type:"token",tokenType:"IDENTIFIER"},
 			{type:"token",tokenType:"EQUALS"},
-			{type:"required",subrule:"expression"},
+			{type:"subrule",subrule:"expression"},
 			{type:"token",tokenType:"NEWLINE"},
 		],
 		polished: rawParse => {
@@ -114,7 +131,7 @@ export let grammar = {
 			{type:"token",tokenType:"LET"},
 			{type:"token",tokenType:"IDENTIFIER"},
 			{type:"token",tokenType:"EQUALS"},
-			{type:"required",subrule:"expression"},
+			{type:"subrule",subrule:"expression"},
 			{type:"token",tokenType:"NEWLINE"},
 		],
 		polished: rawParse => {
@@ -129,9 +146,9 @@ export let grammar = {
 		raw:[
 			{type:"token",tokenType:"IF"},
 			{type:"token",tokenType:"LPAREN"},
-			{type:"required",subrule:"expression"},
+			{type:"subrule",subrule:"expression"},
 			{type:"token",tokenType:"RPAREN"},
-			{type:"optional",subrule:"block"},
+			{type:"subrule",subrule:"block",optional:true},
 			{type:"token",tokenType:"NEWLINE"},
 		],
 		polished: rawParse => {
@@ -142,13 +159,13 @@ export let grammar = {
 			}
 		}
 	},
-	forBlock:{ // I know this isn't right, but doing it for now
+	forBlock:{ // I know this isn't right, but doing it for now, this is really more of a "while" block currently
 		raw:[
 			{type:"token",tokenType:"FOR"},
 			{type:"token",tokenType:"LPAREN"},
-			{type:"required",subrule:"expression"},
+			{type:"subrule",subrule:"expression"},
 			{type:"token",tokenType:"RPAREN"},
-			{type:"optional",subrule:"block"},
+			{type:"subrule",subrule:"block",optional:true},
 			{type:"token",tokenType:"NEWLINE"},
 		],
 		polished: rawParse => {
@@ -161,17 +178,15 @@ export let grammar = {
 	},
 	expression:{
 		raw:[
-			{type:"optional",subgroup:[
-				{type:"token",tokenType:"MINUS"},
-			]},
-			{type:"required",tokenType:"expressionPrimary"},
-			{type:"repeatZeroOrMore",subgroup:[
+			{type:"token",tokenType:"MINUS", optional:true},
+			{type:"subrule",subrule:"expressionPrimary"},
+			{type:"group",subgroup:[
 				{type:"oneOfChoices",options:[
 					{type:"token",tokenType:"PLUS"},
 					{type:"token",tokenType:"MINUS"}
 				]},
-				{type:"required",subrule:"expressionPrimary"},
-			]},
+				{type:"subrule",subrule:"expressionPrimary"},
+			], repeatZeroOrMore:true},
 		],
 		polished: rawParse => {
 			return {
@@ -184,7 +199,7 @@ export let grammar = {
 	expressionPrimary:{
 		raw:[
 			{type:"oneOfChoices",options:[
-				{type:"required",subrule:"arrayOrFncall"},
+				{type:"subrule",subrule:"arrayOrFncall"},
 				{type:"token",tokenType:"IDENTIFIER"},
 				{type:"token",tokenType:"NUMBER"},
 				{type:"token",tokenType:"STRING"},
@@ -201,8 +216,8 @@ export let grammar = {
 	arrayOrFncall:{
 		raw:[
 			{type:"token",tokenType:"IDENTIFIER"},
-			{type:"required",subrule:"arrayOrFncallArgument"},
-			{type:"repeatZeroOrMore",subrule:"arrayOrFncallArgument"},
+			{type:"subrule",subrule:"arrayOrFncallGroup"},
+			{type:"subrule",subrule:"arrayOrFncallGroup",repeatZeroOrMore:true},
 		],
 		polished: rawParse => {
 			return {
@@ -215,20 +230,20 @@ export let grammar = {
 	arrayOrFncallGroup:{
 		raw:[
 			{type:"oneOfChoices",options:[
-				{type:"subgroup",contents:[
+				{type:"group",subgroup:[
 					{type:"token", tokenType:"LPAREN"},
-					{type:"optional", subrule:[
-						{type:"required", subrule:"expression"},
-						{type:"repeatZeroOrMore", subrule:[
+					{type:"group", subgroup:[
+						{type:"subrule", subrule:"expression"},
+						{type:"group", subgroup:[
 							{type:"token", tokenType:"COMMA"},
-							{type:"required", subrule:"expression"}
-						]}
-					]},
+							{type:"subrule", subrule:"expression"}
+						],repeatZeroOrMore:true}
+					], optional:true},
 					{type:"token", tokenType:"RPAREN"},
 				]},
-				{type:"subgroup",contents:[
+				{type:"group",subgroup:[
 					{type:"token", tokenType:"LBRACKET"},
-					{type:"required", subrule:"expression"},
+					{type:"subrule", subrule:"expression"},
 					{type:"token", tokenType:"RBRACKET"},
 				]},
 			]},
@@ -244,7 +259,7 @@ export let grammar = {
 	returnRule:{
 		raw:[
 			{type:"token",tokenType:"RETURN"},
-			{type:"required",subrule:"expression"},
+			{type:"subrule",subrule:"expression"},
 			{type:"token",tokenType:"NEWLINE"},
 		],
 		polished: rawParse => {

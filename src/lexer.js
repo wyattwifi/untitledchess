@@ -131,45 +131,40 @@ export function lexer( stringIn){
 	// now, go through and get rid of any extra newlines
 	// if there are multiple newlines in a row, only keep one of them
 	// also, get rid of any newlines at the start
-	let lastTokenType = "NEWLINE"
-	for( let i = 0; i < result.length; i++){
-		let thisType = result[i].type
-		if( thisType == "NEWLINE" && lastTokenType == "NEWLINE"){
-			result.splice( i, 1)
-			i--
-		}
-		lastTokenType = thisType
-	}
+	// result = removeUselessNewlines(result)
 	
+	//TODO make the lexer match the specs, particularly newline placement
 	
 	// now, filter out all newlines next to indent-changing, since the indent changing already implies a newline. This is what the parser expects
-	result = result.filter((item, index) => {
-		let amINextToAnIndentChanger = false
-		if(
-			result[index - 1]?.type == "INCREASE_INDENT" ||
-			result[index - 1]?.type == "DECREASE_INDENT" ||
-			result[index + 1]?.type == "INCREASE_INDENT" ||
-			result[index + 1]?.type == "DECREASE_INDENT"
-		){ amINextToAnIndentChanger = true}
-		return !(item.type == "NEWLINE" && amINextToAnIndentChanger)
-	})
-	
+	// result = removeNewlinesNextToIndentationChange(result)
 	
 	// keep doing it over and over untill it doesnt remove anything
-	let numOfTokensLastPass = result.length
-	result = removeUselessIndentation(result)
+	let numOfTokensLastPass = result.length + 1000 // so it will go at least once
 	while(numOfTokensLastPass != result.length){
 		numOfTokensLastPass = result.length
 		result = removeUselessIndentation(result)
+		result = removeUselessNewlines(result)
+		result = removeNewlinesNextToIndentationChange(result)
 	}
 	
 	
-	// now, finally, to make it easier for the parser we actually add a newline after each DECREASE_INDENT
+	// now, finally, to make it easier for the parser we actually add a newline before and after each DECREASE_INDENT
+	// do the after part...
 	for( let i = 0; i < result.length; i++){
 		if( result[i].type == "DECREASE_INDENT" ){
 			result.splice( i + 1, 0, {type:"NEWLINE", contents:""})
 		}
 	}
+	// ...and now the before part
+	for( let i = 0; i < result.length; i++){
+		if( result[i].type == "DECREASE_INDENT" ){
+			result.splice( i, 0, {type:"NEWLINE", contents:""})
+			i++
+		}
+	}
+	
+	// for whatever reason, we need to do this again
+	result = removeUselessNewlines(result)
 	
 	
 	return result
@@ -179,6 +174,7 @@ export function lexer( stringIn){
 
 // also, we don't care about empty lines really so if there is an increase-indent directly followed by a decreasing indent, get rid of both of them
 // also do the other way around
+// for it to still have some change there, we need to replace the useless indentation with a newline, instead of just getting rid of it, because the indentatiton-changing currently also includes the newline
 function removeUselessIndentation( tokenListIn){
 	let lastTokenType = "NOT_APPLICABLE"
 	for( let i = 0; i < tokenListIn.length; i++){
@@ -186,8 +182,7 @@ function removeUselessIndentation( tokenListIn){
 		if( thisType == "DECREASE_INDENT" && lastTokenType == "INCREASE_INDENT"){
 			tokenListIn.splice( i, 1)
 			i--
-			tokenListIn.splice( i, 1)
-			i--
+			tokenListIn.splice( i, 1, {type:"NEWLINE", contents:""})
 			lastTokenType = "NOT_APPLICABLE"
 		} else {
 			lastTokenType = thisType
@@ -200,14 +195,46 @@ function removeUselessIndentation( tokenListIn){
 		if( thisType == "INCREASE_INDENT" && lastTokenType == "DECREASE_INDENT"){
 			tokenListIn.splice( i, 1)
 			i--
-			tokenListIn.splice( i, 1)
-			i--
+			tokenListIn.splice( i, 1, {type:"NEWLINE", contents:""})
 			lastTokenType = "NOT_APPLICABLE"
 		} else {
 			lastTokenType = thisType
 		}
 	}
 	return tokenListIn
+}
+
+function removeUselessNewlines( tokenList){
+	
+	// now, go through and get rid of any extra newlines
+	// if there are multiple newlines in a row, only keep one of them
+	// also, get rid of any newlines at the start
+	let lastTokenType = "NEWLINE"
+	for( let i = 0; i < tokenList.length; i++){
+		let thisType = tokenList[i].type
+		if( thisType == "NEWLINE" && lastTokenType == "NEWLINE"){
+			tokenList.splice( i, 1)
+			i--
+		}
+		lastTokenType = thisType
+	}
+	return tokenList
+}
+function removeNewlinesNextToIndentationChange( tokenList){
+	
+	
+	
+	// now, filter out all newlines next to indent-changing, since the indent changing already implies a newline. This is what the parser expects
+	return tokenList.filter((item, index) => {
+		let amINextToAnIndentChanger = false
+		if(
+			tokenList[index - 1]?.type == "INCREASE_INDENT" ||
+			tokenList[index - 1]?.type == "DECREASE_INDENT" ||
+			tokenList[index + 1]?.type == "INCREASE_INDENT" ||
+			tokenList[index + 1]?.type == "DECREASE_INDENT"
+		){ amINextToAnIndentChanger = true}
+		return !(item.type == "NEWLINE" && amINextToAnIndentChanger)
+	})
 }
 
 

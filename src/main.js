@@ -5,7 +5,7 @@ import {lexer} from "./lexer.js"
 import {parse} from "./parseChessLang.js"
 
 
-
+//TODO this is not quite python-like syntax, also i switched in for + just to stop parse error
 // some program written in chessLang
 let sampleChesslangCode = `
 function getUserChoiceOfArray( arrayIn, playerID)
@@ -40,20 +40,22 @@ function doLeaperMove( theMovingPiece, firstAmount, secondAmount)
 	let firstDirection = getUserChoiceOfArray(getTheFourPerpendicularDirections())
 	let secondDirection = getUserChoiceOfArray(getThePerpendicularDirections( firstDirection))
 	# walk along the path, making sure that each space is either empty, itself (because when it moves in it will also move out), or (on the last space only) a capturable enemy piece
-
-	for( unused in range(firstAmount))
+	
+#	for( unused in range(firstAmount))
+	for( unused + range(firstAmount))
 		let location = getPieceLocation( theMovingPiece)
 		let newLocation = getLocationInDirectionFromLocation( location, firstDirection)
-		if( !isLocationEmpty( newLocation))#TODO what if it is being blocked by itself
+		if( 1-isLocationEmpty( newLocation))#TODO what if it is being blocked by itself
 			throwError()
 		
 		movePiece( theMovingPiece, newLocation)
 		firstAmount = firstAmount - 1
-	
-	for( unused in range(secondAmount))
+		
+#	for( unused in range(secondAmount))
+	for( unused + range(secondAmount))
 		let location = getPieceLocation( theMovingPiece)
 		let newLocation = getLocationInDirectionFromLocation( location, secondDirection)
-		if( !isLocationEmpty( newLocation))#TODO what if it is being blocked by itself
+		if( 1-isLocationEmpty( newLocation))#TODO what if it is being blocked by itself and make be NOT syntax, TODO support bool expressions
 			# a piece is there. The only way this can move there is if that piece is itself, or if 
 			throwError()
 		

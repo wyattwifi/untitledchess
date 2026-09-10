@@ -1,6 +1,6 @@
 "use strict";
 
-
+import {polishParse} from "./parseChessLang.js"
 
 // this takes a thing with no blank lines
 
@@ -36,19 +36,23 @@ this grammar json itself has the following syntax:
 the whole thing is a bunch of rules
 Each rule has raw and polished parts
 each raw part is an array of things
-each thing is an object, which has the type attribute of "token","subrule", "oneOfChoices", or "group". Each thing can also have the properties set to true of optional, repeatZeroOrMore, repeatOnceOrMore, or none of those (but only one of those options, not multiple combined)
-//TODO it currently uses an old format, update it to use this new format
+each thing is an object, which has the type attribute of "token","subrule", "oneOfChoices", or "group". Each thing can also have the properties set to true of optional, repeatZeroOrMore, repeatOnceOrMore(TODO support this in parser), or none of those (but only one of those options, not multiple combined)
+Each oneOfChoices that is not a subrule must also have a "name" attribute to be identified by
+
+
+
+the polish functions take the array of symbols, not including the name nor wraped in any object
 
 */
-//TODO this new grammar JSON syntax is nicer, but the parser needs to support it
+
 export let grammar = {
 	
 	main:{
 		raw:[
 			{type:"subrule",subrule:"functiondef", repeatZeroOrMore:true}
 		],
-		polished: rawParse => {
-			return polishParse(rawParse.contents[0])
+		polish: rawParse => {
+			return rawParse[0].map(polishParse) // the first symbol is repeatZeroOrMore, so the parse of that symbol is actually an array. That's why just rawParse.map(polishParse) doesnt work
 		}
 	},
 	functiondef:{
@@ -67,11 +71,20 @@ export let grammar = {
 			{type:"subrule",subrule:"block", optional:true},
 			{type:"token",tokenType:"NEWLINE"},
 		],
-		polished: rawParse => {
+		polish: rawParse => {
+			let params = []
+			if( rawParse[3]){
+				params.push(rawParse[3][0])
+				params.push(...rawParse[3][1].map(e => e[1]))
+			}
+			let statements = []
+			if( rawParse[5]){ // remember that the function body can be empty
+				statements = polishParse( rawParse[5])
+			}
 			return {
-				name:rawParse.contents[0],
-				params:polishParse(rawParse.contents[2]),
-				statements:polishParse(rawParse.contents[5]),
+				name:rawParse[1],
+				params: params,
+				statements:statements,
 			}
 		}
 	},
@@ -81,12 +94,8 @@ export let grammar = {
 			{type:"subrule", subrule:"statementOrSubblock", repeatZeroOrMore:true},
 			{type:"token",tokenType:"DECREASE_INDENT"}
 		],
-		polished: rawParse => {
-			return {
-				name:rawParse.contents[0],
-				params:polishParse(rawParse.contents[2]),
-				statements:polishParse(rawParse.contents[5]),
-			}
+		polish: rawParse => {
+			return rawParse[1].map(polishParse)
 		}
 	},
 	statementOrSubblock:{
@@ -100,15 +109,14 @@ export let grammar = {
 				{type:"group", subgroup:[
 					{type:"subrule", subrule:"expression"}, //TODO the only type of expression that should be allowed is a functioncall
 					{type:"token",tokenType:"NEWLINE"},
-				]},
+				], name:"standaloneFuncall"},
 			]},
 		],
-		polished: rawParse => {
-			return {
-				name:rawParse.contents[0],
-				params:polishParse(rawParse.contents[2]),
-				statements:polishParse(rawParse.contents[5]),
+		polish: rawParse => {
+			if( rawParse[0].name == "standaloneFuncall"){
+				return {type:"assignment", lVal:"bitBucket", rVal: polishParse(rawParse[0].contents[0])}//TODO do this right
 			}
+			return polishParse(rawParse[0])
 		}
 	},
 	assignment:{
@@ -118,12 +126,8 @@ export let grammar = {
 			{type:"subrule",subrule:"expression"},
 			{type:"token",tokenType:"NEWLINE"},
 		],
-		polished: rawParse => {
-			return {
-				name:rawParse.contents[0],
-				params:polishParse(rawParse.contents[2]),
-				statements:polishParse(rawParse.contents[5]),
-			}
+		polish: rawParse => {
+			return {type:"assignment", lVal:rawParse[0], rVal: polishParse(rawParse[2])}
 		}
 	},
 	declarationAssignment:{
@@ -134,12 +138,8 @@ export let grammar = {
 			{type:"subrule",subrule:"expression"},
 			{type:"token",tokenType:"NEWLINE"},
 		],
-		polished: rawParse => {
-			return {
-				name:rawParse.contents[0],
-				params:polishParse(rawParse.contents[2]),
-				statements:polishParse(rawParse.contents[5]),
-			}
+		polish: rawParse => {
+			return {type:"declarationAssignment", lVal:rawParse[1], rVal: polishParse(rawParse[3])}
 		}
 	},
 	ifBlock:{
@@ -151,12 +151,12 @@ export let grammar = {
 			{type:"subrule",subrule:"block",optional:true},
 			{type:"token",tokenType:"NEWLINE"},
 		],
-		polished: rawParse => {
-			return {
-				name:rawParse.contents[0],
-				params:polishParse(rawParse.contents[2]),
-				statements:polishParse(rawParse.contents[5]),
+		polish: rawParse => {
+			let statements = []
+			if( rawParse[4]){ // remember that the body can be empty
+				statements = polishParse( rawParse[4])
 			}
+			return {type:"if",condition: polishParse(rawParse[2]), contents:statements}
 		}
 	},
 	forBlock:{ // I know this isn't right, but doing it for now, this is really more of a "while" block currently
@@ -168,12 +168,13 @@ export let grammar = {
 			{type:"subrule",subrule:"block",optional:true},
 			{type:"token",tokenType:"NEWLINE"},
 		],
-		polished: rawParse => {
-			return {
-				name:rawParse.contents[0],
-				params:polishParse(rawParse.contents[2]),
-				statements:polishParse(rawParse.contents[5]),
+		polish: rawParse => {
+			let statements = []
+			if( rawParse[4]){
+				statements = polishParse(rawParse[4])
 			}
+			return {type:"for",condition: polishParse(rawParse[2]), contents:statements}
+			// return "TODOfor"
 		}
 	},
 	expression:{
@@ -182,35 +183,48 @@ export let grammar = {
 			{type:"subrule",subrule:"expressionPrimary"},
 			{type:"group",subgroup:[
 				{type:"oneOfChoices",options:[
-					{type:"token",tokenType:"PLUS"},
-					{type:"token",tokenType:"MINUS"}
+					{type:"token",tokenType:"PLUS",name:"plus"},
+					{type:"token",tokenType:"MINUS",name:"minus"}
 				]},
 				{type:"subrule",subrule:"expressionPrimary"},
 			], repeatZeroOrMore:true},
 		],
-		polished: rawParse => {
-			return {
-				name:rawParse.contents[0],
-				params:polishParse(rawParse.contents[2]),
-				statements:polishParse(rawParse.contents[5]),
+		polish: rawParse => {
+			
+			let terms = []
+			
+			let isFirstTermPositive = rawParse[0] === null
+			terms.push({ contents:polishParse(rawParse[1]), isPositive: isFirstTermPositive})// do the first term
+			
+			// now do all the other terms
+			for( let termTokens of rawParse[2]){
+				// now, termTokens is the rawParse of the group
+				let isPositive = termTokens[0].name == "plus"//TODO check this
+				terms.push({ contents:polishParse(termTokens[1]), isPositive: isPositive})
 			}
+			
+			return { type:"addition/subtraction", terms:terms}
 		}
 	},
 	expressionPrimary:{
 		raw:[
 			{type:"oneOfChoices",options:[
 				{type:"subrule",subrule:"arrayOrFncall"},
-				{type:"token",tokenType:"IDENTIFIER"},
-				{type:"token",tokenType:"NUMBER"},
-				{type:"token",tokenType:"STRING"},
+				{type:"token",tokenType:"IDENTIFIER", name:"variable"},
+				{type:"token",tokenType:"NUMBER", name:"numberLiteral"},
+				{type:"token",tokenType:"STRING", name:"stringLiteral"},
 			]},
 		],
-		polished: rawParse => {
-			return {
-				name:rawParse.contents[0],
-				params:polishParse(rawParse.contents[2]),
-				statements:polishParse(rawParse.contents[5]),
+		polish: rawParse => {
+			switch(rawParse[0].name){
+				case "variable":
+					return { type: "identifier", contents: rawParse[0].contents }
+				case "numberLiteral":
+					return { type: "integer", contents: Number(rawParse[0].contents) }
+				case "stringLiteral":
+					return { type: "string", contents: rawParse[0].contents }
 			}
+			return polishParse(rawParse[0])
 		}
 	},
 	arrayOrFncall:{
@@ -219,12 +233,12 @@ export let grammar = {
 			{type:"subrule",subrule:"arrayOrFncallGroup"},
 			{type:"subrule",subrule:"arrayOrFncallGroup",repeatZeroOrMore:true},
 		],
-		polished: rawParse => {
-			return {
-				name:rawParse.contents[0],
-				params:polishParse(rawParse.contents[2]),
-				statements:polishParse(rawParse.contents[5]),
-			}
+		polish: rawParse => {
+			let callChain = []
+			callChain.push(polishParse(rawParse[1]))
+			callChain.push(...rawParse[2].map(polishParse))
+			
+			return {type:"arrayOrFncall", firstName: rawParse[0], callChain: callChain}
 		}
 	},
 	arrayOrFncallGroup:{
@@ -240,19 +254,35 @@ export let grammar = {
 						],repeatZeroOrMore:true}
 					], optional:true},
 					{type:"token", tokenType:"RPAREN"},
-				]},
+				],name:"funcall"},
 				{type:"group",subgroup:[
 					{type:"token", tokenType:"LBRACKET"},
 					{type:"subrule", subrule:"expression"},
 					{type:"token", tokenType:"RBRACKET"},
-				]},
+				],name:"arrayAccess"},
 			]},
 		],
-		polished: rawParse => {
-			return {
-				name:rawParse.contents[0],
-				params:polishParse(rawParse.contents[2]),
-				statements:polishParse(rawParse.contents[5]),
+		polish: rawParse => {
+			if( rawParse[0].name == "funcall"){
+				
+				let args = []
+				let rawParseMiddlePart = rawParse[0].contents
+				
+				if( rawParseMiddlePart[1]){
+					// there are some args
+					args.push(polishParse(rawParseMiddlePart[1][0]))
+					
+					for( let a of rawParseMiddlePart[1][1]){
+						args.push(polishParse(a[1]))
+					}
+				}
+				
+				
+				return {type:"functionCall", args: args }
+			} else if( rawParse[0].name == "arrayAccess"){
+				return {type:"arrayLookup", index: polishParse(rawParse[0].contents[1])}
+			} else {
+				throw "errA"
 			}
 		}
 	},
@@ -262,11 +292,10 @@ export let grammar = {
 			{type:"subrule",subrule:"expression"},
 			{type:"token",tokenType:"NEWLINE"},
 		],
-		polished: rawParse => {
+		polish: rawParse => {
 			return {
-				name:rawParse.contents[0],
-				params:polishParse(rawParse.contents[2]),
-				statements:polishParse(rawParse.contents[5]),
+				type:"returnStatement",
+				value:polishParse(rawParse[1]),
 			}
 		}
 	},

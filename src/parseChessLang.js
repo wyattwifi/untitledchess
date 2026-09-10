@@ -21,12 +21,20 @@ class InternalCompilerError extends Error{
 
 import {grammar} from "./parserGrammar.js"
 
+
+
 // this is the main overarching function that takes the source code string and returns the AST
 export function parse(tokenList){
 	
 	
-	// this returns {success:true|false, and then either contents:theRawParse or err:theError}
-	// this does not handle backtracking, all the putting-back-the-position needs done in parseSymbolIgnoreModifiers
+	/* this returns {success:true|false, and then (if successful) contents:theRawParse}
+	 this does not handle backtracking, all the putting-back-the-position needs done in parseSymbolIgnoreModifiers
+	 possibilities of rawParse based on type:
+	 repeatZeroOrMore: array of raw parses gotten with parseSymbolIgnoreModifiers
+	 optional: array of raw parses gotten with parseSymbolIgnoreModifiers
+	 no modifiers: raw parse gotten with parseSymbolIgnoreModifiers
+	*/
+	//TODO support repeatOnceOrMore
 	function parseSymbol( symbol){
 		
 		if( symbol.repeatZeroOrMore){
@@ -62,79 +70,74 @@ export function parse(tokenList){
 	}
 	
 	
-	// this returns {success:true|false, and then either contents:theRawParse or err:theError}
+	// this returns {success:true|false, and then (if successful) contents:theRawParse}
+	/*
+	here are the values that "theRawParse" can have for each branch:
+	token:string of token contents
+	subrule: {name:string of subrule name, contents:{name:stringOfSubruleName, contents:rawParse of subrule, gotten with parseArrayOfSymbols}}NOTE maybe this could be improved
+	oneOfChoices:{name:stringName (either the name of the subrule or a name specified in the grammar), contents:rawParse gotten with parseSymbol}
+	group: array of rawParses of symbols in group, gotten from parseSymbol
+	*/
 	function parseSymbolIgnoreModifiers( symbol){
 		// this does not care if it is optional or repeated, it just parses the raw thing without those modifiers, as if it did not have any modifiers
 		
 		switch( symbol.type){
 			case "token":{
-				// consume only increases the position if it was successful
-				let r = consume(symbol.tokenType)
-				return r
-				// if( r.success){
-				// 	return {success:true,contents:r.contents}
-				// 	// r.stack.push(ruleName)
-				// 	// return {success:false,err:r}
-				// } else {
-				// 	return {success:true,contents:r.contents}
-				// }
+				// consume only increases the position if it was successful, so we do not need to worry about backtracking here. Also, the return value of consume already has built-in success:true|false
+				return consume(symbol.tokenType)
 				break}
 			case "subrule":{
 				
 				if( !grammar[symbol.subrule]){
 					console.trace()
 					console.log(symbol)
+					throw new InternalCompilerError("The grammar calls for a subrule that is not defined in the grammar")
 				}
 				
-				return parseArrayOfSymbols(grammar[symbol.subrule].raw)
-				/*
-				
-				let savedPosition = position
-				let attemptedParse = parseArrayOfSymbols(symbol.subgroup)//TODO
-				if( attemptedParse.success){
-					return attemptedParse
+				let result = parseArrayOfSymbols(grammar[symbol.subrule].raw)
+				if( result.success){
+					return {success:true, contents:{name:symbol.subrule, contents:result.contents}}
 				} else {
-					result.push( attemptedParse)
-					position = savedPosition // it didn't work, undo that part
-					attemptedParse.stack.push(ruleName)
-					return attemptedParse
+					return result
 				}
-				
-				
-				
-				let savedPosition = position
-				let attemptedParse = parseRuleRaw(symbol.subrule)
-				if( attemptedParse.error){
-					position = savedPosition // it didn't work, undo that part
-					attemptedParse.stack.push(ruleName)
-					return attemptedParse
-				} else {
-					result.push( attemptedParse)
-				}*/
+				// return parseArrayOfSymbols(grammar[symbol.subrule].raw)
 				break}
 			case "oneOfChoices":{
 					// it has the property "options", which is an array of the allowed symbols
-					
+					//TODO implement correctly
 					for( let i = 0; i < symbol.options.length; i++){
-						let errors = []
 						let savedPosition = position
 						let attemptedParse = parseSymbol(symbol.options[i])
 						if( attemptedParse.success){
-							return attemptedParse
+							// we need to add in the name to identify it
+							let name
+							let resultSymbol = symbol.options[i]
+							if(resultSymbol.type == "subrule"){
+								name = resultSymbol.subrule
+								// also, currently the return of parsing a subrule includes the name. We only need it once, so take the extra layer out
+								attemptedParse.contents = attemptedParse.contents.contents
+								//TODO do this better
+							} else {
+								if(!resultSymbol.name){
+									throw new InternalCompilerError("a8963249")
+								}
+								name = resultSymbol.name
+							}
+							
+							return {success:true,contents:{name:name,contents:attemptedParse.contents}}//I know this looks a bit wierd, but I believe I did it right to satisfy the specs
 						} else {
-							errors.push( attemptedParse.err)
 							position = savedPosition // it didn't work, undo that part
 						}
 					}
 					// now we went through and tried all of the options, and none of them worked
 					
-					// so, we return an error. For easy debugging, we return the error that got the furthest
-					//TODO but for now not do that
-					return {success:false, err:"TODO"}
+					// so, we return an error. For easy debugging, we use the error that got the furthest
+					//however, the error messages actually get handled separately, in the conusme function, so we dont need to do that now
+					return {success:false}
 				
 				break}
 			case "group":{
-				// console.log(symbol)
+				
 				return parseArrayOfSymbols(symbol.subgroup)
 				break}
 			default:
@@ -146,7 +149,8 @@ export function parse(tokenList){
 	
 	
 	
-	// returns {success:true|false, and then either contents:[array of raw parses] or err:errMsg}
+	// returns {success:true|false, and then (if successful) contents:[array of raw parses]}
+	// the rawParses are gotten from parseSymbol
 	function parseArrayOfSymbols(arrayOfSymbols){
 		let result = []
 		for( let i = 0; i < arrayOfSymbols.length; i++){
@@ -154,198 +158,18 @@ export function parse(tokenList){
 			if( a.success){
 				result.push(a.contents)
 			} else {
-				return {success:false, err:a.err}
+				return {success:false}
 			}
 		}
 		return {success:true, contents:result}
 	}
 	
-	/*
-	function parseRuleRaw(ruleName){
-		// this is the first step of parsing a rule. It returns the raw parse, not the AST
-		// More specifically, it returns {name:"ruleName",contents:[array of the parsed tokens/subrules. Each part of the rule is one element of the array. Tokens are just strings of their contents. repeatZeroOrMore is an array of the raw parses of each repitition. optional is the raw parse of the subrule if it exists, and null otherwise.]}
-		
-		let result = []
-		
-		
-		if( !grammar[ruleName]){
-			throw new InternalCompilerError("rule " + ruleName + " does not exist")
-		}
-		
-		
-		// each section of a rule (token, subrule, or group of rulitos) is called a symbol
-		
-		// this returns {success:true|false, and then either contents:theRawParse or err:theError}
-		
-		
-		
-		let rule = grammar[ruleName].raw
-		
-		for( let i = 0; i < rule.length; i++){
-			
-			
-			
-// 			switch( rule[i].type){
-// 				case "subrule":{
-// 					
-// 					let savedPosition = position
-// 					let attemptedParse = parseRuleRaw(rule[i].subrule)
-// 					if( attemptedParse.error){
-// 						position = savedPosition // it didn't work, undo that part
-// 						attemptedParse.stack.push(ruleName)
-// 						return attemptedParse
-// 					} else {
-// 						result.push( attemptedParse)
-// 					}
-// 					break}
-// 				case "group":{
-// 					let savedPosition = position
-// 					let attemptedParse = parseRuleRaw(rule[i].subrule)
-// 					if( attemptedParse.error){
-// 						position = savedPosition // it didn't work, undo that part
-// 						attemptedParse.stack.push(ruleName)
-// 						result.push(null)
-// 					} else {
-// 						result.push( attemptedParse)
-// 					}
-// 					break}
-// 				case "oneOfChoices":{
-// 					let errors = [] // the error returned by each option that failed
-// 					let savedPosition
-// 					let succeeded = false
-// 					for( let j = 0; j < rule[i].options.length && !succeeded; j++){
-// 						let option = rule[i].options[j]
-// 						savedPosition = position
-// 						let attemptedParse = parseRuleRaw(option)
-// 						if( attemptedParse.error){
-// 							position = savedPosition // it didn't work, undo that part
-// 							errors.push(attemptedParse)
-// 						} else {
-// 							result.push( attemptedParse)
-// 							succeeded = true
-// 						}
-// 					}
-// 					// if it was a success, the result has already been pushed to the result array
-// 					if( !succeeded){ // ...but if not, we need to handle the error
-// 						const errorThatGotFurthest = errors.reduce((best, current) =>
-// 							current.position > best.position ? current : best
-// 						)
-// 						errorThatGotFurthest.stack.push(ruleName)
-// 						return errorThatGotFurthest
-// 					}
-// 					break}
-// 				case "repeatZeroOrMore":{
-// 					let savedPosition = position
-// 					let done = false
-// 					let myResult = []
-// 					while(!done){
-// 						savedPosition = position
-// 						let r = parseRuleRaw(rule[i].subrule)
-// 						if( r.error){
-// 							r.stack.push(ruleName)
-// 							position = savedPosition // it didn't work
-// 							done = true
-// 						} else {
-// 							myResult.push( r)
-// 						}
-// 					}
-// 					result.push(myResult)
-// 					break}
-// 				case "token":{
-// 					let r = consume(rule[i].tokenType)
-// 					if( r.error){
-// 						r.stack.push(ruleName)
-// 						return r
-// 					} else {
-// 						result.push( r.contents)
-// 					}
-// 					break}
-// 			}
-		}
-		return result
-	}*/
-	/*
-	// parses one of the items in the array of the rule declaration
-	function parsePartOfRule( partOfRule){
-		switch( partOfRule.type){
-			case "required":{
-				
-				let savedPosition = position
-				let attemptedParse = parseRuleRaw(rule[i].subrule)
-				if( attemptedParse.error){
-					position = savedPosition // it didn't work, undo that part
-					return attemptedParse
-				} else {
-					result.push( attemptedParse)
-				}
-				result.push(parseRuleRaw(rule[i].subrule))
-				break}
-			case "optional":{
-				let savedPosition = position
-				let attemptedParse = parseRuleRaw(rule[i].subrule)
-				if( attemptedParse.error){
-					position = savedPosition // it didn't work, undo that part
-					result.push(null)
-				} else {
-					result.push( attemptedParse)
-				}
-				break}
-			case "oneOfChoices":{
-				let errors = [] // the error returned by each option that failed
-				let savedPosition
-				let succeeded = false
-				for( let option of rule[i].options){
-					
-					savedPosition = position
-					let attemptedParse = parseRuleRaw(option)
-					if( attemptedParse.error){
-						position = savedPosition // it didn't work, undo that part
-						errors.push(attemptedParse)
-					} else {
-						result.push( attemptedParse)
-						succeeded = true
-					}
-				}
-				// if it was a success, the result has already been pushed to the result array
-				if( !succeeded){ // ...but if not, we need to handle the error
-					const errorThatGotFurthest = errors.reduce((best, current) =>
-					current.position > best.position ? current : best
-					)
-					return errorThatGotFurthest
-				}
-				break}
-			case "repeatZeroOrMore":{
-				let savedPosition = position
-				let myResult = []
-				let done = false
-				while(!done){
-					savedPosition = position
-					let r = parseRuleRaw(rule[i].subrule)
-					if( r.error){
-						position = savedPosition // it didn't work
-						done = true
-					} else {
-						result.push( r)
-					}
-				}
-				result.push(myResult)
-				break}
-			case "token":{
-				let r = consume(rule[i].tokenType)
-				if( r.error){
-					return r
-				} else {
-					result.push( r)
-				}
-				break}
-		}
-	}*/
-	
-	function polishParse(ruleRawParse){
-		return grammar[ruleRawParse.name].polish(ruleRawParse)
-	}
 	
 	
+	let furthestErrors = []
+	let furthestErrorsPosition = -1
+	
+	// this is where all the parse error-handling happens. For easy debugging, we only keep the errors that got the furthest
 	function registerError( expectedToken, actualToken){
 		if( position > furthestErrorsPosition){
 			furthestErrors = ["Parse Error: expected " + expectedToken + " but got " + actualToken + " at position " + position]
@@ -358,44 +182,15 @@ export function parse(tokenList){
 	
 	let position = 0
 	// consume only increases the position if it was successful
+	// returns {success:true|false, contents(if successful): string or whatever that is the raw contents of the token, eg the name of the variable if the token is IDENTIFIER}
 	function consume(tokenType){
 		if( !tokenList[position]){
-			registerError( tokenType, "nothing")/*
-			let error = {error:true,position:position,message:"Parse Error: expected " + tokenType + " but got nothing at position " + position}
-			if( position > furthestError.position){
-				// this is the new furthest error. We might need this later on
-				furthestError = error
-			}*/
+			registerError( tokenType, "nothing")
 			return {success:false,err:"TODO"}
 		}
 		if( tokenList[position].type != tokenType){
-			// throw new Error("parse error")
-			// let stack = new Error("").stack
-			// debugger
-			// console.trace()
-			registerError( tokenType, tokenList[position].type)/*
-			let error = {error:true,position:position,message:"Parse Error: expected " + tokenType + " but got nothing at position " + position}
-			if( position > furthestError.position){
-				// this is the new furthest error. We might need this later on
-				furthestError = error
-			}*/
+			registerError( tokenType, tokenList[position].type)
 			return {success:false,err:"TODO"}
-			// let error = {error:true,position:position,message:"Parse Error: expected " + tokenType + " but got " + tokenList[position].type + " at position " + position,stack:[] }
-			// if( position > furthestError.position){
-			// 	// this is the new furthest error. We might need this later on
-			// 	furthestError = error
-			// }
-			// if( position > furthestErrorsPosition){
-			// 	// this is the new furthest error. We might need this later on
-			// 	furthestErrors = [error]
-			// 	furthestErrorsPosition = position
-			// }
-			// if( position == furthestErrorsPosition){
-			// 	// this is the new furthest error. We might need this later on
-			// 	furthestErrors.push(error)
-			// }
-			// // if( position == 48){debugger}
-			// return error
 		}
 		let contents = tokenList[position].contents
 		// if(!contents){debugger}
@@ -403,28 +198,42 @@ export function parse(tokenList){
 		return {success:true, contents:contents}
 	}
 	
-	// let furthestError = {position:-1}// do this as a temporary placeholder
 	
-	let furthestErrors = []
-	let furthestErrorsPosition = -1
 	
 	// return polishParse(parseRuleRaw("main")) // this is always the main overall rule
-	let result = parseArrayOfSymbols(grammar["main"].raw)//parseRuleRaw("main")
+	let rawParse = parseArrayOfSymbols(grammar["main"].raw)//parseRuleRaw("main")
 	
-	if( position != tokenList.length || !result.success){
-		// it did not get to the end. This could be if the rules were satisfied but then there was gobleygook at the end
+	// console.log(JSON.stringify(rawParse))
+	
+	
+	// now, just get it into the same format as the other rule parses (for the polishParse function). This is needed because in the other parts of the parsing this is done by the thing calling parseArrayOfSymbols. This time it is being called from out here, so we need to do it here
+	
+	let rawParseFormatTwo = {name:"main",contents:rawParse.contents}
+	
+	
+	
+	if( position != tokenList.length || !rawParse.success){
+		// it did not get to the end. This could be, for example, if the rules were satisfied but then there was gobleygook at the end
 		// if that happens, return the error that got the farthest
 		console.log(furthestErrors)
 		throw "a"
 		// throw furthestError
 	}
 	
-	return result // temp just return the raw thing
+	return polishParse( rawParseFormatTwo)
 }
 
 
 
 
+export function polishParse(ruleRawParse){
+	if(!ruleRawParse || !grammar[ruleRawParse.name]){
+		console.log(ruleRawParse)
+		console.trace()
+		debugger
+	}
+	return grammar[ruleRawParse.name].polish(ruleRawParse.contents)
+}
 
 
 
@@ -447,24 +256,21 @@ while =
 
 
 
-
+TODO what the parser currently returns does not match up with this
 
 STRUCTURE OF THE AST:
 
 The main thing is an array of functions
  each function is: {
 		name:name,
-		params:[param, param, param, ...],
+		params:[ array of string names of params],
 		statements:[statement, statement, ...],
 	}
-each param is {
-				type: "identifier",
-				contents: array or string, im not sure which
-			}
 
 
-each statement is one of these 3 things for now:
+			each statement is one of these things for now:
 1: {type:"assignment", lVal:tokens[0].contents, rVal: expression}
+1: {type:"declalaniosAssignment", lVal:tokens[0].contents, rVal: expression}
 2: {type:"if",condition: expression, contents:[statements]}
 3: {type:"while",condition: expression, contents:[statements]}
 
@@ -475,7 +281,7 @@ each expression is: { type:"addition/subtraction", terms:[term]}
 each term is: { contents:thingA, isPositive: bool} // for simplicity the parser always treats an expression of any sort as a list of terms, just often there will be only one term
 // for now multiplication and division are not supported
 
-each thingA is:
+each thingA (aka expressionPrimary) is:
 1:{type:"arrayOrFncall", firstName: string or array I'm not sure which, callChain: [thingB]}
 2: { type: "string", contents: string or array I'm not sure which }
 3:{ type: "integer", contents: a normal JS number }

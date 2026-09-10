@@ -1,11 +1,10 @@
-console.log("hohoho")
 
 
 import {lexer} from "./lexer.js"
 import {parse} from "./parseChessLang.js"
 
 
-//TODO this is not quite python-like syntax, also i switched in for + just to stop parse error
+//TODO this is not quite python-like syntax, also i switched "in" for "+" just to stop parse error temporarily
 // some program written in chessLang
 let sampleChesslangCode = `
 function getUserChoiceOfArray( arrayIn, playerID)
@@ -79,9 +78,9 @@ function main()
 
 
 let tokens = lexer(sampleChesslangCode)
-console.log( tokens)
+// console.log( tokens)
 let ast = parse(tokens)
-console.log( ast)
+console.log( JSON.stringify(ast))
 
 
 

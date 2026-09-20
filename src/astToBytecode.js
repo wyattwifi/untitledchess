@@ -1,40 +1,16 @@
 
 
 
+import {InternalCompilerError} from "./parseChessLang.js"
 
-// this file, unlike what the title says, takes an AST of chessLang and turns it into chessLang bytecode.
+
 // I am doing bytecode instead of just interepreting the AST because I need to do the stack and instruction pointer myself to easily handle duplicating programs
 
 
 //AST is Abstract Syntax Tree. There are things about it on the internet for making your own coding language
+
 /*
-class AFunction{
-	constructor( name, params, statements){
-		this.name = name
-		this.paramNames = paramNames
-		this.statements = statements
-	}
-}*/
-
-
-/* here are the possible bytecode operations:
-
-there is a better thing in the interpreter file actually
-
-// this is not nessisarily a good choice, just something for now
-// note that in this whole thing, for now im not worrying about performance, just trying to get it to work
-
-assign( lVal variable, rVal variable, array access (based on a variable), function call( variable parameters), or literal value, maybe anything im forgetting too)
-assignMath( lVal variable, rVal variable operation variable those 3 in that order)
-jumpIf(variable)// jump if it is not 0
-
-basically it can be the same as the AST but you cant have multiple function calls on the same line maybe? this needs more thinking through
-
-the compiled byetcode is a list of functions, wich is in turn a name, the param names, and an array of the byetcode statements
-
-*/
-
-
+These 2 classes could potentially come in handy later, but they are not needed here
 class Frame{
 	constructor(){
 		this.functionName = ""
@@ -47,19 +23,17 @@ class Thread{
 	constructor(){
 		this.stack = []// array of Frame objects
 	}
-}
+}*/
 
 
-function astToBytecode( ast){
+export function astToBytecode( ast){
 	// this does it for the whole thing
 	return ast.map( astToBytecodeForFunction)
 	
 }
 
-function astToBytecodeForFunction( functionAst ){
-	// this does it just for the contents of a function, not the whole thing
+function astToBytecodeForArrayOfStatements( statements){
 	
-	let statements = functionAst.statements
 	
 	let resultCode = []
 	
@@ -67,35 +41,101 @@ function astToBytecodeForFunction( functionAst ){
 		
 		let statement = statements[i]
 		
-		if( statement.type == "assignment"){
-			// take {type:"assignment", lVal:tokens[0].contents, rVal: expression}
-			// ...to {type:"assignFromVariable", lval:stringName, rval:variableName }
+		switch( statement.type){
 			
-			let expressionLowered = getBytecodeOfExpression( statement.rVal)
 			
-			resultCode.push(...expressionLowered.bytecodeInstructions)
-			
-			resultCode.push({type:"assignFromVariable", lval:new String(statement.lVal), rval:expressionLowered.resultVariableName })//TODO don't know the format have in right format if not string or whatever
-			
-		}
-		if( statements[i].type == "if"){
-			//TODO
-		}
-		if( statements[i].type == "while"){
-			//TODO
-		}
+			case "assignment":{
+				// take {type:"assignment", lVal:tokens[0].contents, rVal: expression}
+				// ...to {type:"assignFromVariable", lval:stringName, rval:variableName }
+				
+				let expressionLowered = getBytecodeOfExpression( statement.rVal)
+				
+				resultCode.push(...expressionLowered.bytecodeInstructions)
+				
+				resultCode.push({type:"assignFromVariable", lval:new String(statement.lVal), rval:expressionLowered.resultVariableName })//TODO don't know the format have in right format if not string or whatever
+				break
+			}
+			case "if":{
+				
+				// the code could change around, so for now we put the destination as a label, instead of a number which is what it will need to end up being
+				
+				let expressionLowered = getBytecodeOfExpression( statement.condition)
+				
+				resultCode.push(...expressionLowered.bytecodeInstructions)
+				
+				let endOfIfStamentLocName = getNewUniqueIdentifier()
+				
+				resultCode.push({type:"jumpIfZero", condition:expressionLowered.resultVariableName, destination: endOfIfStamentLocName})
+				
+				resultCode.push( ...astToBytecodeForArrayOfStatements(statement.contents))
+				
+				
+				resultCode.push({type:"label",name:endOfIfStamentLocName}) // this will later get removed
+				
+				break
+			}
+			case "returnStatement":{
+				
+				let expressionLowered = getBytecodeOfExpression( statement.value)
+				
+				resultCode.push(...expressionLowered.bytecodeInstructions)
+				
+				resultCode.push({type:"assignFromVariable", lval:"r", rval:expressionLowered.resultVariableName })
+				//TODO this does not actually exit the function, it just sets the return value for now
+				break
+			}
+			default:
+				throw new InternalCompilerError("An unknown statement type was given to the astToBytecode stuff. The type is: " + statement.type +"The whole statement was " + JSON.stringify(statement))
 		
+		}
 		
 	}
+	
+	return resultCode
+	
+	
+}
+
+
+function astToBytecodeForFunction( functionAst ){
+	// this does it just for the contents of a function, not the whole thing
+	
+	let code = astToBytecodeForArrayOfStatements( functionAst.statements)
+	
+	// now, we need to go through and replace all the string label stuff with the numbers that are needed
+	
+	let locationTable = []
+	for( let i = 0; i < code.length; i++){
+		// it does not work so well to just delete the labels, because then if some code should jump to the end it would jump to no statement, causing an error TODO avoid that problem by doing it a different way. For now, just replace the label with a nop instruction
+		if( code[i].type == "label"){
+			locationTable[code[i].name] = i
+			code[i] = {type:"assignFromVariable", lval:"bitBucketNOP", rval:"bitBucketAlwaysZero" }//NOTE "bitBucketAlwaysZero" needs supported in the interpreter
+		}
+	}
+	
+	// now we have the numbers for each label, now go through and actually replace the strings with the numbers
+	for( let i = 0; i < code.length; i++){
+		if( code[i].type == "jumpIfZero"){
+			code[i].destination = locationTable[code[i].destination]
+		}
+	}
+	// now we have replaced all the destination strings with integers, like it sohuld be
+	
+	console.log(functionAst.params)
 	return {
 		name:functionAst.name,
-		paramNames:functionAst.params.map(p=>p.contents),
-		statements:resultCode
+		paramNames:functionAst.params,
+		statements: code,
 	}
 }
 
+
+
+
+
 //For now I am just trying to get it to work, not get it to work efficiently
 
+// return value: { bytecodeInstructions: array of statements after which the variable named in resultVariableName will have the value you are looking for, resultVariableName: stringName,}
 function getBytecodeOfExpression( expressionAst){
 	// takes an expression ast and returns both a sequence of bytecode instructions and the name of the variable that will have the value of that expression after those bytecode instructions are run
 	

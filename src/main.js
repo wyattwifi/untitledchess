@@ -2,7 +2,8 @@
 
 import {lexer} from "./lexer.js"
 import {parse} from "./parseChessLang.js"
-
+import {astToBytecode} from "./astToBytecode.js"
+import {interpretChessLang} from "./interpreter.js"
 
 //TODO this is not quite python-like syntax, also i switched "in" for "+" just to stop parse error temporarily
 // some program written in chessLang
@@ -77,11 +78,29 @@ function main()
 `
 
 
-let tokens = lexer(sampleChesslangCode)
+//TODO it is not actually python syntax
+let simpleCode = `
+
+
+function main()
+	print(factorial(5))
+
+function factorial(a)
+	print(a)
+	if (a)
+		return multiply(factorial(a - 1), a)
+	if (not(a))
+		return 1
+`
+
+// let tokens = lexer(sampleChesslangCode)
+let tokens = lexer(simpleCode)
 // console.log( tokens)
 let ast = parse(tokens)
 console.log( JSON.stringify(ast))
-
+let bytecode = astToBytecode(ast)
+console.log(JSON.stringify(bytecode))
+interpretChessLang(bytecode)
 
 
 

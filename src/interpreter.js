@@ -11,6 +11,20 @@ let BUILT_IN_API = [
 		}
 	},
 	{
+		name:"not",
+		argTypes:["int"],
+		effect:function(a){
+			return +(!a)
+		}
+	},
+	{
+		name:"multiply",
+		argTypes:["int","int"],
+		effect:function(a,b){
+			return a * b
+		}
+	},
+	{
 		name:"getNewArray",
 		argTypes:[],
 		effect:function(a){
@@ -28,13 +42,14 @@ let BUILT_IN_API = [
 //{type:"assignFromLiteral", lval:stringName, rval:integer}
 //{type:"assignFromLiteralString", lval:varName, rval:string}
 // {type:"assignMath", lval:stringName, lOperand:variableName, operation:stringSymbol, rOperand:variableName}
-// {type:"jumpIf",condition:nameString,destination:integer} jumpIf(variable, destination)// jump if it is not 0
+// {type:"jumpIfNotZero",condition:variableNameString,destination:integer} jumpIf(variable, destination)// jump if it is not 0, only jumps within functions
+// {type:"jumpIfZero",condition:variableNameString,destination:integer} jumpIf(variable, destination)// jump if it is  0, only jumps within functions
 
 //WIP
 //TODO i forgot i need to support setting arrays too, not just reading from them
 
 
-function interpretChessLang( bytecode){
+export function interpretChessLang( bytecode){
 	// the parameter is an array of objects of the format {name, [paramNames],statements:[bytecode instructions]}
 	
 	let stack = []
@@ -54,6 +69,7 @@ function interpretChessLang( bytecode){
 		for( let i = 0; i < a.paramNames.length; i++){
 			localVariables[a.paramNames[i]] = parameterValues[i]
 		}
+		localVariables["bitBucketAlwaysZero"] = 0 // this is a unpolished shortcut that is currently required for the astToBytecode thing to have a NOP instruction
 		
 		stack.push({
 			functionName:functionName,
@@ -133,12 +149,24 @@ function interpretChessLang( bytecode){
 				
 				thisFrame.instructionPointer++
 				break}
-			case "jumpIf":{
+			case "jumpIfNotZero":{
 				// we jump to the location in the current function if the variable is not 0
 				// it simply sets the instructionPointer
 				// note that we should not increment the instructionPointer in this case
 				// instruction format: {type:"jumpIf",condition:nameString,destination:integer}
 				if( thisFrame.localVariables[instruction.condition]){
+					thisFrame.instructionPointer = instruction.destination
+				} else {
+					// if we did not jump then we still need to increment the instruction pointer
+					thisFrame.instructionPointer++
+				}
+				break}
+			case "jumpIfZero":{
+				// we jump to the location in the current function if the variable is not 0
+				// it simply sets the instructionPointer
+				// note that we should not increment the instructionPointer in this case
+				// instruction format: {type:"jumpIf",condition:nameString,destination:integer}
+				if( !thisFrame.localVariables[instruction.condition]){
 					thisFrame.instructionPointer = instruction.destination
 				} else {
 					// if we did not jump then we still need to increment the instruction pointer
@@ -206,7 +234,7 @@ function interpretChessLang( bytecode){
 				return bytecode[i]
 			}
 		}
-		throw new Error("error")
+		throw new Error("error function " + functionName + " does not exist")
 	}
 	
 	

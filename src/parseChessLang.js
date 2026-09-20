@@ -8,7 +8,7 @@
 
 
 
-class InternalCompilerError extends Error{
+export class InternalCompilerError extends Error{
 	constructor(message){
 		super("Internal Compiler Error. User, this isn't your fault. Apparently the compiler is coded wrong. If you want it, here's the error message:" + message)
 	}

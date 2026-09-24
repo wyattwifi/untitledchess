@@ -1,4 +1,4 @@
-"use strict"
+
 
 //WARNING for now I'm trying to have this parse correct code correctly. No guarantees about what incorrect code will do
 // some of the comments are inaccurate. This could use some work
@@ -240,20 +240,6 @@ export function polishParse(ruleRawParse){
 /*
 
 
-whole thing = functiondef*
-functiondef = IDENTIFIER LPAREN params-optional RPAREN LBRACE statement* RBRACE
-params = IDENTIFIER ( COMMA IDENTIFIER)*
-statement = assignment | if | while
-assignment = IDENTIFIER EQUALS expression
-expression = 
-if =
-while =
-
-
-
-
-
-
 
 
 TODO what the parser currently returns does not match up with this
@@ -293,6 +279,14 @@ each thingB is:
 
 
 A function/array lookup chain is something like (in JS) thing[3][6]( aVariable, "some text")["key based array lookup"]("yet another function call")
+
+
+
+Possible thing to switch it to:
+{type:"functionCall", theFunction:expression that returns a function, params:[ array of expressions]}
+{type:"arrayAccess", array:expression that returns an array, index:expression that returns string or int}
+{type:"unaryMathOp", kind:"-"|"!", operand:expression}
+{type:"binaryMathOp", kind:"-"|"!", operand:expression}
 
 
 

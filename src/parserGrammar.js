@@ -11,13 +11,13 @@ import {polishParse} from "./parseChessLang.js"
 ? is optional
 
 main = functiondef*
-functiondef = FUNCTIONDEF IDENTIFIER LPAREN ( IDENTIFIER ( COMMA IDENTIFIER)*)? RPAREN block? NEWLINE
+functiondef = FUNCTIONDEF IDENTIFIER LPAREN ( IDENTIFIER ( COMMA IDENTIFIER)*)? RPAREN COLON block? NEWLINE
 block = INCREASE_INDENT statementOrSubblock* DECREASE_INDENT
 statementOrSubblock = (assignment | declarationAssignment | ifBlock | returnStatement | expression)
 assignment =  IDENTIFIER EQUALS expression NEWLINE
 declarationAssignment = LET IDENTIFIER EQUALS expression NEWLINE
 returnStatement = RETURN expression NEWLINE
-ifBlock = IF LPAREN  expression RPAREN block? NEWLINE
+ifBlock = IF expression COLON block? NEWLINE
 expression = MINUS? expressionPrimary ( (PLUS | MINUS) expressionPrimary)*
 expressionPrimary = (arrayOrFncall | IDENTIFIER | NUMBER | STRING )
 arrayOrFncall = IDENTIFIER arrayOrFncallGroup arrayOrFncallGroup*
@@ -68,6 +68,7 @@ export let grammar = {
 				], repeatZeroOrMore:true}
 			], optional:true},
 			{type:"token",tokenType:"RPAREN"},
+			{type:"token",tokenType:"COLON"},
 			{type:"subrule",subrule:"block", optional:true},
 			{type:"token",tokenType:"NEWLINE"},
 		],
@@ -78,8 +79,8 @@ export let grammar = {
 				params.push(...rawParse[3][1].map(e => e[1]))
 			}
 			let statements = []
-			if( rawParse[5]){ // remember that the function body can be empty
-				statements = polishParse( rawParse[5])
+			if( rawParse[6]){ // remember that the function body can be empty
+				statements = polishParse( rawParse[6])
 			}
 			return {
 				name:rawParse[1],
@@ -145,36 +146,80 @@ export let grammar = {
 	ifBlock:{
 		raw:[
 			{type:"token",tokenType:"IF"},
-			{type:"token",tokenType:"LPAREN"},
 			{type:"subrule",subrule:"expression"},
-			{type:"token",tokenType:"RPAREN"},
+			{type:"token",tokenType:"COLON"},
 			{type:"subrule",subrule:"block",optional:true},
 			{type:"token",tokenType:"NEWLINE"},
 		],
 		polish: rawParse => {
 			let statements = []
-			if( rawParse[4]){ // remember that the body can be empty
-				statements = polishParse( rawParse[4])
+			if( rawParse[3]){ // remember that the body can be empty
+				statements = polishParse( rawParse[3])
 			}
-			return {type:"if",condition: polishParse(rawParse[2]), contents:statements}
+			return {type:"if",condition: polishParse(rawParse[1]), contents:statements}
 		}
 	},
 	forBlock:{ // I know this isn't right, but doing it for now, this is really more of a "while" block currently
 		raw:[
 			{type:"token",tokenType:"FOR"},
-			{type:"token",tokenType:"LPAREN"},
 			{type:"subrule",subrule:"expression"},
-			{type:"token",tokenType:"RPAREN"},
+			{type:"token",tokenType:"COLON"},
 			{type:"subrule",subrule:"block",optional:true},
 			{type:"token",tokenType:"NEWLINE"},
 		],
 		polish: rawParse => {
 			let statements = []
-			if( rawParse[4]){
-				statements = polishParse(rawParse[4])
+			if( rawParse[3]){
+				statements = polishParse(rawParse[3])
 			}
-			return {type:"for",condition: polishParse(rawParse[2]), contents:statements}
+			return {type:"for",condition: polishParse(rawParse[1]), contents:statements}
 			// return "TODOfor"
+		}
+	},
+	boolExpression:{
+		raw:[
+			{type:"token",tokenType:"NOT", optional:true},
+			{type:"subrule",subrule:"bool"},
+			{type:"group",subgroup:[
+				{type:"oneOfChoices",options:[
+					{type:"token",tokenType:"OR",name:"or"},
+					{type:"token",tokenType:"AND",name:"and"}
+				]},
+				{type:"token",tokenType:"NOT", optional:true},
+				{type:"subrule",subrule:"bool"},
+			], repeatZeroOrMore:true},
+		],
+		polish: rawParse => {
+			return "TODO"
+		}
+	},
+	numberExpression:{
+		raw:[
+			{type:"token",tokenType:"MINUS", optional:true},
+			{type:"subrule",subrule:"expressionPrimary"},
+			{type:"group",subgroup:[
+				{type:"oneOfChoices",options:[
+					{type:"token",tokenType:"PLUS",name:"plus"},
+					{type:"token",tokenType:"MINUS",name:"minus"}
+				]},
+				{type:"subrule",subrule:"expressionPrimary"},
+			], repeatZeroOrMore:true},
+		],
+		polish: rawParse => {
+			
+			let terms = []
+			
+			let isFirstTermPositive = rawParse[0] === null
+			terms.push({ contents:polishParse(rawParse[1]), isPositive: isFirstTermPositive})// do the first term
+			
+			// now do all the other terms
+			for( let termTokens of rawParse[2]){
+				// now, termTokens is the rawParse of the group
+				let isPositive = termTokens[0].name == "plus"//TODO check this
+				terms.push({ contents:polishParse(termTokens[1]), isPositive: isPositive})
+			}
+			
+			return { type:"addition/subtraction", terms:terms}
 		}
 	},
 	expression:{

@@ -28,7 +28,7 @@ let BUILT_IN_API = [
 		name:"getNewArray",
 		argTypes:[],
 		effect:function(a){
-			return [17]
+			return [17]//TODO not have be just a placeholder
 		}
 	},
 ]
@@ -44,6 +44,7 @@ let BUILT_IN_API = [
 // {type:"assignMath", lval:stringName, lOperand:variableName, operation:stringSymbol, rOperand:variableName}
 // {type:"jumpIfNotZero",condition:variableNameString,destination:integer} jumpIf(variable, destination)// jump if it is not 0, only jumps within functions
 // {type:"jumpIfZero",condition:variableNameString,destination:integer} jumpIf(variable, destination)// jump if it is  0, only jumps within functions
+// {type:"nop"} - No OPeration
 
 //WIP
 //TODO i forgot i need to support setting arrays too, not just reading from them
@@ -102,6 +103,9 @@ export function interpretChessLang( bytecode){
 			case "assignFromLiteral":{
 				let localVars = thisFrame.localVariables
 				localVars[instruction.lval] = instruction.rval
+				thisFrame.instructionPointer++
+				break}
+			case "nop":{
 				thisFrame.instructionPointer++
 				break}
 			case "assignFromLiteralString":{

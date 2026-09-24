@@ -109,7 +109,7 @@ function astToBytecodeForFunction( functionAst ){
 		// it does not work so well to just delete the labels, because then if some code should jump to the end it would jump to no statement, causing an error TODO avoid that problem by doing it a different way. For now, just replace the label with a nop instruction
 		if( code[i].type == "label"){
 			locationTable[code[i].name] = i
-			code[i] = {type:"assignFromVariable", lval:"bitBucketNOP", rval:"bitBucketAlwaysZero" }//NOTE "bitBucketAlwaysZero" needs supported in the interpreter
+			code[i] = {type:"nop" }
 		}
 	}
 	
@@ -139,7 +139,6 @@ function astToBytecodeForFunction( functionAst ){
 function getBytecodeOfExpression( expressionAst){
 	// takes an expression ast and returns both a sequence of bytecode instructions and the name of the variable that will have the value of that expression after those bytecode instructions are run
 	
-	let resultName = getNewUniqueIdentifier()
 	
 	
 	switch( expressionAst.type){
@@ -268,10 +267,6 @@ function getBytecodeOfExpression( expressionAst){
 			throw new Error("Internal compiler error: invalid AST")
 	}
 	
-	return {
-		bytecodeInstructions: [],
-		resultVariableName: a,
-	}
 }
 
 

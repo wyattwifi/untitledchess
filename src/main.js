@@ -78,18 +78,17 @@ function main()
 `
 
 
-//TODO it is not actually python syntax
+
 let simpleCode = `
 
 
-function main()
+function main():
 	print(factorial(5))
 
-function factorial(a)
-	print(a)
-	if (a)
+function factorial(a):
+	if a:
 		return multiply(factorial(a - 1), a)
-	if (not(a))
+	if not(a):
 		return 1
 `
 

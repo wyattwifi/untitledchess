@@ -1,5 +1,9 @@
 
 
+
+import {lexer} from "./lexer.js" //temporarily, for dev
+
+
 //WARNING for now I'm trying to have this parse correct code correctly. No guarantees about what incorrect code will do
 // some of the comments are inaccurate. This could use some work
 
@@ -87,6 +91,11 @@ export function parse(tokenList){
 				return consume(symbol.tokenType)
 				break}
 			case "subrule":{
+				
+				// expressions are handled by a pratt parser instead of the main recursive descent parser
+				if( symbol.subrule == "expression"){
+					return expressionPrattParser(0)
+				}
 				
 				if( !grammar[symbol.subrule]){
 					console.trace()
@@ -198,6 +207,77 @@ export function parse(tokenList){
 		return {success:true, contents:contents}
 	}
 	
+	function peek(){
+		return tokenList[position]
+	}
+	
+	
+	
+	function expressionPrattParser( minimumBindingPower){
+		
+		let currentToken = consume(peek().type).contents
+		let left
+		
+		//TODO support unary operators
+		
+		switch( currentToken.type){
+			case "IDENTIFIER":
+				left = currentToken
+				if( peek().type == "LPAREN" || peek().type == "LBRACKET"){
+					// it is the start of a funcall or arraylookup
+					// this is better handled by the recursive descent parser
+					pos-- // undo the consuming the identifier
+					left = parseSymbol(grammar["arrayOrFncall"].raw)
+				}
+				break
+			case "NUMBER":
+				left = currentToken
+				break
+			case "STRING":
+				left = currentToken
+				break
+			case "LPAREN":
+				left = {parengroup:expressionPrattParser(0)}
+				consume("RPAREN")
+				break
+			default:
+				throw "pratterr2"
+		}
+		while(true){
+			currentToken = peek()
+			
+			let bindingPowers = {
+				OR:{left:10,right:11},
+				AND:{left:20,right:21},
+				NOT:{left:30,right:31},
+				TESTEQUAL:{left:40,right:41},
+				TESTGREATERTHAN:{left:40,right:41},
+				TESTLESSTHAN:{left:40,right:41},
+				TESTGREATERTHANOREQUALTO:{left:40,right:41},
+				TESTLESSTHANOREQUALTO:{left:40,right:41},
+				PLUS:{left:50,right:51},
+				MINUS:{left:50,right:51},
+				ASTERISK:{left:60,right:61},
+				SLASH:{left:60,right:61},
+			}
+			
+			if( !bindingPowers[currentToken.type]){
+				break
+			}
+			let binding_powers = bindingPowers[currentToken.type]
+			
+			if( binding_powers.left < minimumBindingPower){
+				break
+			}
+			
+			consume(currentToken.type)
+			
+			left = {op:currentToken.type, left:left, right:expressionPrattParser(binding_powers.right)}
+			
+		}
+		return left
+	}
+	
 	
 	
 	// return polishParse(parseRuleRaw("main")) // this is always the main overall rule
@@ -221,7 +301,70 @@ export function parse(tokenList){
 	}
 	
 	return polishParse( rawParseFormatTwo)
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+let tmp = lexer(`
+a+b*c
+	indent`)
+let pos = 0
+function consume( tokenType){
+	if( tmp[pos].type != tokenType){throw "prattErr"}
+	pos++
+	return tmp[pos - 1]
+}
+function peek(){
+	return tmp[pos]
+}
+
+console.log(expressionPrattParser(0))
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

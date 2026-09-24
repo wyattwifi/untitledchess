@@ -121,7 +121,6 @@ function astToBytecodeForFunction( functionAst ){
 	}
 	// now we have replaced all the destination strings with integers, like it sohuld be
 	
-	console.log(functionAst.params)
 	return {
 		name:functionAst.name,
 		paramNames:functionAst.params,

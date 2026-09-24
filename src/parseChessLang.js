@@ -31,6 +31,8 @@ import {grammar} from "./parserGrammar.js"
 export function parse(tokenList){
 	
 	
+	console.log(tokenList)
+	
 	/* this returns {success:true|false, and then (if successful) contents:theRawParse}
 	 this does not handle backtracking, all the putting-back-the-position needs done in parseSymbolIgnoreModifiers
 	 possibilities of rawParse based on type:
@@ -212,10 +214,13 @@ export function parse(tokenList){
 	}
 	
 	
-	
+	// returns {success:true|false, (if successful) contents:parse}
 	function expressionPrattParser( minimumBindingPower){
 		
-		let currentToken = consume(peek().type).contents
+		console.log("prattStart")
+		
+		let currentToken = peek()
+		consume(currentToken.type)
 		let left
 		
 		//TODO support unary operators
@@ -226,8 +231,12 @@ export function parse(tokenList){
 				if( peek().type == "LPAREN" || peek().type == "LBRACKET"){
 					// it is the start of a funcall or arraylookup
 					// this is better handled by the recursive descent parser
-					pos-- // undo the consuming the identifier
-					left = parseSymbol(grammar["arrayOrFncall"].raw)
+					position-- // undo the consuming the identifier
+					left = parseArrayOfSymbols(grammar["arrayOrFncall"].raw)
+					if( !left.success){
+						return {success:false}
+					}
+					left = left.contents
 				}
 				break
 			case "NUMBER":
@@ -238,10 +247,14 @@ export function parse(tokenList){
 				break
 			case "LPAREN":
 				left = {parengroup:expressionPrattParser(0)}
-				consume("RPAREN")
+				if( !consume("RPAREN").success){
+					registerError( "RPAREN", peek())
+					return {success:false}
+				}
 				break
 			default:
-				throw "pratterr2"
+				
+				return {success:false}
 		}
 		while(true){
 			currentToken = peek()
@@ -272,10 +285,15 @@ export function parse(tokenList){
 			
 			consume(currentToken.type)
 			
-			left = {op:currentToken.type, left:left, right:expressionPrattParser(binding_powers.right)}
+			let potentialRight = expressionPrattParser(binding_powers.right)
+			if( !potentialRight.success){
+				return {success:false}
+			}
+			
+			left = {op:currentToken.type, left:left, right:potentialRight.contents}
 			
 		}
-		return left
+		return {success:true, contents:left}
 	}
 	
 	
@@ -283,7 +301,7 @@ export function parse(tokenList){
 	// return polishParse(parseRuleRaw("main")) // this is always the main overall rule
 	let rawParse = parseArrayOfSymbols(grammar["main"].raw)//parseRuleRaw("main")
 	
-	// console.log(JSON.stringify(rawParse))
+	console.log(JSON.stringify(rawParse))
 	
 	
 	// now, just get it into the same format as the other rule parses (for the polishParse function). This is needed because in the other parts of the parsing this is done by the thing calling parseArrayOfSymbols. This time it is being called from out here, so we need to do it here
@@ -305,58 +323,7 @@ export function parse(tokenList){
 	
 	
 	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-let tmp = lexer(`
-a+b*c
-	indent`)
-let pos = 0
-function consume( tokenType){
-	if( tmp[pos].type != tokenType){throw "prattErr"}
-	pos++
-	return tmp[pos - 1]
-}
-function peek(){
-	return tmp[pos]
-}
-
-console.log(expressionPrattParser(0))
-
-
-
-
-
-
 
 
 

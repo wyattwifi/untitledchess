@@ -9,22 +9,6 @@ import {InternalCompilerError} from "./parseChessLang.js"
 
 //AST is Abstract Syntax Tree. There are things about it on the internet for making your own coding language
 
-/*
-These 2 classes could potentially come in handy later, but they are not needed here
-class Frame{
-	constructor(){
-		this.functionName = ""
-		this.instructionPointer = 0
-		this.localVariables = [] // use key
-	}
-}
-
-class Thread{
-	constructor(){
-		this.stack = []// array of Frame objects
-	}
-}*/
-
 
 export function astToBytecode( ast){
 	// this does it for the whole thing
@@ -138,73 +122,14 @@ function astToBytecodeForFunction( functionAst ){
 function getBytecodeOfExpression( expressionAst){
 	// takes an expression ast and returns both a sequence of bytecode instructions and the name of the variable that will have the value of that expression after those bytecode instructions are run
 	
+	// the expression structure was just redone. Now  all expressions are objects containing {op:"stringOfOperationName", otherProperties...}
 	
-	
-	switch( expressionAst.type){
-		case "addition/subtraction":
+	switch (expressionAst.op) {
+		case "variable":
 			
-			let terms = expressionAst.terms
+			return {bytecodeInstructions:[],resultVariableName:expressionAst.contents}
 			
-			
-			if( terms.length > 1){
-				
-				//  we take off the last term and process it
-				
-				
-				// basically, we take off the last term. Then we (recursively) get the code for both the last term and all the other terms. Then, we just stitch the code of the two together
-				
-				let allButLastTermAst = clone(expressionAst)
-				allButLastTermAst.terms = allButLastTermAst.terms.slice(0, allButLastTermAst.terms.length - 1) // take off the last one
-				
-				
-				let lastTerm = terms[terms.length - 1]
-				
-				
-				let allButLastLowered = getBytecodeOfExpression( allButLastTermAst)
-				
-				let lastTermLowered = getBytecodeOfExpression( lastTerm.contents)
-				
-				let resultName = getNewUniqueIdentifier()
-				
-				let result = {
-					bytecodeInstructions: [ ...allButLastLowered.bytecodeInstructions, ...lastTermLowered.bytecodeInstructions],
-					resultVariableName: resultName,
-				}
-				
-				// now we have most of the code in place, we just need a statement tying it all together
-				// we put it in an if statement to decide if we need "+" or "-"
-				
-				
-				if( lastTerm.isPositive){
-					result.bytecodeInstructions.push({type:"assignMath", lval:resultName, lOperand:allButLastLowered.resultVariableName, operation:"+", rOperand:lastTermLowered.resultVariableName})
-				} else {
-					result.bytecodeInstructions.push({type:"assignMath", lval:resultName, lOperand:allButLastLowered.resultVariableName, operation:"-", rOperand:lastTermLowered.resultVariableName})
-				}
-				
-				
-				return result
-				
-				
-			} else { // there is only one term in the term list
-				// either it is positive and we can just return the result of it, or it is negative and we add a step negating it
-				if( terms[0].isPositive){
-					// it is positive
-					return getBytecodeOfExpression( terms[0].contents)
-				} else {
-					
-					let defaultResult = getBytecodeOfExpression( terms[0].contents)
-					
-					let zeroVariableName = getNewUniqueIdentifier() // this variable will hold the value 0
-					
-					defaultResult.bytecodeInstructions.push({type:"assignFromLiteral", lval:zeroVariableName, rval:0})
-					defaultResult.bytecodeInstructions.push({type:"assignMath", lval:defaultResult.resultVariableName, lOperand:zeroVariableName, operation:"-", rOperand:defaultResult.resultVariableName})
-					
-					return defaultResult
-				}
-			}
-			
-			break
-		case "arrayOrFncall":
+		case "funcallOrArrayAccess":
 			
 			// copied here for reference from bytecode instruction list:
 			// {type:"assignFromArrayAcces", lval:stringName, varHoldingArrayName:string,index:variableName}
@@ -213,12 +138,14 @@ function getBytecodeOfExpression( expressionAst){
 			
 			// we will have a variable that holds the running total. We start out by storing the name of the first thing in it. Then we go down the list of calls, one call at a time, doing the call based on the current value of the running total and then storing the value back into the running total
 			
+			expressionAst = expressionAst.contents //TODO do this more intuitively
 			
 			let runningTotalName = getNewUniqueIdentifier() // or, rather, runningResult
 			
 			let resultBytecode = []
 			
 			resultBytecode.push({type:"assignFromLiteralString", lval:runningTotalName, rval:expressionAst.firstName})
+			
 			
 			for( let i = 0; i < expressionAst.callChain.length; i++){
 				let call = expressionAst.callChain[i]
@@ -246,25 +173,66 @@ function getBytecodeOfExpression( expressionAst){
 				bytecodeInstructions: resultBytecode,
 				resultVariableName: runningTotalName,
 			}
-		case "string":
-			throw new Error("not supported yet")
-			break
-		case "integer":
+			
+		case "number":
 			let name = getNewUniqueIdentifier()
 			return {
 				bytecodeInstructions: [{type:"assignFromLiteral", lval:name, rval:expressionAst.contents}],
 				resultVariableName: name,
 			}
-			break
-		case "identifier":
-			return {
-				bytecodeInstructions: [], // the variable already contains its own value, so we don't have to do anything
-				resultVariableName: new String(expressionAst.contents),//TODO see if this works, i dont know if it is a string or array or what
-			}
-			break
+			
+		case "UNARYMINUS":
+			return {bytecodeInstructions:[],resultVariableName:""}
+			
+		case "NOT":
+			return {bytecodeInstructions:[],resultVariableName:""}
+			
+		case "stringLiteral":
+			throw new Error("not supported yet")
+			return {bytecodeInstructions:[],resultVariableName:""}
+			
+		case "parengroup":
+			break;
+			
+		case "PLUS":
+		case "MINUS":
+		case "ASTERISK":
+		case "SLASH":
+		case "TESTEQUAL":
+		case "TESTGREATERTHAN":
+		case "TESTLESSTHAN":
+		case "TESTGREATERTHANOREQUALTO":
+		case "TESTLESSTHANOREQUALTO":
+			return get_result_for_binary_op( expressionAst)
+			
 		default:
-			throw new Error("Internal compiler error: invalid AST")
+			throw new InternalCompilerError("An unknown expression operation was given to the astToBytecode stuff. The expression is: " + JSON.stringify(expressionAst))
 	}
+	
+	function get_result_for_binary_op( expressionAst){
+		
+		let symbolMap = {
+			PLUS:"+",
+			MINUS:"-",
+			//TODO do the rest
+		}
+		
+		let bytecodeOperationSymbol = symbolMap[expressionAst.op]
+		
+		
+		let resultName = getNewUniqueIdentifier()
+		let left_operand_setup = getBytecodeOfExpression( expressionAst.left)
+		let right_operand_setup = getBytecodeOfExpression( expressionAst.right)
+		
+		let resultCode = []
+		resultCode.push( ...left_operand_setup.bytecodeInstructions)
+		resultCode.push( ...right_operand_setup.bytecodeInstructions)
+		
+		resultCode.push({type:"assignMath", lval:resultName, lOperand:left_operand_setup.resultVariableName, operation:bytecodeOperationSymbol, rOperand:right_operand_setup.resultVariableName})
+		
+		return {bytecodeInstructions:resultCode, resultVariableName:resultName}
+	}
+	
 	
 }
 

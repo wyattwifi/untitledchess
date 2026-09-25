@@ -96,7 +96,12 @@ export function parse(tokenList){
 				
 				// expressions are handled by a pratt parser instead of the main recursive descent parser
 				if( symbol.subrule == "expression"){
-					return expressionPrattParser(0)
+					let result = expressionPrattParser(0)
+					if( result.success){
+						return {success:true,contents:{name:"expression",contents:result.contents}}
+					} else {
+						return {success:false}
+					}
 				}
 				
 				if( !grammar[symbol.subrule]){
@@ -217,7 +222,6 @@ export function parse(tokenList){
 	// returns {success:true|false, (if successful) contents:parse}
 	function expressionPrattParser( minimumBindingPower){
 		
-		console.log("prattStart")
 		
 		let currentToken = peek()
 		consume(currentToken.type)
@@ -226,8 +230,8 @@ export function parse(tokenList){
 		//TODO support unary operators
 		
 		switch( currentToken.type){
-			case "IDENTIFIER":
-				left = currentToken
+			case "IDENTIFIER":{
+				left = {op:"variable", contents:currentToken.contents}
 				if( peek().type == "LPAREN" || peek().type == "LBRACKET"){
 					// it is the start of a funcall or arraylookup
 					// this is better handled by the recursive descent parser
@@ -236,25 +240,50 @@ export function parse(tokenList){
 					if( !left.success){
 						return {success:false}
 					}
-					left = left.contents
+					
+					console.log(left.contents)
+					
+					left = {op:"funcallOrArrayAccess", contents:polishParse({name:"arrayOrFncall", contents:left.contents})}
 				}
-				break
-			case "NUMBER":
-				left = currentToken
-				break
-			case "STRING":
-				left = currentToken
-				break
-			case "LPAREN":
-				left = {parengroup:expressionPrattParser(0)}
+				break}
+			case "NUMBER":{
+				left = {op:"number", contents:currentToken.contents}
+				break}
+			//NOTE I deliberately did not support unary plus. I think it potentially would cause more trouble than it would solve
+			case "MINUS":{
+				consume("MINUS")
+				let potentialOperand = expressionPrattParser( 100)
+				if( !potentialOperand.success){
+					return {success:false}
+				}
+				left = {op:"UNARYMINUS", operand:potentialOperand.contents}
+				break}
+			case "NOT":{
+				consume("NOT")
+				let potentialOperand = expressionPrattParser( 30)
+				if( !potentialOperand.success){
+					return {success:false}
+				}
+				left = {op:"NOT", operand:potentialOperand.contents}
+				break}
+			case "STRING":{
+				left = {op:"stringLiteral",contents:currentToken.contents}
+				break}
+			case "LPAREN":{
+				let potentialInnerExpression = expressionPrattParser(0)
+				if( !potentialInnerExpression.success){
+					return {success:false}
+				}
+				
+				left = {op:"parengroup", contents:potentialInnerExpression.contents}
 				if( !consume("RPAREN").success){
 					registerError( "RPAREN", peek())
 					return {success:false}
 				}
-				break
-			default:
-				
-				return {success:false}
+				break}
+			default:{
+				registerError( "identifier, number, minus, string or lparen", peek())
+				return {success:false}}
 		}
 		while(true){
 			currentToken = peek()
@@ -262,7 +291,7 @@ export function parse(tokenList){
 			let bindingPowers = {
 				OR:{left:10,right:11},
 				AND:{left:20,right:21},
-				NOT:{left:30,right:31},
+				//NOT has binding power of 30, but it is unary so it is handled above
 				TESTEQUAL:{left:40,right:41},
 				TESTGREATERTHAN:{left:40,right:41},
 				TESTLESSTHAN:{left:40,right:41},
@@ -325,7 +354,27 @@ export function parse(tokenList){
 	
 }
 
-
+/*
+the expression structure was just redone. Now  all expressions are objects containing {op:"stringOfOperationName", otherProperties...}
+TODO this could be more polished and have more intuitive names
+Possible values for op:
+"variable"
+"funcallOrArrayAccess"
+"number"
+"UNARYMINUS"
+"NOT"
+"stringLiteral"
+"parengroup"
+"PLUS"
+"MINUS"
+"ASTERISK"
+"SLASH"
+"TESTEQUAL"
+"TESTGREATERTHAN"
+"TESTLESSTHAN"
+"TESTGREATERTHANOREQUALTO"
+"TESTLESSTHANOREQUALTO"
+*/
 
 
 
@@ -337,6 +386,11 @@ export function parse(tokenList){
 
 
 export function polishParse(ruleRawParse){
+	
+	if( ruleRawParse.name == "expression"){
+		return ruleRawParse.contents
+	}
+	
 	if(!ruleRawParse || !grammar[ruleRawParse.name]){
 		console.log(ruleRawParse)
 		console.trace()

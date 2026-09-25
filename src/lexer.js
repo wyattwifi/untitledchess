@@ -245,17 +245,23 @@ function lexerCore( stringIn){
 	
 	//WARNING the possible token regexes must start with the ^ char
 	let possibleTokens = [
-		//TODO for now a var named ifa will count as keyword "if"
-		{name:"IF",regex:/^if/},
-		{name:"FOR",regex:/^for/},
-		{name:"FUNCTIONDEF",regex:/^function/},
-		{name:"LET",regex:/^let/},
-		{name:"RETURN",regex:/^return/},
-		{name:"ELSE",regex:/^else/},
+		//a var named ifa will count as keyword "if" without special handling, so I added (?=([^a-z01-9]|$)) to the end of a lot of token regexes
+		{name:"IF",regex:/^if(?=([^a-z01-9]|$))/},
+		{name:"FOR",regex:/^for(?=([^a-z01-9]|$))/},
+		{name:"FUNCTIONDEF",regex:/^function(?=([^a-z01-9]|$))/},
+		{name:"LET",regex:/^let(?=([^a-z01-9]|$))/},
+		{name:"RETURN",regex:/^return(?=([^a-z01-9]|$))/},
+		{name:"ELSE",regex:/^else(?=([^a-z01-9]|$))/},
+		{name:"IN",regex:/^in(?=([^a-z01-9]|$))/},
 		{name:"PLUS",regex:/^\+/},
 		{name:"MINUS",regex:/^-/},
 		{name:"ASTERISK",regex:/^\*/},
-		{name:"DOUBLEEQUALS",regex:/^==/},
+		{name:"SLASH",regex:/^\//},
+		{name:"TESTEQUAL",regex:/^==/},
+		{name:"TESTGREATERTHAN",regex:/^>/},
+		{name:"TESTLESSTHAN",regex:/^</},
+		{name:"TESTGREATERTHANOREQUALTO",regex:/^>=/},
+		{name:"TESTLESSTHANOREQUALTO",regex:/^<=/},
 		{name:"EQUALS",regex:/^=/},
 		{name:"NOT",regex:/^!/},
 		{name:"AND",regex:/^&/},
@@ -271,9 +277,9 @@ function lexerCore( stringIn){
 		{name:"NEWLINE",regex:/^\n/},
 		{name:"TAB",regex:/^\t/},
 		{name:"SPACE",regex:/^[ ]/},
-		{name:"NUMBER",regex:/^[0-9]+/},//NOTE currently not support decimals
-		{name:"IDENTIFIER",regex:/^[a-z][a-zA-Z_0-9]*/},
-		{name:"STRING",regex:/^"[^"]*"/},
+		{name:"NUMBER",regex:/^[0-9]+(?=([^a-z01-9]|$))/},//NOTE currently not support decimals
+		{name:"IDENTIFIER",regex:/^[a-z][a-zA-Z_0-9]*(?=([^a-z01-9]|$))/},
+		{name:"STRING",regex:/^"[^"]*"(?=([^a-z01-9]|$))/},
 		{name:"COMMENT",regex:/^#[^\n]*(?=\n|$)/},
 		// {name:"",regex://},
 	]

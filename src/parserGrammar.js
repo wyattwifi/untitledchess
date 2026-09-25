@@ -115,7 +115,7 @@ export let grammar = {
 		],
 		polish: rawParse => {
 			if( rawParse[0].name == "standaloneFuncall"){
-				return {type:"assignment", lVal:"bitBucket", rVal: polishParse(rawParse[0].contents[0])}//TODO do this right
+				return {type:"assignment", lVal:"bitBucket", rVal: polishParse(rawParse[0].contents[0])}//TODO make this more intuitive
 			}
 			return polishParse(rawParse[0])
 		}
@@ -162,6 +162,8 @@ export let grammar = {
 	forBlock:{ // I know this isn't right, but doing it for now, this is really more of a "while" block currently
 		raw:[
 			{type:"token",tokenType:"FOR"},
+			{type:"token",tokenType:"IDENTIFIER"},
+			{type:"token",tokenType:"IN"},
 			{type:"subrule",subrule:"expression"},
 			{type:"token",tokenType:"COLON"},
 			{type:"subrule",subrule:"block",optional:true},
@@ -169,14 +171,14 @@ export let grammar = {
 		],
 		polish: rawParse => {
 			let statements = []
-			if( rawParse[3]){
-				statements = polishParse(rawParse[3])
+			if( rawParse[5]){
+				statements = polishParse(rawParse[5])
 			}
-			return {type:"for",condition: polishParse(rawParse[1]), contents:statements}
+			return {type:"for",loopVariableName:rawParse[1], iterable: polishParse(rawParse[3]), contents:statements}
 			// return "TODOfor"
 		}
 	},
-	boolExpression:{
+	/*boolExpression:{
 		raw:[
 			{type:"token",tokenType:"NOT", optional:true},
 			{type:"subrule",subrule:"bool"},
@@ -271,7 +273,7 @@ export let grammar = {
 			}
 			return polishParse(rawParse[0])
 		}
-	},
+	},*/
 	arrayOrFncall:{
 		raw:[
 			{type:"token",tokenType:"IDENTIFIER"},

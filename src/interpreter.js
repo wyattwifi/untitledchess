@@ -188,9 +188,6 @@ export function interpretChessLang( bytecode){
 			case "unconditionalJump":{
 				// it simply sets the instructionPointer
 				// note that we should not increment the instructionPointer in this case
-				// instruction format: {type:"jumpIf",condition:nameString,destination:integer}
-				console.log("a")
-				debugger
 				thisFrame.instructionPointer = instruction.destination
 				
 				break}

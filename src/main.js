@@ -68,6 +68,7 @@ function doLeaperMove( theMovingPiece, firstAmount, secondAmount):
 function doTurn():
 	simulateAllChoicesUpToTurnBoundary() # returns a tree. Each node can be a user choice that has one child node for each choice, a state node that may
 	uiUpdateState() # takes the current state variable and prints it to the console
+	#TODO there is not a thing stopping it, it just infitite loops currently
 	doTurn()
 
 
@@ -79,12 +80,6 @@ function main():
 
 
 let simpleCode = `
-
-
-function copyable():
-	if i < length(iterable):
-		j = iterable[j]
-		i = i + 1
 
 function test():
 	for i in range(10):
@@ -106,9 +101,9 @@ function factorial(a):
 let tokens = lexer(simpleCode)
 // console.log( tokens)
 let ast = parse(tokens)
-console.log( JSON.stringify(ast))
+// console.log( JSON.stringify(ast))
 ast = desugarAST( ast)
-console.log( JSON.stringify(ast))
+// console.log( JSON.stringify(ast))
 let bytecode = astToBytecode(ast)
 // console.log(JSON.stringify(bytecode))
 interpretChessLang(bytecode)

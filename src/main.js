@@ -83,6 +83,7 @@ let simpleCode = `
 
 function copyable():
 	if i < length(iterable):
+		j = iterable[j]
 		i = i + 1
 
 function test():

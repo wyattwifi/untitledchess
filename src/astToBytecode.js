@@ -142,6 +142,12 @@ function astToBytecodeForFunction( functionAst ){
 		if( code[i].type == "jumpIfZero"){
 			code[i].destination = locationTable[code[i].destination]
 		}
+		if( code[i].type == "jumpIfNotZero"){
+			code[i].destination = locationTable[code[i].destination]
+		}
+		if( code[i].type == "unconditionalJump"){
+			code[i].destination = locationTable[code[i].destination]
+		}
 	}
 	// now we have replaced all the destination strings with integers, like it sohuld be
 	

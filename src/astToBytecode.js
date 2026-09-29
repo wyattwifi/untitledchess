@@ -4,13 +4,18 @@
 import {InternalCompilerError} from "./parseChessLang.js"
 
 
+export {
+	astToBytecode,
+	getNewUniqueIdentifier
+}
+
 // I am doing bytecode instead of just interepreting the AST because I need to do the stack and instruction pointer myself to easily handle duplicating programs
 
 
 //AST is Abstract Syntax Tree. There are things about it on the internet for making your own coding language
 
 
-export function astToBytecode( ast){
+function astToBytecode( ast){
 	// this does it for the whole thing
 	return ast.map( astToBytecodeForFunction)
 	
@@ -27,7 +32,7 @@ function astToBytecodeForArrayOfStatements( statements){
 		
 		switch( statement.type){
 			
-			
+			case "declarationAssignment":
 			case "assignment":{
 				// take {type:"assignment", lVal:tokens[0].contents, rVal: expression}
 				// ...to {type:"assignFromVariable", lval:stringName, rval:variableName }
@@ -55,6 +60,41 @@ function astToBytecodeForArrayOfStatements( statements){
 				
 				
 				resultCode.push({type:"label",name:endOfIfStamentLocName}) // this will later get removed
+				
+				break
+			}
+			case "while":{
+				
+				/*
+				The result code will be like this:
+				startLabel
+				evaluateCondition
+				jumpIfZero to endLabel
+				do While body
+				jump to startLabel
+				endLabel
+				*/
+				
+				
+				// the code could change around, so for now we put the destination as a label, instead of a number which is what it will need to end up being
+				let startOfWhileStamentLocName = getNewUniqueIdentifier()
+				let endOfWhileStamentLocName = getNewUniqueIdentifier()
+				
+				resultCode.push({type:"label",name:startOfWhileStamentLocName}) // this will later get removed
+				
+				let expressionLowered = getBytecodeOfExpression( statement.condition)
+				
+				resultCode.push(...expressionLowered.bytecodeInstructions)
+				
+				
+				resultCode.push({type:"jumpIfZero", condition:expressionLowered.resultVariableName, destination: endOfWhileStamentLocName})
+				
+				resultCode.push( ...astToBytecodeForArrayOfStatements(statement.contents))
+				
+				
+				resultCode.push({type:"unconditionalJump", destination: startOfWhileStamentLocName})
+				
+				resultCode.push({type:"label",name:endOfWhileStamentLocName}) // this will later get removed
 				
 				break
 			}
@@ -129,7 +169,7 @@ function getBytecodeOfExpression( expressionAst){
 			
 			return {bytecodeInstructions:[],resultVariableName:expressionAst.contents}
 			
-		case "funcallOrArrayAccess":
+		case "funcallOrArrayAccess":{
 			
 			// copied here for reference from bytecode instruction list:
 			// {type:"assignFromArrayAcces", lval:stringName, varHoldingArrayName:string,index:variableName}
@@ -173,26 +213,59 @@ function getBytecodeOfExpression( expressionAst){
 				bytecodeInstructions: resultBytecode,
 				resultVariableName: runningTotalName,
 			}
-			
-		case "number":
+		}
+		case "number":{
 			let name = getNewUniqueIdentifier()
 			return {
 				bytecodeInstructions: [{type:"assignFromLiteral", lval:name, rval:expressionAst.contents}],
 				resultVariableName: name,
 			}
+		}
+		case "UNARYMINUS":{
+			//{type:"assignMath", lval:stringName, lOperand:variableName, operation:stringSymbol, rOperand:variableName}
 			
-		case "UNARYMINUS":
-			return {bytecodeInstructions:[],resultVariableName:""}
+			let resultName = getNewUniqueIdentifier()
+			let operand_setup = getBytecodeOfExpression( expressionAst.operand)
 			
-		case "NOT":
-			return {bytecodeInstructions:[],resultVariableName:""}
+			let resultCode = []
+			resultCode.push( ...operand_setup.bytecodeInstructions)
 			
-		case "stringLiteral":
-			throw new Error("not supported yet")
-			return {bytecodeInstructions:[],resultVariableName:""}
+			let zero_variable_name = getNewUniqueIdentifier()
+			resultCode.push( {type:"assignFromLiteral", lval:zero_variable_name, rval:0})
 			
+			resultCode.push({type:"assignMath", lval:resultName, lOperand:zero_variable_name, operation:"-", rOperand:operand_setup.resultVariableName})
+			
+			return {bytecodeInstructions:resultCode, resultVariableName:resultName}
+			
+		}
+		
+		case "NOT":{
+			//WARNING currently this just returns 1-x when given x
+			
+			let resultName = getNewUniqueIdentifier()
+			let operand_setup = getBytecodeOfExpression( expressionAst.operand)
+			
+			let resultCode = []
+			resultCode.push( ...operand_setup.bytecodeInstructions)
+			
+			let one_variable_name = getNewUniqueIdentifier()
+			resultCode.push( {type:"assignFromLiteral", lval:one_variable_name, rval:1})
+			
+			resultCode.push({type:"assignMath", lval:resultName, lOperand:one_variable_name, operation:"-", rOperand:operand_setup.resultVariableName})
+			
+			return {bytecodeInstructions:resultCode, resultVariableName:resultName}
+		}
+		case "stringLiteral":{
+			let name = getNewUniqueIdentifier()
+			return {
+				bytecodeInstructions: [{type:"assignFromLiteralString", lval:name, rval:expressionAst.contents}],
+				resultVariableName: name,
+			}
+			
+		}
 		case "parengroup":
-			break;
+			
+			return getBytecodeOfExpression( expressionAst.contents)
 			
 		case "PLUS":
 		case "MINUS":
@@ -214,6 +287,7 @@ function getBytecodeOfExpression( expressionAst){
 		let symbolMap = {
 			PLUS:"+",
 			MINUS:"-",
+			TESTLESSTHAN:"TESTLESSTHAN",
 			//TODO do the rest
 		}
 		

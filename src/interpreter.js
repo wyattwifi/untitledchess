@@ -18,6 +18,22 @@ let BUILT_IN_API = [
 		}
 	},
 	{
+		name:"length",
+		effect:function(a){
+			return a.length
+		}
+	},
+	{
+		name:"range",
+		effect:function(a){
+			let result = []
+			for( let i = 0; i < a; i++){
+				result.push(i)
+			}
+			return result
+		}
+	},
+	{
 		name:"multiply",
 		argTypes:["int","int"],
 		effect:function(a,b){
@@ -44,6 +60,7 @@ let BUILT_IN_API = [
 // {type:"assignMath", lval:stringName, lOperand:variableName, operation:stringSymbol, rOperand:variableName}
 // {type:"jumpIfNotZero",condition:variableNameString,destination:integer} jumpIf(variable, destination)// jump if it is not 0, only jumps within functions
 // {type:"jumpIfZero",condition:variableNameString,destination:integer} jumpIf(variable, destination)// jump if it is  0, only jumps within functions
+// {type:"unconditionalJump", destination:integer}
 // {type:"nop"} - No OPeration
 
 //WIP
@@ -146,8 +163,11 @@ export function interpretChessLang( bytecode){
 					case "-":
 						localVars[instruction.lval] = localVars[instruction.lOperand] - localVars[instruction.rOperand]
 						break
+					case "TESTLESSTHAN":
+						localVars[instruction.lval] = localVars[instruction.lOperand] < localVars[instruction.rOperand]
+						break
 					default:
-						throw new Error("invalid opcode math operation")
+						throw new Error("invalid opcode math operation: " + instruction.operation)
 					
 				}
 				
@@ -164,6 +184,14 @@ export function interpretChessLang( bytecode){
 					// if we did not jump then we still need to increment the instruction pointer
 					thisFrame.instructionPointer++
 				}
+				break}
+			case "unconditionalJump":{
+				// it simply sets the instructionPointer
+				// note that we should not increment the instructionPointer in this case
+				// instruction format: {type:"jumpIf",condition:nameString,destination:integer}
+				
+				thisFrame.instructionPointer = instruction.destination
+				
 				break}
 			case "jumpIfZero":{
 				// we jump to the location in the current function if the variable is not 0

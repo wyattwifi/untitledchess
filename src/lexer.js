@@ -248,6 +248,7 @@ function lexerCore( stringIn){
 		//a var named ifa will count as keyword "if" without special handling, so I added (?=([^a-z01-9]|$)) to the end of a lot of token regexes
 		{name:"IF",regex:/^if(?=([^a-z01-9]|$))/},
 		{name:"FOR",regex:/^for(?=([^a-z01-9]|$))/},
+		{name:"WHILE",regex:/^while(?=([^a-z01-9]|$))/},
 		{name:"FUNCTIONDEF",regex:/^function(?=([^a-z01-9]|$))/},
 		{name:"LET",regex:/^let(?=([^a-z01-9]|$))/},
 		{name:"RETURN",regex:/^return(?=([^a-z01-9]|$))/},
@@ -277,7 +278,7 @@ function lexerCore( stringIn){
 		{name:"NEWLINE",regex:/^\n/},
 		{name:"TAB",regex:/^\t/},
 		{name:"SPACE",regex:/^[ ]/},
-		{name:"NUMBER",regex:/^[0-9]+(?=([^a-z01-9]|$))/},//NOTE currently not support decimals
+		{name:"NUMBER",regex:/^[0-9]+(?=([^a-z01-9]|$))/},//NOTE currently does not support decimals
 		{name:"IDENTIFIER",regex:/^[a-z][a-zA-Z_0-9]*(?=([^a-z01-9]|$))/},
 		{name:"STRING",regex:/^"[^"]*"(?=([^a-z01-9]|$))/},
 		{name:"COMMENT",regex:/^#[^\n]*(?=\n|$)/},

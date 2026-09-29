@@ -31,7 +31,6 @@ import {grammar} from "./parserGrammar.js"
 export function parse(tokenList){
 	
 	
-	console.log(tokenList)
 	
 	/* this returns {success:true|false, and then (if successful) contents:theRawParse}
 	 this does not handle backtracking, all the putting-back-the-position needs done in parseSymbolIgnoreModifiers
@@ -241,7 +240,6 @@ export function parse(tokenList){
 						return {success:false}
 					}
 					
-					console.log(left.contents)
 					
 					left = {op:"funcallOrArrayAccess", contents:polishParse({name:"arrayOrFncall", contents:left.contents})}
 				}
@@ -330,7 +328,6 @@ export function parse(tokenList){
 	// return polishParse(parseRuleRaw("main")) // this is always the main overall rule
 	let rawParse = parseArrayOfSymbols(grammar["main"].raw)//parseRuleRaw("main")
 	
-	console.log(JSON.stringify(rawParse))
 	
 	
 	// now, just get it into the same format as the other rule parses (for the polishParse function). This is needed because in the other parts of the parsing this is done by the thing calling parseArrayOfSymbols. This time it is being called from out here, so we need to do it here

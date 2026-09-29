@@ -1,4 +1,9 @@
 
+// This is from the old version without ChessLang. It might be useful later but for now is obsolete
+
+
+
+
 
 // name is plain text
 // cost i'll need to think about
@@ -8,7 +13,7 @@
 // that is simple
 
 // for now, have effects take effect anytime. Most effects will only happen if the piece is on the board, but the logic to check that is in the efffect code
-
+/*
 const RAW_PIECE_DATA = [
 	{
 		name:"White King",
@@ -93,5 +98,6 @@ const RAW_PIECE_DATA = [
 		cost:7,
 		action:'leaperMove',
 		effect:'',
-	},*/
+	},* /
 ]
+*/

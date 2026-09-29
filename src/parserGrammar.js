@@ -159,7 +159,7 @@ export let grammar = {
 			return {type:"if",condition: polishParse(rawParse[1]), contents:statements}
 		}
 	},
-	forBlock:{ // I know this isn't right, but doing it for now, this is really more of a "while" block currently
+	forBlock:{
 		raw:[
 			{type:"token",tokenType:"FOR"},
 			{type:"token",tokenType:"IDENTIFIER"},
@@ -171,109 +171,29 @@ export let grammar = {
 		],
 		polish: rawParse => {
 			let statements = []
-			if( rawParse[5]){
+			if( rawParse[5]){ // remember that the body can be empty
 				statements = polishParse(rawParse[5])
 			}
 			return {type:"for",loopVariableName:rawParse[1], iterable: polishParse(rawParse[3]), contents:statements}
-			// return "TODOfor"
 		}
 	},
-	/*boolExpression:{
+	whileBlock:{
 		raw:[
-			{type:"token",tokenType:"NOT", optional:true},
-			{type:"subrule",subrule:"bool"},
-			{type:"group",subgroup:[
-				{type:"oneOfChoices",options:[
-					{type:"token",tokenType:"OR",name:"or"},
-					{type:"token",tokenType:"AND",name:"and"}
-				]},
-				{type:"token",tokenType:"NOT", optional:true},
-				{type:"subrule",subrule:"bool"},
-			], repeatZeroOrMore:true},
+			{type:"token",tokenType:"WHILE"},
+			{type:"subrule",subrule:"expression"},
+			{type:"token",tokenType:"COLON"},
+			{type:"subrule",subrule:"block",optional:true},
+			{type:"token",tokenType:"NEWLINE"},
 		],
 		polish: rawParse => {
-			return "TODO"
-		}
-	},
-	numberExpression:{
-		raw:[
-			{type:"token",tokenType:"MINUS", optional:true},
-			{type:"subrule",subrule:"expressionPrimary"},
-			{type:"group",subgroup:[
-				{type:"oneOfChoices",options:[
-					{type:"token",tokenType:"PLUS",name:"plus"},
-					{type:"token",tokenType:"MINUS",name:"minus"}
-				]},
-				{type:"subrule",subrule:"expressionPrimary"},
-			], repeatZeroOrMore:true},
-		],
-		polish: rawParse => {
-			
-			let terms = []
-			
-			let isFirstTermPositive = rawParse[0] === null
-			terms.push({ contents:polishParse(rawParse[1]), isPositive: isFirstTermPositive})// do the first term
-			
-			// now do all the other terms
-			for( let termTokens of rawParse[2]){
-				// now, termTokens is the rawParse of the group
-				let isPositive = termTokens[0].name == "plus"//TODO check this
-				terms.push({ contents:polishParse(termTokens[1]), isPositive: isPositive})
+			let statements = []
+			if( rawParse[3]){ // remember that the body can be empty
+				statements = polishParse(rawParse[3])
 			}
-			
-			return { type:"addition/subtraction", terms:terms}
+			return {type:"for",condition: polishParse(rawParse[1]), contents:statements}
 		}
 	},
-	expression:{
-		raw:[
-			{type:"token",tokenType:"MINUS", optional:true},
-			{type:"subrule",subrule:"expressionPrimary"},
-			{type:"group",subgroup:[
-				{type:"oneOfChoices",options:[
-					{type:"token",tokenType:"PLUS",name:"plus"},
-					{type:"token",tokenType:"MINUS",name:"minus"}
-				]},
-				{type:"subrule",subrule:"expressionPrimary"},
-			], repeatZeroOrMore:true},
-		],
-		polish: rawParse => {
-			
-			let terms = []
-			
-			let isFirstTermPositive = rawParse[0] === null
-			terms.push({ contents:polishParse(rawParse[1]), isPositive: isFirstTermPositive})// do the first term
-			
-			// now do all the other terms
-			for( let termTokens of rawParse[2]){
-				// now, termTokens is the rawParse of the group
-				let isPositive = termTokens[0].name == "plus"//TODO check this
-				terms.push({ contents:polishParse(termTokens[1]), isPositive: isPositive})
-			}
-			
-			return { type:"addition/subtraction", terms:terms}
-		}
-	},
-	expressionPrimary:{
-		raw:[
-			{type:"oneOfChoices",options:[
-				{type:"subrule",subrule:"arrayOrFncall"},
-				{type:"token",tokenType:"IDENTIFIER", name:"variable"},
-				{type:"token",tokenType:"NUMBER", name:"numberLiteral"},
-				{type:"token",tokenType:"STRING", name:"stringLiteral"},
-			]},
-		],
-		polish: rawParse => {
-			switch(rawParse[0].name){
-				case "variable":
-					return { type: "identifier", contents: rawParse[0].contents }
-				case "numberLiteral":
-					return { type: "integer", contents: Number(rawParse[0].contents) }
-				case "stringLiteral":
-					return { type: "string", contents: rawParse[0].contents }
-			}
-			return polishParse(rawParse[0])
-		}
-	},*/
+	//"expression" is handled separately, in a Pratt parser
 	arrayOrFncall:{
 		raw:[
 			{type:"token",tokenType:"IDENTIFIER"},

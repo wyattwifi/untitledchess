@@ -249,7 +249,7 @@ function lexerCore( stringIn){
 		{name:"IF",regex:/^if(?=([^a-z01-9]|$))/},
 		{name:"FOR",regex:/^for(?=([^a-z01-9]|$))/},
 		{name:"WHILE",regex:/^while(?=([^a-z01-9]|$))/},
-		{name:"FUNCTIONDEF",regex:/^function(?=([^a-z01-9]|$))/},
+		{name:"FUNCTIONDEF",regex:/^def(?=([^a-z01-9]|$))/},
 		{name:"LET",regex:/^let(?=([^a-z01-9]|$))/},
 		{name:"RETURN",regex:/^return(?=([^a-z01-9]|$))/},
 		{name:"ELSE",regex:/^else(?=([^a-z01-9]|$))/},

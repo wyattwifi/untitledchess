@@ -10,8 +10,58 @@ import {getNewUniqueIdentifier} from "./astToBytecode.js"
 
 export function desugarAST( ast){
 	// currently all this does is replace FOR loops with WHILE loops
+	desugarFuncallsAndArrayLookups( ast)
 	return desugarForLoops(ast)
 }
+
+
+
+
+
+
+
+
+/*
+this takes all expression operations of the form (for example and handy reference):
+{
+	"op": "funcallOrArrayAccess",
+	"contents": {
+		"type": "arrayOrFncall",
+		"firstName": "state",
+		"callChain": [
+			{
+				"type": "arrayLookup",
+				"index": {
+					"op": "stringLiteral",
+					"contents": "pieces"
+				}
+			},
+			{
+				"type": "functionCall",
+				"args": []
+			}
+		]
+	}
+}
+
+and turns them into
+
+
+
+
+
+*/
+
+
+function desugarFuncallsAndArrayLookups( ast){
+	
+	
+	
+	
+	
+}
+
+
 
 function desugarForLoops( ast){
 	
@@ -31,9 +81,9 @@ function desugarForLoopsOfStatementArray( arrayOfStatements){
 			
 			// we turn for i in iterable -> let i = 0; while( i < length(iterable)){ loopVariableName = iterable[i] ...; i++}, but the variable is named something other than "i"
 			
-			let counterVariableName = getNewUniqueIdentifier()
-			let loopVariableName = oldStatement.loopVariableName
-			let arrayOfIterableVariableName = getNewUniqueIdentifier()
+			let counterVariableName = getNewUniqueIdentifier() // the equivalent of "i"
+			let loopVariableName = oldStatement.loopVariableName // the equivalent of "thing" in "for thing of things"
+			let arrayOfIterableVariableName = getNewUniqueIdentifier() // the equivalent of "things" in "for thing of things"
 			
 			// first, switch it to a while loop
 			
@@ -41,11 +91,8 @@ function desugarForLoopsOfStatementArray( arrayOfStatements){
 			let newCondition = {
 				op:"TESTLESSTHAN",
 				left:{op:"variable",contents:counterVariableName},
-				right:{op:"funcallOrArrayAccess", contents:{
-					type:"arrayOrFncall", firstName:"length", callChain:[
-						{type:"functionCall", args:[
-							oldStatement.iterable]}
-					]}}}
+				right:{op:"functionCall", theFunction:{op:"variable", contents:"length"}, args:[oldStatement.iterable]}
+			}
 			
 			
 			let newStatements = oldStatement.contents // the new thing has already been pushed to it
@@ -79,20 +126,9 @@ function desugarForLoopsOfStatementArray( arrayOfStatements){
 				type: "assignment",
 				lVal: loopVariableName,
 				rVal: {
-					op: "funcallOrArrayAccess",
-					contents: {
-						type: "arrayOrFncall",
-						 firstName: arrayOfIterableVariableName,
-						 callChain: [
-							 {
-								type: "arrayLookup",
-								index: {
-									op: "variable",
-									contents: counterVariableName
-									}
-							 }
-						 ]
-					}
+					op: "arrayAccess",
+					array: {op:"variable",contents:arrayOfIterableVariableName},
+					index: {op:"variable",contents:counterVariableName},
 				}
 			})
 			

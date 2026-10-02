@@ -214,6 +214,9 @@ export function parse(tokenList){
 	}
 	
 	function peek(){
+		if( !tokenList[position]){
+			return {type:"None", contents:""}
+		}
 		return tokenList[position]
 	}
 	
@@ -231,25 +234,12 @@ export function parse(tokenList){
 		switch( currentToken.type){
 			case "IDENTIFIER":{
 				left = {op:"variable", contents:currentToken.contents}
-				if( peek().type == "LPAREN" || peek().type == "LBRACKET"){
-					// it is the start of a funcall or arraylookup
-					// this is better handled by the recursive descent parser
-					position-- // undo the consuming the identifier
-					left = parseArrayOfSymbols(grammar["arrayOrFncall"].raw)
-					if( !left.success){
-						return {success:false}
-					}
-					
-					
-					left = {op:"funcallOrArrayAccess", contents:polishParse({name:"arrayOrFncall", contents:left.contents})}
-				}
 				break}
 			case "NUMBER":{
-				left = {op:"number", contents:currentToken.contents}
+				left = {op:"number", contents:Number(currentToken.contents)}
 				break}
 			//NOTE I deliberately did not support unary plus. I think it potentially would cause more trouble than it would solve
 			case "MINUS":{
-				consume("MINUS")
 				let potentialOperand = expressionPrattParser( 100)
 				if( !potentialOperand.success){
 					return {success:false}
@@ -257,7 +247,6 @@ export function parse(tokenList){
 				left = {op:"UNARYMINUS", operand:potentialOperand.contents}
 				break}
 			case "NOT":{
-				consume("NOT")
 				let potentialOperand = expressionPrattParser( 30)
 				if( !potentialOperand.success){
 					return {success:false}
@@ -275,7 +264,6 @@ export function parse(tokenList){
 				
 				left = {op:"parengroup", contents:potentialInnerExpression.contents}
 				if( !consume("RPAREN").success){
-					registerError( "RPAREN", peek())
 					return {success:false}
 				}
 				break}
@@ -285,6 +273,52 @@ export function parse(tokenList){
 		}
 		while(true){
 			currentToken = peek()
+			
+			
+			
+			// handle postfix operations
+			if (currentToken.type === "LBRACKET") {
+				consume("LBRACKET")
+				
+				const index = expressionPrattParser(0)
+				
+				if (!index.success) {
+					return {success: false}
+				}
+				
+				if (!consume("RBRACKET").success) {
+					return {success: false}
+				}
+				
+				left = {
+					op: "arrayAccess",
+					array: left,
+					index: index.contents
+				}
+				
+				continue
+			}
+			
+			if (currentToken.type === "LPAREN") {
+				const argsRaw = parseArrayOfSymbols(grammar["functionCallArgumentsIncludingParens"].raw)
+				
+				if (!argsRaw.success) {
+					return {success: false}
+				}
+				
+				const args = polishParse({name:"functionCallArgumentsIncludingParens",contents:argsRaw.contents}).map(a=>a.contents)
+				
+				left = {
+					op: "functionCall",
+					theFunction: left,
+					args: args
+				}
+				
+				continue
+			}
+			
+			
+			
 			
 			let bindingPowers = {
 				OR:{left:10,right:11},
@@ -339,8 +373,15 @@ export function parse(tokenList){
 	if( position != tokenList.length || !rawParse.success){
 		// it did not get to the end. This could be, for example, if the rules were satisfied but then there was gobleygook at the end
 		// if that happens, return the error that got the farthest
+		
+		// let startOfTokensToShow = Math.max( 0, furthestErrorsPosition - 5)
+		// let endOfTokensToShow = Math.min( furthestErrorsPosition + 5, tokenList.length)
+		// console.log(tokenList.slice( startOfTokensToShow, endOfTokensToShow))
+		
+		
+		console.log(tokenList)
 		console.log(furthestErrors)
-		throw "a"
+		throw "Parse Error"
 		// throw furthestError
 	}
 	
@@ -356,7 +397,8 @@ the expression structure was just redone. Now  all expressions are objects conta
 TODO this could be more polished and have more intuitive names
 Possible values for op:
 "variable"
-"funcallOrArrayAccess"
+"functionCall"
+"arrayAccess"
 "number"
 "UNARYMINUS"
 "NOT"

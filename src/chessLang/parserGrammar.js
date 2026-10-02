@@ -1,4 +1,4 @@
-"use strict";
+
 
 import {polishParse} from "./parseChessLang.js"
 
@@ -106,6 +106,7 @@ export let grammar = {
 				{type:"subrule", subrule:"declarationAssignment"},
 				{type:"subrule", subrule:"ifBlock"},
 				{type:"subrule", subrule:"forBlock"},
+				{type:"subrule", subrule:"whileBlock"},
 				{type:"subrule", subrule:"returnRule"},
 				{type:"group", subgroup:[
 					{type:"subrule", subrule:"expression"}, //TODO the only type of expression that should be allowed is a functioncall
@@ -122,7 +123,7 @@ export let grammar = {
 	},
 	assignment:{
 		raw:[
-			{type:"token",tokenType:"IDENTIFIER"},
+			{type:"subrule",subrule:"expression"},
 			{type:"token",tokenType:"EQUALS"},
 			{type:"subrule",subrule:"expression"},
 			{type:"token",tokenType:"NEWLINE"},
@@ -194,7 +195,7 @@ export let grammar = {
 		}
 	},
 	//"expression" is handled separately, in a Pratt parser
-	arrayOrFncall:{
+	/*arrayOrFncall:{
 		raw:[
 			{type:"token",tokenType:"IDENTIFIER"},
 			{type:"subrule",subrule:"arrayOrFncallGroup"},
@@ -252,6 +253,25 @@ export let grammar = {
 				throw "errA"
 			}
 		}
+	},
+	*/
+	functionCallArgumentsIncludingParens:{
+		raw:[
+			{type:"token", tokenType:"LPAREN"},
+			{type:"subrule", subrule:"expression"},
+			{type:"group", subgroup:[
+				{type:"token", tokenType:"COMMA"},
+				{type:"subrule", subrule:"expression"}
+			],repeatZeroOrMore:true},
+			{type:"token", tokenType:"RPAREN"},
+		],
+		polish: rawParse => {
+			let args = [ rawParse[1]]
+			for( let i = 0; i < rawParse[2].length; i++){
+				args.push( rawParse[2][i][1])
+			}
+			return args
+		},
 	},
 	returnRule:{
 		raw:[

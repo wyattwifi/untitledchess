@@ -1,5 +1,15 @@
 
-// the file names are really messed up for now, this is a start on the actual interpreter
+
+import {InternalCompilerError} from "./parseChessLang.js"
+import {getStartingState} from "./getStartingState.js"
+
+
+
+class ChessLangStandardLibraryError extends Error{
+	constructor(message){
+		super("ChessLangStandardLibraryError:" + message)
+	}
+}
 
 
 let BUILT_IN_API = [
@@ -8,13 +18,6 @@ let BUILT_IN_API = [
 		argTypes:["string"],
 		effect:function(a){
 			console.log(a)
-		}
-	},
-	{
-		name:"not",
-		argTypes:["int"],
-		effect:function(a){
-			return +(!a)
 		}
 	},
 	{
@@ -33,18 +36,33 @@ let BUILT_IN_API = [
 			return result
 		}
 	},
+	// {
+	// 	name:"getState",
+	// 	effect:function(){
+	// 		let result = []
+	// 		for( let i = 0; i < 100; i++){
+	// 			result.push({x:11,y:10})
+	// 		}
+	// 		return result
+	// 	}
+	// },
 	{
-		name:"multiply",
-		argTypes:["int","int"],
-		effect:function(a,b){
-			return a * b
+		name:"uiUpdateState",
+		effect:function(){
+			console.log(globalStateVariable)
 		}
 	},
 	{
-		name:"getNewArray",
-		argTypes:[],
-		effect:function(a){
-			return [17]//TODO not have be just a placeholder
+		name:"getUserChoice",
+		effect:function( userID, numOfOptions){
+			if( numOfOptions <= 0){
+				throw new ChessLangStandardLibraryError("That isn't much of a choice, is it?")
+			}
+			let result = Number(prompt("Player " + userID +": Make a choice 0 (inclusive) to " + numOfOptions + "(exclusive):"))
+			while( !(result >= 0 && result < numOfOptions) ){
+				result = Number(prompt("Try again to follow the instructions. Player " + userID +": Make a choice 0 (inclusive) to " + numOfOptions + "(exclusive):"))
+			}
+			return result
 		}
 	},
 ]
@@ -53,7 +71,7 @@ let BUILT_IN_API = [
 // supported bytecode operations for now
 // assign( lval variable, rval variable, array access (based on a variable), function call( variable parameters), or literal value, maybe anything im forgetting too)
 //{type:"assignFromVariable", lval:stringName, rval:variableName }
-//{type:"assignFromArrayAcces", lval:stringName, varHoldingArrayName:string,index:variableName}
+//{type:"assignFromArrayAcces", lval:stringName, nameOfVarHoldingArray:string,index:variableName}
 //{type:"assignFromFunctionCall", lval:stringName, varHoldingFunctionName:string,parameters:[variableNames]}
 //{type:"assignFromLiteral", lval:stringName, rval:integer}
 //{type:"assignFromLiteralString", lval:varName, rval:string}
@@ -67,8 +85,13 @@ let BUILT_IN_API = [
 //TODO i forgot i need to support setting arrays too, not just reading from them
 
 
+let globalStateVariable = getStartingState()
+
+
 export function interpretChessLang( bytecode){
 	// the parameter is an array of objects of the format {name, [paramNames],statements:[bytecode instructions]}
+	
+	
 	
 	let stack = []
 	
@@ -87,7 +110,8 @@ export function interpretChessLang( bytecode){
 		for( let i = 0; i < a.paramNames.length; i++){
 			localVariables[a.paramNames[i]] = parameterValues[i]
 		}
-		localVariables["bitBucketAlwaysZero"] = 0 // this is a unpolished shortcut that is currently required for the astToBytecode thing to have a NOP instruction
+		
+		localVariables["state"] = globalStateVariable // there is not a built-in way to handle global variables, so we just set it here
 		
 		stack.push({
 			functionName:functionName,
@@ -113,7 +137,10 @@ export function interpretChessLang( bytecode){
 				break}
 			case "assignFromArrayAcces":{
 				let localVars = thisFrame.localVariables
-				localVars[instruction.lval] = localVars[localVars[instruction.varHoldingArrayName]][localVars[instruction.index]]
+				let indexVariableName = instruction.index
+				let indexValue = localVars[indexVariableName]
+				let theArrayItself = localVars[instruction.nameOfVarHoldingArray]
+				localVars[instruction.lval] = theArrayItself[indexValue]
 				thisFrame.instructionPointer++
 				break}
 				break
@@ -135,9 +162,19 @@ export function interpretChessLang( bytecode){
 				
 				let isDoneAlready = false
 				
+				//WARNING as a temporary fix, this will call the variable itself or the value it holds, whichever is available
+				
+				
 				// first, we need to check if it is one of the built-in API functions
 				for( let i = 0; i < BUILT_IN_API.length; i++){
 					if(BUILT_IN_API[i].name == localVars[instruction.varHoldingFunctionName]){
+						localVars[instruction.lval] = BUILT_IN_API[i].effect(...instruction.parameters.map(i=>localVars[i]))
+						thisFrame.instructionPointer++ // we need to do this now because there is not all that interesting instruction pointer stack stuff as with a normal function call. instead it is just like a normal statement
+						isDoneAlready = true
+					}
+				}
+				for( let i = 0; i < BUILT_IN_API.length; i++){
+					if(BUILT_IN_API[i].name == instruction.varHoldingFunctionName){
 						localVars[instruction.lval] = BUILT_IN_API[i].effect(...instruction.parameters.map(i=>localVars[i]))
 						thisFrame.instructionPointer++ // we need to do this now because there is not all that interesting instruction pointer stack stuff as with a normal function call. instead it is just like a normal statement
 						isDoneAlready = true
@@ -150,7 +187,13 @@ export function interpretChessLang( bytecode){
 				
 				// now we know that it is not a built in api function
 				
-				jumpToFunction(localVars[instruction.varHoldingFunctionName], instruction.parameters.map(i=>localVars[i]))// jumpToFunction expects the literal values of the parameters, while the bytecode instruction gives the variable names
+				if( localVars[instruction.varHoldingFunctionName]){
+					
+					jumpToFunction(localVars[instruction.varHoldingFunctionName], instruction.parameters.map(i=>localVars[i]))// jumpToFunction expects the literal values of the parameters, while the bytecode instruction gives the variable names
+				} else {
+					jumpToFunction(instruction.varHoldingFunctionName, instruction.parameters.map(i=>localVars[i]))
+				}
+				
 				// setting the variable to the return value will be handled when the function returns
 				// incrementing the instructionPointer will be handled when the function returns
 				break}
@@ -204,7 +247,7 @@ export function interpretChessLang( bytecode){
 				}
 				break}
 			default:
-				throw new Error("invalid opcode instruction")
+				throw new InternalCompilerError("invalid opcode instruction: " + JSON.stringify(instruction))
 		}
 		
 		
@@ -264,6 +307,7 @@ export function interpretChessLang( bytecode){
 				return bytecode[i]
 			}
 		}
+		console.log( stack, bytecode)
 		throw new Error("error function " + functionName + " does not exist")
 	}
 	

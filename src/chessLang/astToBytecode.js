@@ -172,52 +172,74 @@ function getBytecodeOfExpression( expressionAst){
 	
 	switch (expressionAst.op) {
 		case "variable":
-			
 			return {bytecodeInstructions:[],resultVariableName:expressionAst.contents}
+		case "functionCall":{
 			
-		case "funcallOrArrayAccess":{
+			let resultVariableName = getNewUniqueIdentifier()
+			
+			let resultBytecode = []
+			
+			
+			let paramExpressionsLowered = expressionAst.args.map( getBytecodeOfExpression)
+			
+			for( let i= 0; i < paramExpressionsLowered.length; i++){
+				resultBytecode.push(...paramExpressionsLowered[i].bytecodeInstructions)
+			}
+			
+			let stuffToGetFunctionName = getBytecodeOfExpression( expressionAst.theFunction)
+			/*
+			// it is needed to store it in another variable because of the functioncall setup for now. It assumes that the function name will be stored in a variable
+			let resultVariableName = getNewUniqueIdentifier()
+			return {bytecodeInstructions:[
+				{type:"assignFromVariable", lval:resultVariableName, rval:expressionAst.contents }
+			],resultVariableName:resultVariableName}*/
+			
+			
+			
+			let varHoldingFunctionName = stuffToGetFunctionName.resultVariableName
+			let codeToSetUpFunctionName = stuffToGetFunctionName.bytecodeInstructions
+			
+			resultBytecode.push( ...codeToSetUpFunctionName)
+			
+			
+			resultBytecode.push({type:"assignFromFunctionCall", lval:resultVariableName, varHoldingFunctionName:varHoldingFunctionName, parameters:paramExpressionsLowered.map(i=>i.resultVariableName)})
 			
 			// copied here for reference from bytecode instruction list:
 			// {type:"assignFromArrayAcces", lval:stringName, varHoldingArrayName:string,index:variableName}
 			// {type:"assignFromFunctionCall", lval:stringName, varHoldingFunctionName:string,parameters:[variableNames]}
 			// {type:"assignFromLiteralString", lval:varName, rval:string}
 			
-			// we will have a variable that holds the running total. We start out by storing the name of the first thing in it. Then we go down the list of calls, one call at a time, doing the call based on the current value of the running total and then storing the value back into the running total
-			
-			expressionAst = expressionAst.contents //TODO do this more intuitively
-			
-			let runningTotalName = getNewUniqueIdentifier() // or, rather, runningResult
-			
-			let resultBytecode = []
-			
-			resultBytecode.push({type:"assignFromLiteralString", lval:runningTotalName, rval:expressionAst.firstName})
-			
-			
-			for( let i = 0; i < expressionAst.callChain.length; i++){
-				let call = expressionAst.callChain[i]
-				switch (call.type){
-					case "arrayLookup":
-						let indexExpressionLowered = getBytecodeOfExpression( call.index)
-						resultBytecode.push(...indexExpressionLowered.bytecodeInstructions )
-						resultBytecode.push({type:"assignFromArrayAcces", lval:runningTotalName, varHoldingArrayName:runningTotalName,index:indexExpressionLowered.resultVariableName})
-						break
-					case "functionCall":
-						let paramExpressionsLowered = call.args.map( getBytecodeOfExpression)
-						
-						
-						resultBytecode.push(...paramExpressionsLowered.flatMap(i=>i.bytecodeInstructions))
-						
-						resultBytecode.push({type:"assignFromFunctionCall", lval:runningTotalName, varHoldingFunctionName:runningTotalName, parameters:paramExpressionsLowered.map(i=>i.resultVariableName)})
-						
-						break
-					default:
-						throw new Error("Internal compiler error, invalid AST a")
-				}
-			}
 			
 			return {
 				bytecodeInstructions: resultBytecode,
-				resultVariableName: runningTotalName,
+				resultVariableName: resultVariableName,
+			}
+		}
+		case "arrayAccess":{
+			
+			let resultVariableName = getNewUniqueIdentifier()
+			
+			let resultBytecode = []
+			
+			
+			let indexExpressionLowered = getBytecodeOfExpression(expressionAst.index)
+			
+			resultBytecode.push(...indexExpressionLowered.bytecodeInstructions)
+			
+			let stuffToGetArrayName = getBytecodeOfExpression( expressionAst.array)
+			let varHoldingArrayName = stuffToGetArrayName.resultVariableName
+			let codeToSetUpArrayName = stuffToGetArrayName.bytecodeInstructions
+			
+			resultBytecode.push( ...codeToSetUpArrayName)
+			
+			
+			resultBytecode.push({type:"assignFromArrayAcces", lval:resultVariableName, nameOfVarHoldingArray:varHoldingArrayName, index:indexExpressionLowered.resultVariableName})
+			
+			
+			
+			return {
+				bytecodeInstructions: resultBytecode,
+				resultVariableName: resultVariableName,
 			}
 		}
 		case "number":{

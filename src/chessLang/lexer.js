@@ -1,4 +1,4 @@
-"use strict";
+
 
 
 
@@ -7,6 +7,10 @@
 export function lexer( stringIn){
 	// this is the wrapper function for the lexer. It handles the indentation stuff
 	// chessLang uses python-style indentation
+	
+	
+	// for whatever reason, for the line-indentation stuff to work correctly there must be an empty line at the end, or line without any indentatino or something, so rather than fixing the lexer to work without that we will just add that
+	stringIn = stringIn + "\n"
 	
 	let rawLex = lexerCore(stringIn)
 	
@@ -301,9 +305,18 @@ function lexerCore( stringIn){
 			
 			let match = stringInLeft.match(possibleTokens[i].regex)
 			if( match){
-				result.push({type:possibleTokens[i].name,contents:match[0]})
-				index += match[0].length
-				return true
+				if( possibleTokens[i].name == "STRING"){
+					// if it is a string we should take off the quotation marks at the start and end when saving the result contents
+					result.push({type:possibleTokens[i].name,contents:match[0].slice( 1, match[0].length - 1)})
+					index += match[0].length
+					return true
+				} else {
+					// otherwise just put the whole match
+					result.push({type:possibleTokens[i].name,contents:match[0]})
+					index += match[0].length
+					return true
+					
+				}
 			}
 		}
 		throw new Error("lexer error this doesnt match any of the things:" +  stringInLeft.slice(0, 20) + "...")

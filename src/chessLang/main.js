@@ -1,10 +1,10 @@
 
 
-import {lexer} from "./chessLang/lexer.js"
-import {parse} from "./chessLang/parseChessLang.js"
-import {astToBytecode} from "./chessLang/astToBytecode.js"
-import {interpretChessLang} from "./chessLang/interpreter.js"
-import {desugarAST} from "./chessLang/desugarAST.js"
+import {lexer} from "./lexer.js"
+import {parse} from "./parseChessLang.js"
+import {astToBytecode} from "./astToBytecode.js"
+import {interpretChessLang} from "./interpreter.js"
+import {desugarAST} from "./desugarAST.js"
 
 // returns the array of the bytecode
 export function compileChessCode( sourceCodeString){
@@ -15,7 +15,7 @@ export function compileChessCode( sourceCodeString){
 	let ast = parse(tokens)
 	// console.log( JSON.stringify(ast))
 	ast = desugarAST( ast)
-	// console.log( JSON.stringify(ast))
+	console.log( JSON.stringify(ast))
 	let bytecode = astToBytecode(ast)
 	// console.log(JSON.stringify(bytecode))
 	return bytecode

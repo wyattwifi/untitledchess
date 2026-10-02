@@ -104,8 +104,8 @@ function astToBytecodeForArrayOfStatements( statements){
 				
 				resultCode.push(...expressionLowered.bytecodeInstructions)
 				
-				resultCode.push({type:"assignFromVariable", lval:"r", rval:expressionLowered.resultVariableName })
-				//TODO this does not actually exit the function, it just sets the return value for now
+				resultCode.push({type:"return", value:expressionLowered.resultVariableName })
+				
 				break
 			}
 			default:

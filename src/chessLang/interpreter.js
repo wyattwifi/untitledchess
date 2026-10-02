@@ -11,6 +11,7 @@ class ChessLangStandardLibraryError extends Error{
 	}
 }
 
+//TODO chessLang does not support assigning to arrays
 
 let BUILT_IN_API = [
 	{
@@ -36,6 +37,12 @@ let BUILT_IN_API = [
 			return result
 		}
 	},
+	{
+		name:"createLoc",
+		effect:function(x,y){
+			return {x:x, y:y}
+		}
+	},
 	// {
 	// 	name:"getState",
 	// 	effect:function(){
@@ -46,6 +53,18 @@ let BUILT_IN_API = [
 	// 		return result
 	// 	}
 	// },
+	{
+		name:"setState", // this is easier for now than adding rval array setting
+		effect:function( newValue, ...indexes){
+			// this is passed as parameters the indexes to get the part to set
+			let finalArray = globalStateVariable
+			for( let i = 0; i < indexes.length - 1; i++){
+				finalArray = finalArray[indexes[i]]
+			}
+			let finalIndex = indexes[indexes.length - 1]
+			finalArray[finalIndex] = newValue
+		}
+	},
 	{
 		name:"uiUpdateState",
 		effect:function(){
@@ -80,9 +99,10 @@ let BUILT_IN_API = [
 // {type:"jumpIfZero",condition:variableNameString,destination:integer} jumpIf(variable, destination)// jump if it is  0, only jumps within functions
 // {type:"unconditionalJump", destination:integer}
 // {type:"nop"} - No OPeration
+//{type:"return",value:variableName}
 
 //WIP
-//TODO i forgot i need to support setting arrays too, not just reading from them
+//TODO i forgot i need to support setting arrays too, not just reading from them. Hence it needs references, because array can be in arrays
 
 
 let globalStateVariable = getStartingState()
@@ -245,6 +265,11 @@ export function interpretChessLang( bytecode){
 					// if we did not jump then we still need to increment the instruction pointer
 					thisFrame.instructionPointer++
 				}
+				break}
+			case "return":{
+				let localVars = thisFrame.localVariables
+				localVars["r"] = localVars[instruction.value]
+				thisFrame.instructionPointer = getBytecodeWrapperOfFunction( thisFrame.functionName).statements.length
 				break}
 			default:
 				throw new InternalCompilerError("invalid opcode instruction: " + JSON.stringify(instruction))

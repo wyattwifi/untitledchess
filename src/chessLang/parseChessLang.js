@@ -300,6 +300,7 @@ export function parse(tokenList){
 			}
 			
 			if (currentToken.type === "LPAREN") {
+				//TODO the args need to be optional
 				const argsRaw = parseArrayOfSymbols(grammar["functionCallArgumentsIncludingParens"].raw)
 				
 				if (!argsRaw.success) {

@@ -43,6 +43,12 @@ let BUILT_IN_API = [
 			return {x:x, y:y}
 		}
 	},
+	{
+		name:"throwError",
+		effect:function(message){
+			throw new Error(message)
+		}
+	},
 	// {
 	// 	name:"getState",
 	// 	effect:function(){
@@ -63,6 +69,12 @@ let BUILT_IN_API = [
 			}
 			let finalIndex = indexes[indexes.length - 1]
 			finalArray[finalIndex] = newValue
+		}
+	},
+	{
+		name:"createArray",
+		effect:function( ...values){
+			return values
 		}
 	},
 	{
@@ -112,7 +124,6 @@ export function interpretChessLang( bytecode){
 	// the parameter is an array of objects of the format {name, [paramNames],statements:[bytecode instructions]}
 	
 	
-	
 	let stack = []
 	
 	function jumpToFunction( functionName, parameterValues){
@@ -123,6 +134,8 @@ export function interpretChessLang( bytecode){
 		let a = getBytecodeWrapperOfFunction( functionName)
 		
 		if( parameterValues.length != a.paramNames.length){ // check to see that it has the expected number of parameters
+			console.log(stack)
+			console.log(bytecode)
 			throw new Error("passed wrong number of parameters to a function")
 		}
 		
@@ -228,6 +241,30 @@ export function interpretChessLang( bytecode){
 						break
 					case "TESTLESSTHAN":
 						localVars[instruction.lval] = localVars[instruction.lOperand] < localVars[instruction.rOperand]
+						break
+					case "TESTGREATERTHAN":
+						localVars[instruction.lval] = localVars[instruction.lOperand] > localVars[instruction.rOperand]
+						break
+					case "TESTLESSTHANOREQUALTO":
+						localVars[instruction.lval] = localVars[instruction.lOperand] <= localVars[instruction.rOperand]
+						break
+					case "TESTGREATERTHANOREQUALTO":
+						localVars[instruction.lval] = localVars[instruction.lOperand] >= localVars[instruction.rOperand]
+						break
+					case "OR":
+						localVars[instruction.lval] = localVars[instruction.lOperand] || localVars[instruction.rOperand]
+						break
+					case "AND":
+						localVars[instruction.lval] = localVars[instruction.lOperand] && localVars[instruction.rOperand]
+						break
+					case "TESTEQUAL":
+						localVars[instruction.lval] = localVars[instruction.lOperand] == localVars[instruction.rOperand]
+						break
+					case "ASTERISK":
+						localVars[instruction.lval] = localVars[instruction.lOperand] * localVars[instruction.rOperand]
+						break
+					case "SLASH":
+						localVars[instruction.lval] = localVars[instruction.lOperand] / localVars[instruction.rOperand]
 						break
 					default:
 						throw new Error("invalid opcode math operation: " + instruction.operation)
@@ -338,5 +375,16 @@ export function interpretChessLang( bytecode){
 	
 	
 }
+
+
+
+
+
+
+
+
+
+
+
 
 

@@ -15,7 +15,7 @@ export function compileChessCode( sourceCodeString){
 	let ast = parse(tokens)
 	// console.log( JSON.stringify(ast))
 	ast = desugarAST( ast)
-	console.log( JSON.stringify(ast))
+	// console.log( JSON.stringify(ast))
 	let bytecode = astToBytecode(ast)
 	// console.log(JSON.stringify(bytecode))
 	return bytecode

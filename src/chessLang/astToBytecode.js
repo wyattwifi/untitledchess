@@ -41,7 +41,18 @@ function astToBytecodeForArrayOfStatements( statements){
 				
 				resultCode.push(...expressionLowered.bytecodeInstructions)
 				
-				resultCode.push({type:"assignFromVariable", lval:new String(statement.lVal), rval:expressionLowered.resultVariableName })//TODO don't know the format have in right format if not string or whatever
+				
+				//TODO this should be done better. The AST should not be so complicated that we need to do this
+				let lvalName
+				if( statement.lVal.name){
+					lvalName = statement.lVal.contents.contents
+				} else {
+					lvalName = statement.lVal
+				}
+				
+				
+				
+				resultCode.push({type:"assignFromVariable", lval:lvalName, rval:expressionLowered.resultVariableName })//TODO don't know the format have in right format if not string or whatever
 				break
 			}
 			case "if":{
@@ -304,6 +315,8 @@ function getBytecodeOfExpression( expressionAst){
 		case "TESTLESSTHAN":
 		case "TESTGREATERTHANOREQUALTO":
 		case "TESTLESSTHANOREQUALTO":
+		case "OR":
+		case "AND":
 			return get_result_for_binary_op( expressionAst)
 			
 		default:
@@ -313,9 +326,18 @@ function getBytecodeOfExpression( expressionAst){
 	function get_result_for_binary_op( expressionAst){
 		
 		let symbolMap = {
+			OR: "OR",
+			AND: "AND",
+			TESTEQUAL: "TESTEQUAL",
+			TESTGREATERTHAN: "TESTGREATERTHAN",
+			TESTLESSTHAN: "TESTLESSTHAN",
+			TESTGREATERTHANOREQUALTO: "TESTGREATERTHANOREQUALTO",
+			TESTLESSTHANOREQUALTO: "TESTLESSTHANOREQUALTO",
 			PLUS:"+",
 			MINUS:"-",
-			TESTLESSTHAN:"TESTLESSTHAN",
+			ASTERISK: "ASTERISK",
+			SLASH: "SLASH",
+			
 			//TODO do the rest
 		}
 		

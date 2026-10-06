@@ -3,7 +3,7 @@
 import {InternalCompilerError} from "./parseChessLang.js"
 import {getStartingState} from "./getStartingState.js"
 
-
+import {uiUpdateState} from "./../ui.js"
 
 class ChessLangStandardLibraryError extends Error{
 	constructor(message){
@@ -78,9 +78,22 @@ let BUILT_IN_API = [
 		}
 	},
 	{
+		name:"createEmptyArray",
+		effect:function( unused){
+			return []
+		}
+	},
+	{
+		name:"assignArray",
+		effect:function( array, index, value){
+			array[index] = value
+		}
+	},
+	{
 		name:"uiUpdateState",
 		effect:function(){
-			console.log(globalStateVariable)
+			// console.log(globalStateVariable)
+			uiUpdateState(globalStateVariable)
 		}
 	},
 	{
@@ -136,7 +149,7 @@ export function interpretChessLang( bytecode){
 		if( parameterValues.length != a.paramNames.length){ // check to see that it has the expected number of parameters
 			console.log(stack)
 			console.log(bytecode)
-			throw new Error("passed wrong number of parameters to a function")
+			throw new Error("passed wrong number of parameters to a function. The function you tried to call is " + functionName + " with parameters " + parameterValues)
 		}
 		
 		// add the parameters to the local variables

@@ -1,0 +1,274 @@
+
+
+# Directions are stored as 0 - N, 1 - E, 2 - S, 3 - W,
+# y==0 is at the bottom of the board
+# White starts at the bottom of the board
+
+
+#TODO have stuff work with diagonals
+
+#TODO the parser currently doesnt support having no parameters, so there is a 1 passed to stuff
+#TODO apparently the FOR loops still reevalueates the condition thing each time
+
+
+# locs are arrays of x, y
+
+def main():
+	# print(state["pieces"][0]["name"])
+	uiUpdateState(1)
+		
+	
+	# print( getUserChoiceOfArray( 0, createArray("a","b","c")))
+	
+	let pieceActions = createArray("doActionOfPieceWithID0", "doActionOfPieceWithID1","doActionOfPieceWithID2","doActionOfPieceWithID3")
+	
+	let idOfPieceToMove = getUserChoiceOfArray( 0, getAllPiecesOnBoardOfCertainColorIDs(0) )
+	
+	
+	
+	# print(getAllPiecesOnBoardOfCertainColorIDs(0))
+	
+	pieceActions[idOfPieceToMove](0)
+	
+	# pieceActions[0](1)
+	
+	# let a = whiteKingMove(1)
+	# let a = pieceActions[0](1)
+	uiUpdateState(1)
+	
+	# print(movePieceOneSpaceInDirection(createLoc(0,4),2))
+	
+	
+
+
+
+def getAllPiecesOnBoardIDs( a):
+	let result = createEmptyArray(1)
+	let i = 0
+	let j = 0
+	for piece in state["pieces"]:
+		if piece["position"]["onBoard"]:
+			assignArray( result, i, j)
+			i = i + 1
+		j = j + 1
+	return result
+
+
+def getAllPiecesOnBoardOfCertainColorIDs( userID):
+	let result = createEmptyArray(1)
+	let i = 0
+	let j = 0
+	for piece in state["pieces"]:
+		if piece["position"]["onBoard"] & piece["position"]["color"] == userID:
+			assignArray( result, i, j)
+			i = i + 1
+		j = j + 1
+	return result
+
+
+def getPieceColor( pieceID):
+	return state["pieces"][pieceID]["position"]["color"]
+
+
+def getAllOrthogonalDirections(unused):
+	return range(4)
+
+def isLocOnBoard( loc):
+	
+	if loc["x"] < 0:
+		return 0
+	if loc["x"] > 7:
+		return 0
+	if loc["y"] < 0:
+		return 0
+	if loc["y"] > 7:
+		return 0
+	return 1
+
+def getUserChoiceOfArray( userID, array):
+	return array[getUserChoice( userID, length(array))]
+
+
+
+def getDirectionsPerpendicularToDirection( directionIn):
+	if directionIn == 0 | directionIn == 2:
+		return createArray( 1, 3)
+	if directionIn == 1 | directionIn == 3:
+		return createArray( 0, 2)
+
+
+
+def getPieceLocation( pieceID):
+	return state["pieces"][pieceID]["position"]
+
+
+def doLeaperMove( userID, theMovingPieceId, firstAmount, secondAmount):
+
+	let firstDirection = getUserChoiceOfArray( userID, getAllOrthogonalDirections(1))
+	let secondDirection = getUserChoiceOfArray( userID, getDirectionsPerpendicularToDirection( firstDirection))
+	# walk along the path, making sure that each space is either empty, itself (because when it moves in it will also move out), or (on the last space only) a capturable enemy piece
+
+	for i in range(firstAmount):
+		let location = getPieceLocation( theMovingPieceId)
+		let newLocation = getLocOneSpaceInDirection( location, firstDirection)
+		
+		
+		movePiece( theMovingPieceId, newLocation)
+			
+	for unused in range(secondAmount):
+		let location = getPieceLocation( theMovingPieceId)
+		let newLocation = getLocOneSpaceInDirection( location, secondDirection)
+# 		
+# 		if !isLocationEmpty( newLocation):#TODO what if it is being blocked by itself
+# 			# a piece is there. The only way this can move there is if that piece is itself, or if 
+# 			throwError()
+# 			
+		movePiece( theMovingPieceId, newLocation)
+					
+					
+				
+				
+				
+
+
+
+
+
+def movePiece( theMovingPieceId, newLocation):
+	# the old position still has the correct onBoard and color properties, so we need to copy those over
+	let oldPosition = state["pieces"][theMovingPieceId]["position"]
+	assignArray(state["pieces"][theMovingPieceId]["position"], "x", newLocation["x"])
+	assignArray(state["pieces"][theMovingPieceId]["position"], "y", newLocation["y"])
+	# setState( newLocation, "pieces", theMovingPieceId, "position")
+
+
+
+
+
+
+
+
+
+
+
+
+
+def getLocOneSpaceInDirection( startingLoc, direction):
+	let newLoc = "placeholder"
+	if direction == 0:
+		newLoc = createLoc( startingLoc["x"] + 0, startingLoc["y"] + 1)
+	if direction == 1:
+		newLoc = createLoc( startingLoc["x"] + 1, startingLoc["y"] + 0)
+	if direction == 2:
+		newLoc = createLoc( startingLoc["x"] + 0, startingLoc["y"] - 1)
+	if direction == 3:
+		newLoc = createLoc( startingLoc["x"] - 1, startingLoc["y"] + 0)
+	# if direction == 0:
+	# 	newLoc = createLoc( pieceLoc["x"] + 1, pieceLoc["y"] + 1)
+	# if direction == 0:
+	# 	newLoc = createLoc( pieceLoc["x"] + 1, pieceLoc["y"] + 1)
+	# if direction == 0:
+	# 	newLoc = createLoc( pieceLoc["x"] + 1, pieceLoc["y"] + 1)
+	# if direction == 0:
+	# 	newLoc = createLoc( pieceLoc["x"] + 1, pieceLoc["y"] + 1)
+	if !isLocOnBoard( newLoc):
+		throwError("Tried to move off of the board")
+	return newLoc
+	# throwError("not a valid direction")
+
+
+
+
+
+
+
+
+# 
+# 
+# def movePieceOneSpaceInDirection( pieceLoc, direction):
+# 	let newLoc = "placeholder"
+# 	if direction == 0:
+# 		newLoc = createLoc( pieceLoc["x"] + 0, pieceLoc["y"] + 1)
+# 	if direction == 1:
+# 		newLoc = createLoc( pieceLoc["x"] + 1, pieceLoc["y"] + 0)
+# 	if direction == 2:
+# 		newLoc = createLoc( pieceLoc["x"] + 0, pieceLoc["y"] - 1)
+# 	if direction == 3:
+# 		newLoc = createLoc( pieceLoc["x"] - 1, pieceLoc["y"] + 0)
+# 	# if direction == 0:
+# 	# 	newLoc = createLoc( pieceLoc["x"] + 1, pieceLoc["y"] + 1)
+# 	# if direction == 0:
+# 	# 	newLoc = createLoc( pieceLoc["x"] + 1, pieceLoc["y"] + 1)
+# 	# if direction == 0:
+# 	# 	newLoc = createLoc( pieceLoc["x"] + 1, pieceLoc["y"] + 1)
+# 	# if direction == 0:
+# 	# 	newLoc = createLoc( pieceLoc["x"] + 1, pieceLoc["y"] + 1)
+# 	if !isLocOnBoard( newLoc):
+# 		throwError("Tried to move off of the board")
+# 	return newLoc
+# 	# throwError("not a valid direction")
+
+
+def whiteKingMove(a):
+	# setState( 1 + state["pieces"][0]["position"]["y"], "pieces", 0, "position", "y")
+	let choice = getUserChoice( 0, 2)
+	
+	if choice:
+		return doLeaperMove( 0, 0, 1, 0)
+	if !choice:
+		return doLeaperMove( 0, 0, 1, 1)
+	# doLeaperMove( 0, 0, 2, 1) #temporary, for development
+	
+
+def doActionOfPieceWithID0( userID ):
+	doLeaperMove( userID,0,1,0)
+def doActionOfPieceWithID1( userID ):
+	doLeaperMove( userID,1,1,0)
+def doActionOfPieceWithID2( userID ):
+	doLeaperMove( userID,2,1,0)
+def doActionOfPieceWithID3( userID ):
+	doLeaperMove( userID,3,1,0)
+def doActionOfPieceWithID4( userID ):
+	doLeaperMove( userID,4,1,0)
+
+def whiteKnightMove(a):
+	doLeaperMove( 0, 2, 2, 1)
+
+
+def canPieceMoveThroughLocation( piece, location):
+
+
+def getForwardDirection( piece):
+	#this returns the direction that is forward for a piece. This varies piece-to-piece because the different colors head in opposite directions
+
+def jumpForwardOne( piece):
+	# this is a very simple piece that just jumps forward one space, capturing if able
+
+	let location = getPieceLocation( piece)
+	let newLocation = getLocationInDirectionFromLocation( location, getForwardDirection(piece))
+	let canMove = canPieceMoveToLocation(newLocation)
+	if canMove:
+		movePiece( piece, newLocation)
+		
+	if !canMove:
+		throwError("aaa")
+
+
+
+
+# def doTurn():
+# 	simulateAllChoicesUpToTurnBoundary() # returns a tree. Each node can be a user choice that has one child node for each choice, a state node that may
+# 	uiUpdateState() # takes the current state variable and prints it to the console
+# 	#TODO there is not a thing stopping it, it just infitite loops currently
+# 	doTurn()
+# 
+# 
+# def main():
+# 	doTurn()
+
+
+
+
+
+
+

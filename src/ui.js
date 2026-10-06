@@ -1,18 +1,6 @@
 
 
 
-
-
-
-
-
-
-/*
-It is possible that a lot of this code is still usable, but I commented it all out while switching from js to chesslang
-
-
-
-
 const theCanvas = document.createElement("canvas")
 
 const margins = {left:0,right:0, top:0,bottom:0}// the area within the canvas outside of the board
@@ -28,8 +16,86 @@ theCanvas.height = SQUARE_SIZE * BOARD_SIZE_IN_SQUARES + margins.top + margins.b
 let drawing = theCanvas.getContext("2d")
 window.addEventListener("load",()=>{
 	document.body.appendChild( theCanvas)
-	drawBoard(state)
+	// drawBoard(state)
 })
+
+
+//TODO update this to the new format
+export function uiUpdateState( state){
+	
+	console.log(JSON.stringify(state))
+	
+	// the state object is not the most easily useable format for the sake of being very flexible
+	// so, now, go through and generate the 8x8 grid we are used to from the state object
+	let grid = []
+	for( let i = 0; i < 8; i++){
+		grid[i] = []
+		for( let j = 0; j < 8; j++){
+			grid[i][j] = ""
+		}	
+	}
+	
+	for( let i = 0; i < state.pieces.length; i++){
+		let data = state.pieces[i]
+		
+		if( data.position.onBoard){//TODO do right
+			grid[data.position.x][data.position.y] = data.name
+		}
+	}
+	
+	// console.log(grid)
+	// clear the canvas with the classic checkerboard pattern
+	for( let i = 0; i < 8; i++){
+		for( let j = 0; j < 8; j++){
+			if( (i + j) % 2 == 0){
+				drawing.fillStyle = "tan"
+			} else {
+				drawing.fillStyle = "brown"
+			}
+			drawing.fillRect( i * SQUARE_SIZE + margins.left, j * SQUARE_SIZE + margins.top, SQUARE_SIZE, SQUARE_SIZE)
+		}	
+	}
+	
+// 	// highlight the selected square, if needed
+// 	if( selectedSquare){
+// 		
+// 		drawing.fillStyle = "blue"
+// 		drawing.fillRect( selectedSquare.x * SQUARE_SIZE + margins.left, selectedSquare.y * SQUARE_SIZE + margins.top, SQUARE_SIZE, SQUARE_SIZE)
+// 		
+// 		// draw the icons marking where the piece can move to for all the places you are allowed to move to from here
+// 		
+// 		drawing.fillStyle = "grey"
+// 		
+// 		possibilities = getPossibilities(state)
+// 		
+// 		for( let i = 0; i < possibilities.length; i++){
+// 			let p = possibilities[i]
+// 			if( p.startLocX == selectedSquare.x && p.startLocY == selectedSquare.y ){
+// 				drawing.fillRect( p.endLocX * SQUARE_SIZE + margins.left + 5, p.endLocY * SQUARE_SIZE + margins.top + 5, SQUARE_SIZE - 10, SQUARE_SIZE - 10)
+// 			}
+// 		}
+// 	}
+	
+	// draw the pieces
+	drawing.fillStyle = "white"
+	for( let i = 0; i < 8; i++){
+		for( let j = 0; j < 8; j++){
+			drawing.fillText(grid[i][j], i * SQUARE_SIZE + margins.left, 7 * SQUARE_SIZE - j * SQUARE_SIZE + 15 + margins.top)
+		}	
+	}
+	// drawMarket(state)
+	
+	
+}
+
+
+
+
+/*
+It is possible that a lot of this code is still usable, but I commented it all out while switching from js to chesslang
+
+
+
 
 let selectedSquare = undefined
 // let isWhitesTurn = true
@@ -123,69 +189,6 @@ function onClickOuter( e){
 theCanvas.addEventListener( "click", onClickOuter)
 
 
-function drawBoard( state){
-	
-	// the state object is not the most easily useable format for the sake of being very flexible
-	// so, now, go through and generate the 8x8 grid we are used to from the state object
-	let grid = []
-	for( let i = 0; i < 8; i++){
-		grid[i] = []
-		for( let j = 0; j < 8; j++){
-			grid[i][j] = ""
-		}	
-	}
-	
-	for( let i = 0; i < state.piecePositions.length; i++){
-		let data = JSON.parse(state.piecePositions[i])
-		
-		if( data.onBoard){
-			grid[data.x][data.y] = RAW_PIECE_DATA[i].name
-		}
-	}
-	
-	// console.log(grid)
-	// clear the canvas with the classic checkerboard pattern
-	for( let i = 0; i < 8; i++){
-		for( let j = 0; j < 8; j++){
-			if( (i + j) % 2 == 0){
-				drawing.fillStyle = "tan"
-			} else {
-				drawing.fillStyle = "brown"
-			}
-			drawing.fillRect( i * SQUARE_SIZE + margins.left, j * SQUARE_SIZE + margins.top, SQUARE_SIZE, SQUARE_SIZE)
-		}	
-	}
-	
-	// highlight the selected square, if needed
-	if( selectedSquare){
-		
-		drawing.fillStyle = "blue"
-		drawing.fillRect( selectedSquare.x * SQUARE_SIZE + margins.left, selectedSquare.y * SQUARE_SIZE + margins.top, SQUARE_SIZE, SQUARE_SIZE)
-		
-		// draw the icons marking where the piece can move to for all the places you are allowed to move to from here
-		
-		drawing.fillStyle = "grey"
-		
-		possibilities = getPossibilities(state)
-		
-		for( let i = 0; i < possibilities.length; i++){
-			let p = possibilities[i]
-			if( p.startLocX == selectedSquare.x && p.startLocY == selectedSquare.y ){
-				drawing.fillRect( p.endLocX * SQUARE_SIZE + margins.left + 5, p.endLocY * SQUARE_SIZE + margins.top + 5, SQUARE_SIZE - 10, SQUARE_SIZE - 10)
-			}
-		}
-	}
-	
-	// draw the pieces
-	drawing.fillStyle = "white"
-	for( let i = 0; i < 8; i++){
-		for( let j = 0; j < 8; j++){
-			drawing.fillText(grid[i][j], i * SQUARE_SIZE + margins.left, j * SQUARE_SIZE + 15 + margins.top)
-		}	
-	}
-	drawMarket(state)
-	
-}
 
 
 

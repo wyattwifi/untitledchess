@@ -27,8 +27,9 @@ def main():
 	
 	
 	# print(getAllPiecesOnBoardOfCertainColorIDs(0))
+	let userID = 0
+	state["pieces"][idOfPieceToMove]["actionFunction"]( userID, idOfPieceToMove)
 	
-	pieceActions[idOfPieceToMove](0)
 	
 	# pieceActions[0](1)
 	
@@ -220,16 +221,6 @@ def whiteKingMove(a):
 	# doLeaperMove( 0, 0, 2, 1) #temporary, for development
 	
 
-def doActionOfPieceWithID0( userID ):
-	doLeaperMove( userID,0,1,0)
-def doActionOfPieceWithID1( userID ):
-	doLeaperMove( userID,1,1,0)
-def doActionOfPieceWithID2( userID ):
-	doLeaperMove( userID,2,1,0)
-def doActionOfPieceWithID3( userID ):
-	doLeaperMove( userID,3,1,0)
-def doActionOfPieceWithID4( userID ):
-	doLeaperMove( userID,4,1,0)
 
 def whiteKnightMove(a):
 	doLeaperMove( 0, 2, 2, 1)
@@ -267,8 +258,18 @@ def jumpForwardOne( piece):
 # 	doTurn()
 
 
-
-
+# 
+# 
+# def doActionOfPieceWithID0( userID, myPieceID ):
+# 	doLeaperMove( userID,myPieceID,1,0)
+# def doActionOfPieceWithID1( userID, myPieceID ):
+# 	doLeaperMove( userID,myPieceID,1,0)
+# def doActionOfPieceWithID2( userID, myPieceID ):
+# 	doLeaperMove( userID,myPieceID,1,0)
+# def doActionOfPieceWithID3( userID, myPieceID ):
+# 	doLeaperMove( userID,myPieceID,1,0)
+# def doActionOfPieceWithID4( userID, myPieceID ):
+# 	doLeaperMove( userID,myPieceID,1,0)
 
 
 

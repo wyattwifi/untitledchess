@@ -2,16 +2,24 @@
 
 
 
+
+
+//TODO for now the state variable has some (ideally but not in practice) read-only data, specifically the action names
+// this should be a pure function
 export function getStartingState(){
-	return {
+	let result = {
 		pieces:[
-			{name:"whiteKing", position:{onBoard:1, color:0, x:4, y:4}},
-			{name:"blackKing", position:{onBoard:1, color:1, x:0, y:7}},
-			{name:"Wazir", position:{onBoard:0, color:1, x:2, y:7}},
-			{name:"knight", position:{onBoard:1, color:0, x:3, y:7}},
+			{name:"whiteKing", position:{onBoard:1, color:0, x:4, y:4}, actionString: "doLeaperMove( userID,myPieceID,1,0)"},
+			{name:"blackKing", position:{onBoard:1, color:1, x:0, y:7}, actionString: "doLeaperMove( userID,myPieceID,1,0)"},
+			{name:"Wazir", position:{onBoard:0, color:1, x:2, y:7}, actionString: "doLeaperMove( userID,myPieceID,1,0)"},
+			{name:"knight", position:{onBoard:1, color:0, x:3, y:7}, actionString: "doLeaperMove( userID,myPieceID,2,1)"},
 		],
 		isItWhitesTurn:true,
 	}
+	for( let i = 0; i < result.pieces.length; i++){
+		result.pieces[i].actionFunction = "doActionOfPieceWithID" + i
+	}
+	return result
 }
 
 //STUFF ORIGINALLY FROM GETSTARTINGSTATE.JS

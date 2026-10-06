@@ -49,16 +49,6 @@ let BUILT_IN_API = [
 			throw new Error(message)
 		}
 	},
-	// {
-	// 	name:"getState",
-	// 	effect:function(){
-	// 		let result = []
-	// 		for( let i = 0; i < 100; i++){
-	// 			result.push({x:11,y:10})
-	// 		}
-	// 		return result
-	// 	}
-	// },
 	{
 		name:"setState", // this is easier for now than adding rval array setting
 		effect:function( newValue, ...indexes){
@@ -92,7 +82,6 @@ let BUILT_IN_API = [
 	{
 		name:"uiUpdateState",
 		effect:function(){
-			// console.log(globalStateVariable)
 			uiUpdateState(globalStateVariable)
 		}
 	},

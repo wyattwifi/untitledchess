@@ -14,30 +14,16 @@
 # locs are arrays of x, y
 
 def main():
-	# print(state["pieces"][0]["name"])
-	uiUpdateState(1)
-		
 	
-	# print( getUserChoiceOfArray( 0, createArray("a","b","c")))
-	
-	let pieceActions = createArray("doActionOfPieceWithID0", "doActionOfPieceWithID1","doActionOfPieceWithID2","doActionOfPieceWithID3")
-	
-	let idOfPieceToMove = getUserChoiceOfArray( 0, getAllPiecesOnBoardOfCertainColorIDs(0) )
-	
-	
-	
-	# print(getAllPiecesOnBoardOfCertainColorIDs(0))
-	let userID = 0
-	state["pieces"][idOfPieceToMove]["actionFunction"]( userID, idOfPieceToMove)
-	
-	
-	# pieceActions[0](1)
-	
-	# let a = whiteKingMove(1)
-	# let a = pieceActions[0](1)
 	uiUpdateState(1)
 	
-	# print(movePieceOneSpaceInDirection(createLoc(0,4),2))
+	simulateAllChoicesInFunction("doPlayerTurn", 0)
+	
+	
+	# doPlayerTurn(0)
+	
+	uiUpdateState(1)
+	
 	
 	
 
@@ -245,7 +231,13 @@ def jumpForwardOne( piece):
 		throwError("aaa")
 
 
-
+def doPlayerTurn(playerID):
+	
+	let idOfPieceToMove = getUserChoiceOfArray( playerID, getAllPiecesOnBoardOfCertainColorIDs(playerID) )
+	
+	state["pieces"][idOfPieceToMove]["actionFunction"]( playerID, idOfPieceToMove)
+	
+	uiUpdateState(1)
 
 # def doTurn():
 # 	simulateAllChoicesUpToTurnBoundary() # returns a tree. Each node can be a user choice that has one child node for each choice, a state node that may

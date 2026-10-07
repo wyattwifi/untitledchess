@@ -82,6 +82,7 @@ let BUILT_IN_API = [
 	{
 		name:"uiUpdateState",
 		effect:function(){
+			if( currentRunningUniverse.amIASim){return}
 			uiUpdateState(currentRunningUniverse.state)
 		}
 	},
@@ -94,12 +95,24 @@ let BUILT_IN_API = [
 			let a = new Universe( currentRunningUniverse.bytecode, structuredClone(currentRunningUniverse.state))
 			
 			currentSimThreads = [a]
+			a.idNum = Math.random()
 			a.jumpToFunction(functionToCall, parameters)
 			while(currentSimThreads.length > 0){
-				let t = currentSimThreads[currentSimThreads.length - 1]
-				t.runCourse()
-				results.push(t.state)
-				currentSimThreads.pop()
+				
+				let t = currentSimThreads[0]
+				
+				try{ // since it can throw for moving off the board or something - TODO do this better
+					t.runCourse()
+					
+					results.push(t.state)
+				} catch(e){
+					if(e.message != "Tried to move off of the board"){
+						throw e
+					}
+					results.push("err")
+				}
+				// remove the thread from the list of simThreads. We cannot just pop off the last one, since 
+				currentSimThreads.shift() //WARNING this might not work since running the thread can add new threads
 			}
 			console.log(results)
 			return results
@@ -115,12 +128,13 @@ let BUILT_IN_API = [
 				let copies = []
 				for( let i = 0; i < numOfOptions - 1; i++){
 					// let newThread = structuredClone(currentRunningUniverse)
-					let newThread = new Universe( currentRunningUniverse.bytecode, JSON.parse(JSON.stringify(currentRunningUniverse.state)))
-					newThread.stack = JSON.parse(JSON.stringify(currentRunningUniverse.stack))
+					let newThread = new Universe( currentRunningUniverse.bytecode, structuredClone(currentRunningUniverse.state))
+					newThread.stack = structuredClone(currentRunningUniverse.stack)
 					currentSimThreads.push(newThread)
 					// now we need to run the rest of the instruction, since it is not mid-instruction currently
 					let t = newThread // for easy typing
-					
+					t.idNum = Math.random()
+					// we need to do this current instruction now so it gets the correct return value of getUserChoice, instead of it not being run yet and being run again later, making an infinite loop
 					let thisFrame = t.stack[t.stack.length - 1]
 					let instruction = t.getBytecodeWrapperOfFunction( thisFrame.functionName).statements[ thisFrame.instructionPointer]
 					let localVars = thisFrame.localVariables
@@ -134,7 +148,7 @@ let BUILT_IN_API = [
 					}
 					
 				}
-				// simulate input
+				// simulate input - the original thread gets 0, the other threads get the other numbers
 				return 0
 			} 
 			if( numOfOptions <= 0){

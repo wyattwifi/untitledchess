@@ -10,6 +10,9 @@
 #TODO the parser currently doesnt support having no parameters, so there is a 1 passed to stuff
 #TODO apparently the FOR loops still reevalueates the condition thing each time
 
+#TODO assigning the state variable to something else does not currently actually change the state
+# state = choices[0] See above, this line doesnt work currently
+#instead do something like the following
 
 # locs are arrays of x, y
 
@@ -17,23 +20,36 @@ def main():
 	
 	uiUpdateState(1)
 	
-	let choices = simulateAllChoicesInFunction("doPlayerTurn", 0)
-	
-	let viableChoices = filterA( choices, "isNotErr")
-	uiHint(viableChoices)
-	
-	#TODO assigning the state variable to something else does not currently actually change the state
-	# state = choices[0] See above, this line doesnt work currently
-	#instead do something like the following
-	let choice = getUserChoice( 0, length(viableChoices))
-	assignArray(state, "pieces", viableChoices[choice]["pieces"])
-	
-	
-	
-	# doPlayerTurn(0)
-	
-	uiUpdateState(1)
-	
+	for i in range(1000):
+		
+		let choices = simulateAllChoicesInFunction("doPlayerTurn", 0)
+		
+		let viableChoices = filterA( choices, "isNotErr")
+		if length(viableChoices) == 0:
+			return "Black won"
+		uiHint(viableChoices)
+		
+		let choice = getUserChoice( 0, length(viableChoices))
+		assignArray(state, "pieces", viableChoices[choice]["pieces"])
+		
+		
+		uiUpdateState(1)
+		
+		
+		
+		let choices2 = simulateAllChoicesInFunction("doPlayerTurn", 1)
+		
+		let viableChoices2 = filterA( choices2, "isNotErr")
+		if length(viableChoices2) == 0:
+			return "White won"
+		uiHint(viableChoices2)
+		
+		let choice2 = getUserChoice( 1, length(viableChoices2))
+		assignArray(state, "pieces", viableChoices2[choice2]["pieces"])
+		
+		
+		uiUpdateState(1)
+		
 	
 
 
@@ -262,7 +278,23 @@ def doPlayerTurn(playerID):
 	
 	let idOfPieceToMove = getUserChoiceOfArray( playerID, getAllPiecesOnBoardOfCertainColorIDs(playerID) )
 	
+	
+	# UI hint stuff
+	let a = createEmptyArray(1)
+	let loc = getPieceLocation( idOfPieceToMove)
+	assignArray(a, "startLoc", createLoc(loc["x"],loc["y"])) #we need to do the create new loc thing because I think otherwise it is just pointing to the state loc, which may get overwritten
+	uiHint( a)
+	
 	state["pieces"][idOfPieceToMove]["actionFunction"]( playerID, idOfPieceToMove)
+	
+	
+	
+	# UI hint stuff
+	let b = createEmptyArray(1)
+	let loc = getPieceLocation( idOfPieceToMove)
+	assignArray(b, "endLoc", loc)
+	uiHint( b)
+	
 	
 	uiUpdateState(1)
 

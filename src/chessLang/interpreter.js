@@ -89,7 +89,18 @@ let BUILT_IN_API = [
 	{
 		name:"uiHint",
 		effect: async function(message){
-			if( currentRunningUniverse.amIASim){throw "err1029"}
+			if( currentRunningUniverse.amIASim){
+				// if it is a sim, this is the starting loc or ending loc of the move. This is helpful for a computer UI
+				if( message.startLoc){
+					currentRunningUniverse.state.startLoc = message.startLoc
+				} else if( message.endLoc){
+					currentRunningUniverse.state.endLoc = message.endLoc
+				} else {
+					throw "err1213243"
+				}
+				return
+			}
+			// otherwise, if it is not in a sim, it shows all the possible moves
 			uiHint(message)
 		}
 	},

@@ -22,43 +22,58 @@ window.addEventListener("load",()=>{
 
 let lastGottenHint
 export function uiHint( message){
+	// console.log(message)
 	lastGottenHint = message
 }
+
+
+// this returns an array of objects of the form {startLocX:int, startLocY: int, endLocX:int, endLocY: int}
+function getPossibilities(){
+	let result = []
+	for( let i = 0; i < lastGottenHint.length; i++){
+		result.push({startLocX:lastGottenHint[i].startLoc.x, startLocY: lastGottenHint[i].startLoc.y, endLocX:lastGottenHint[i].endLoc.x, endLocY: lastGottenHint[i].endLoc.y})
+	}
+	return result
+}
+
 
 
 export async function uiGetUserChoice( userID, numOfOptions){
 	
 	
-	await waitForInput()
-	
+	return await waitForInput()
+	/*
 	let result = Number(prompt("Player " + userID +": Make a choice 0 (inclusive) to " + numOfOptions + "(exclusive):"))
 	while( !(result >= 0 && result < numOfOptions) ){
 		result = Number(prompt("Try again to follow the instructions. Player " + userID +": Make a choice 0 (inclusive) to " + numOfOptions + "(exclusive):"))
 	}
-	return result
+	return result*/
 	
 }
 
 
-
-
+let inputResolver
+/*
 let b = document.createElement("button")
-document.body.appendChild(b)
+document.body.appendChild(b)*/
 function waitForInput() {
 	return new Promise(resolve => {
-		b.addEventListener("click", () => {
-			console.log("clicked")
-			resolve();
-		}, { once: true });
+		inputResolver = resolve
+		// b.addEventListener("click", () => {
+		// 	console.log("clicked")
+		// 	resolve();
+		// }, { once: true });
 	});
 }
 
 
 
-
+let lastGottenState
 
 //TODO update this to the new format
 export function uiUpdateState( state){
+	lastGottenState = state
+	
 	
 	console.log(JSON.stringify(state))
 	
@@ -93,25 +108,25 @@ export function uiUpdateState( state){
 		}	
 	}
 	
-// 	// highlight the selected square, if needed
-// 	if( selectedSquare){
-// 		
-// 		drawing.fillStyle = "blue"
-// 		drawing.fillRect( selectedSquare.x * SQUARE_SIZE + margins.left, selectedSquare.y * SQUARE_SIZE + margins.top, SQUARE_SIZE, SQUARE_SIZE)
-// 		
-// 		// draw the icons marking where the piece can move to for all the places you are allowed to move to from here
-// 		
-// 		drawing.fillStyle = "grey"
-// 		
-// 		possibilities = getPossibilities(state)
-// 		
-// 		for( let i = 0; i < possibilities.length; i++){
-// 			let p = possibilities[i]
-// 			if( p.startLocX == selectedSquare.x && p.startLocY == selectedSquare.y ){
-// 				drawing.fillRect( p.endLocX * SQUARE_SIZE + margins.left + 5, p.endLocY * SQUARE_SIZE + margins.top + 5, SQUARE_SIZE - 10, SQUARE_SIZE - 10)
-// 			}
-// 		}
-// 	}
+	// highlight the selected square, if needed
+	if( selectedSquare){
+		
+		drawing.fillStyle = "blue"
+		drawing.fillRect( selectedSquare.x * SQUARE_SIZE + margins.left, 7 * SQUARE_SIZE - selectedSquare.y * SQUARE_SIZE + margins.top, SQUARE_SIZE, SQUARE_SIZE)
+		
+		// draw the icons marking where the piece can move to for all the places you are allowed to move to from here
+		
+		drawing.fillStyle = "grey"
+		
+		possibilities = getPossibilities()
+		
+		for( let i = 0; i < possibilities.length; i++){
+			let p = possibilities[i]
+			if( p.startLocX == selectedSquare.x && p.startLocY == selectedSquare.y ){
+				drawing.fillRect( p.endLocX * SQUARE_SIZE + margins.left + 5, 7 * SQUARE_SIZE - p.endLocY * SQUARE_SIZE + margins.top + 5, SQUARE_SIZE - 10, SQUARE_SIZE - 10)
+			}
+		}
+	}
 	
 	// draw the pieces
 	drawing.fillStyle = "white"
@@ -128,8 +143,8 @@ export function uiUpdateState( state){
 
 
 
-/*
-It is possible that a lot of this code is still usable, but I commented it all out while switching from js to chesslang
+
+//It is possible that a lot of this code is still usable, but I commented it all out while switching from js to chesslang
 
 
 
@@ -150,23 +165,38 @@ function onClickInner( squareX, squareY){
 		
 		// see if it is a legal move to go from the selected square to the square that was just clicked
 		let isAllowed = false
-		possibilities = getPossibilities(state)
-		let theNewState = undefined
+		possibilities = getPossibilities()
 		
 		for( let i = 0; i < possibilities.length; i++){
 			let p = possibilities[i]
 			if( p.startLocX == selectedSquare.x && p.startLocY == selectedSquare.y && p.endLocX == squareX && p.endLocY == squareY){
 				isAllowed = true
-				theNewState = p.state
 				break
 			}
 		}
 		
 		if( isAllowed){
 			// it is a legal move
+			
+			// now that we know the start and end locs of the move, we need to look through the hint that we got most recently to see where it was in the list, so we know what choice number to return to the game engine
+			let resultChoiceNumber
+			for( let i = 0; i < lastGottenHint.length; i++){
+				if(
+					selectedSquare.x == lastGottenHint[i].startLoc.x &&
+					selectedSquare.y == lastGottenHint[i].startLoc.y &&
+					squareX == lastGottenHint[i].endLoc.x &&
+					squareY == lastGottenHint[i].endLoc.y
+				){
+					resultChoiceNumber = i
+					break
+					//TODO there can be multiple different choices, with different resulting states, all coming from the same start loc and end loc
+				}
+			}
+			
+			inputResolver( resultChoiceNumber)
+			
 			selectedSquare = undefined
-			state = theNewState
-			drawBoard(state)
+			
 		} else {
 			console.log("not allowed")
 		}
@@ -175,11 +205,11 @@ function onClickInner( squareX, squareY){
 		// is that something that is allowed to be selected?
 		
 		let isAllowed = false
-		possibilities = getPossibilities(state)
+		possibilities = getPossibilities()
 		
 		for( let i = 0; i < possibilities.length; i++){
 			let p = possibilities[i]
-			if( p.startLocX == squareX && p.startLocY == squareY){ //TODO make sure it is the color of the current player
+			if( p.startLocX == squareX && p.startLocY == squareY){
 				isAllowed = true
 				break
 			}
@@ -189,7 +219,7 @@ function onClickInner( squareX, squareY){
 		// console.log(possibilities)
 		if( isAllowed){
 			selectedSquare = {x:squareX,y:squareY}
-			drawBoard(state)
+			uiUpdateState(lastGottenState)
 		} else {
 			console.log("not allowed")
 		}
@@ -214,6 +244,9 @@ function onClickOuter( e){
 	y = Math.floor(y / SQUARE_SIZE)
 	
 	
+	// The chess game has y == 0 at the bottom, so we need to flip it
+	y = 7 - y
+	
 	// throw away out of bound clicks
 	if( x < 0 || x >= BOARD_SIZE_IN_SQUARES || y < 0 || y >= BOARD_SIZE_IN_SQUARES){
 		return
@@ -228,7 +261,7 @@ theCanvas.addEventListener( "click", onClickOuter)
 
 
 
-
+/*
 
 function drawMarket( state){
 	

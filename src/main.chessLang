@@ -17,7 +17,17 @@ def main():
 	
 	uiUpdateState(1)
 	
-	simulateAllChoicesInFunction("doPlayerTurn", 0)
+	let choices = simulateAllChoicesInFunction("doPlayerTurn", 0)
+	
+	let viableChoices = filterA( choices, "isNotErr")
+	uiHint(viableChoices)
+	
+	#TODO assigning the state variable to something else does not currently actually change the state
+	# state = choices[0] See above, this line doesnt work currently
+	#instead do something like the following
+	let choice = getUserChoice( 0, length(viableChoices))
+	assignArray(state, "pieces", viableChoices[choice]["pieces"])
+	
 	
 	
 	# doPlayerTurn(0)
@@ -25,7 +35,23 @@ def main():
 	uiUpdateState(1)
 	
 	
-	
+
+
+
+# WARNING for some unknown reason, using the name "filter" insetad of "filterA" makes it fail with an error
+def filterA( arrayIn, condition):
+	let newArray = createEmptyArray(1)
+	let i = 0
+	for item in arrayIn:
+		if condition(item):
+			assignArray( newArray, i, item)
+			i = i + 1
+	return newArray
+
+
+def isNotErr(thingToCheck):
+	return !(thingToCheck == "err")
+
 
 
 
@@ -73,6 +99,7 @@ def isLocOnBoard( loc):
 	return 1
 
 def getUserChoiceOfArray( userID, array):
+	# return array[0]
 	return array[getUserChoice( userID, length(array))]
 
 

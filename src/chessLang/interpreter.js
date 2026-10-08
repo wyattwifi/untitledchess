@@ -3,7 +3,7 @@
 import {InternalCompilerError} from "./parseChessLang.js"
 import {getStartingState} from "./getStartingState.js"
 
-import {uiUpdateState} from "./../ui.js"
+import {uiUpdateState, uiHint, uiGetUserChoice} from "./../ui.js"
 
 class ChessLangStandardLibraryError extends Error{
 	constructor(message){
@@ -87,6 +87,13 @@ let BUILT_IN_API = [
 		}
 	},
 	{
+		name:"uiHint",
+		effect:function(message){
+			if( currentRunningUniverse.amIASim){throw "err1029"}
+			uiHint(message)
+		}
+	},
+	{
 		name:"simulateAllChoicesInFunction",
 		effect:function( functionToCall, ...parameters){
 			
@@ -114,7 +121,7 @@ let BUILT_IN_API = [
 				// remove the thread from the list of simThreads. We cannot just pop off the last one, since 
 				currentSimThreads.shift() //WARNING this might not work since running the thread can add new threads
 			}
-			console.log(results)
+			
 			return results
 			//TODO get working
 		}
@@ -150,15 +157,11 @@ let BUILT_IN_API = [
 				}
 				// simulate input - the original thread gets 0, the other threads get the other numbers
 				return 0
-			} 
+			}
 			if( numOfOptions <= 0){
 				throw new ChessLangStandardLibraryError("That isn't much of a choice, is it?")
 			}
-			let result = Number(prompt("Player " + userID +": Make a choice 0 (inclusive) to " + numOfOptions + "(exclusive):"))
-			while( !(result >= 0 && result < numOfOptions) ){
-				result = Number(prompt("Try again to follow the instructions. Player " + userID +": Make a choice 0 (inclusive) to " + numOfOptions + "(exclusive):"))
-			}
-			return result
+			return uiGetUserChoice( userID, numOfOptions)
 		}
 	},
 ]

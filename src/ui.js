@@ -20,6 +20,42 @@ window.addEventListener("load",()=>{
 })
 
 
+let lastGottenHint
+export function uiHint( message){
+	lastGottenHint = message
+}
+
+
+export function uiGetUserChoice( userID, numOfOptions){
+	
+	
+	
+	
+	let result = Number(prompt("Player " + userID +": Make a choice 0 (inclusive) to " + numOfOptions + "(exclusive):"))
+	while( !(result >= 0 && result < numOfOptions) ){
+		result = Number(prompt("Try again to follow the instructions. Player " + userID +": Make a choice 0 (inclusive) to " + numOfOptions + "(exclusive):"))
+	}
+	return result
+	
+}
+
+
+
+
+let b = document.createElement("button")
+document.body.appendChild(b)
+ function waitForInput() {
+	return new Promise(resolve => {
+		b.addEventListener("click", () => {
+			resolve();
+		}, { once: true });
+	});
+}
+
+
+
+
+
 //TODO update this to the new format
 export function uiUpdateState( state){
 	

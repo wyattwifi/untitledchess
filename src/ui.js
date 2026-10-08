@@ -26,10 +26,10 @@ export function uiHint( message){
 }
 
 
-export function uiGetUserChoice( userID, numOfOptions){
+export async function uiGetUserChoice( userID, numOfOptions){
 	
 	
-	
+	await waitForInput()
 	
 	let result = Number(prompt("Player " + userID +": Make a choice 0 (inclusive) to " + numOfOptions + "(exclusive):"))
 	while( !(result >= 0 && result < numOfOptions) ){
@@ -44,9 +44,10 @@ export function uiGetUserChoice( userID, numOfOptions){
 
 let b = document.createElement("button")
 document.body.appendChild(b)
- function waitForInput() {
+function waitForInput() {
 	return new Promise(resolve => {
 		b.addEventListener("click", () => {
+			console.log("clicked")
 			resolve();
 		}, { once: true });
 	});

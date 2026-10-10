@@ -16,16 +16,25 @@
 
 # locs are arrays of x, y
 
+# TODO make it be so that the main function returning a string is how the game ends
+
 def main():
 	
 	uiUpdateState(1)
 	
-	for i in range(1000):
+	for i in range(9999):#TODO while loop wasnt working
+		
+		
+		#TODO I dont know why this check is needed, but without it it fails with an error
+		if length(getAllPiecesOnBoardOfCertainColorIDs(1)) == 0:
+			endGame("Black won")
+			return "Black won"
 		
 		let choices = simulateAllChoicesInFunction("doPlayerTurn", 0)
 		
 		let viableChoices = filterA( choices, "isNotErr")
 		if length(viableChoices) == 0:
+			endGame("Black won")
 			return "Black won"
 		uiHint(viableChoices)
 		
@@ -36,11 +45,15 @@ def main():
 		uiUpdateState(1)
 		
 		
+		if length(getAllPiecesOnBoardOfCertainColorIDs(1)) == 0:
+			endGame("White won")
+			return "White won"
 		
 		let choices2 = simulateAllChoicesInFunction("doPlayerTurn", 1)
 		
 		let viableChoices2 = filterA( choices2, "isNotErr")
 		if length(viableChoices2) == 0:
+			endGame("White won")
 			return "White won"
 		uiHint(viableChoices2)
 		
@@ -161,16 +174,34 @@ def doLeaperMove( userID, theMovingPieceId, firstAmount, secondAmount):
 				
 
 
-
+def getPiecesAtLoc( loc):
+	let result = createEmptyArray(1)
+	let i = 0
+	let j = 0
+	for piece in state["pieces"]:
+		if piece["position"]["onBoard"]:
+			if piece["position"]["x"] == loc["x"] & piece["position"]["y"] == loc["y"]:
+				assignArray( result, i, j)
+				i = i + 1
+		j = j + 1
+	return result
 
 
 def movePiece( theMovingPieceId, newLocation):
-	# the old position still has the correct onBoard and color properties, so we need to copy those over
-	let oldPosition = state["pieces"][theMovingPieceId]["position"]
+	
+	#TODO do this better
+	# see if there is another piece there already and, if so, capture it
+	let piecesIDsToCapture = getPiecesAtLoc( newLocation)
+	for theID in piecesIDsToCapture:
+		assignArray(state["pieces"][theID]["position"], "onBoard", 0)
+	
+	
+	# the old position still has the correct onBoard and color properties, so we need to not overwrite those
 	assignArray(state["pieces"][theMovingPieceId]["position"], "x", newLocation["x"])
 	assignArray(state["pieces"][theMovingPieceId]["position"], "y", newLocation["y"])
-	# setState( newLocation, "pieces", theMovingPieceId, "position")
-
+	
+	
+	
 
 
 
@@ -212,35 +243,8 @@ def getLocOneSpaceInDirection( startingLoc, direction):
 
 
 
-
-# 
-# 
-# def movePieceOneSpaceInDirection( pieceLoc, direction):
-# 	let newLoc = "placeholder"
-# 	if direction == 0:
-# 		newLoc = createLoc( pieceLoc["x"] + 0, pieceLoc["y"] + 1)
-# 	if direction == 1:
-# 		newLoc = createLoc( pieceLoc["x"] + 1, pieceLoc["y"] + 0)
-# 	if direction == 2:
-# 		newLoc = createLoc( pieceLoc["x"] + 0, pieceLoc["y"] - 1)
-# 	if direction == 3:
-# 		newLoc = createLoc( pieceLoc["x"] - 1, pieceLoc["y"] + 0)
-# 	# if direction == 0:
-# 	# 	newLoc = createLoc( pieceLoc["x"] + 1, pieceLoc["y"] + 1)
-# 	# if direction == 0:
-# 	# 	newLoc = createLoc( pieceLoc["x"] + 1, pieceLoc["y"] + 1)
-# 	# if direction == 0:
-# 	# 	newLoc = createLoc( pieceLoc["x"] + 1, pieceLoc["y"] + 1)
-# 	# if direction == 0:
-# 	# 	newLoc = createLoc( pieceLoc["x"] + 1, pieceLoc["y"] + 1)
-# 	if !isLocOnBoard( newLoc):
-# 		throwError("Tried to move off of the board")
-# 	return newLoc
-# 	# throwError("not a valid direction")
-
-
 def whiteKingMove(a):
-	# setState( 1 + state["pieces"][0]["position"]["y"], "pieces", 0, "position", "y")
+	
 	let choice = getUserChoice( 0, 2)
 	
 	if choice:
@@ -298,29 +302,6 @@ def doPlayerTurn(playerID):
 	
 	uiUpdateState(1)
 
-# def doTurn():
-# 	simulateAllChoicesUpToTurnBoundary() # returns a tree. Each node can be a user choice that has one child node for each choice, a state node that may
-# 	uiUpdateState() # takes the current state variable and prints it to the console
-# 	#TODO there is not a thing stopping it, it just infitite loops currently
-# 	doTurn()
-# 
-# 
-# def main():
-# 	doTurn()
-
-
-# 
-# 
-# def doActionOfPieceWithID0( userID, myPieceID ):
-# 	doLeaperMove( userID,myPieceID,1,0)
-# def doActionOfPieceWithID1( userID, myPieceID ):
-# 	doLeaperMove( userID,myPieceID,1,0)
-# def doActionOfPieceWithID2( userID, myPieceID ):
-# 	doLeaperMove( userID,myPieceID,1,0)
-# def doActionOfPieceWithID3( userID, myPieceID ):
-# 	doLeaperMove( userID,myPieceID,1,0)
-# def doActionOfPieceWithID4( userID, myPieceID ):
-# 	doLeaperMove( userID,myPieceID,1,0)
 
 
 

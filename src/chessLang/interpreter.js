@@ -50,21 +50,18 @@ let BUILT_IN_API = [
 		}
 	},
 	{
-		name:"setState", // this is easier for now than adding rval array setting
-		effect: async function( newValue, ...indexes){
-			// this is passed as parameters the indexes to get the part to set
-			let finalArray = globalStateVariable
-			for( let i = 0; i < indexes.length - 1; i++){
-				finalArray = finalArray[indexes[i]]
-			}
-			let finalIndex = indexes[indexes.length - 1]
-			finalArray[finalIndex] = newValue
-		}
-	},
-	{
 		name:"createArray",
 		effect: async function( ...values){
 			return values
+		}
+	},
+	{
+		name:"endGame",
+		effect: async function( message){
+			console.log(message)
+			let p = document.createElement("p")
+			p.innerHTML = message
+			document.body.appendChild(p)
 		}
 	},
 	{
@@ -274,6 +271,8 @@ class Universe{
 					let indexVariableName = instruction.index
 					let indexValue = localVars[indexVariableName]
 					let theArrayItself = localVars[instruction.nameOfVarHoldingArray]
+					
+					
 					localVars[instruction.lval] = theArrayItself[indexValue]
 					thisFrame.instructionPointer++
 					break}

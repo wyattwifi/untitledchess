@@ -75,7 +75,7 @@ export function uiUpdateState( state){
 	lastGottenState = state
 	
 	
-	console.log(JSON.stringify(state))
+	// console.log(JSON.stringify(state))
 	
 	// the state object is not the most easily useable format for the sake of being very flexible
 	// so, now, go through and generate the 8x8 grid we are used to from the state object
@@ -84,14 +84,23 @@ export function uiUpdateState( state){
 		grid[i] = []
 		for( let j = 0; j < 8; j++){
 			grid[i][j] = ""
-		}	
+		}
+	}
+	
+	let gridColors = []
+	for( let i = 0; i < 8; i++){
+		gridColors[i] = []
+		for( let j = 0; j < 8; j++){
+			gridColors[i][j] = ""
+		}
 	}
 	
 	for( let i = 0; i < state.pieces.length; i++){
 		let data = state.pieces[i]
 		
-		if( data.position.onBoard){//TODO do right
+		if( data.position.onBoard){
 			grid[data.position.x][data.position.y] = data.name
+			gridColors[data.position.x][data.position.y] = data.position.color
 		}
 	}
 	
@@ -129,9 +138,14 @@ export function uiUpdateState( state){
 	}
 	
 	// draw the pieces
-	drawing.fillStyle = "white"
 	for( let i = 0; i < 8; i++){
 		for( let j = 0; j < 8; j++){
+			
+			if( gridColors[i][j]){
+				drawing.fillStyle = "black"
+			} else {
+				drawing.fillStyle = "white"
+			}
 			drawing.fillText(grid[i][j], i * SQUARE_SIZE + margins.left, 7 * SQUARE_SIZE - j * SQUARE_SIZE + 15 + margins.top)
 		}	
 	}

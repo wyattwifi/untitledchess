@@ -2,18 +2,29 @@
 
 
 
+// The base of the piece information is saved in the file "piece-data.js". That file started out as a JSON file, but it no longer is one because I wanted to have multiline strings in it. This file loads that file data and then puts it into the format that the rest of the code uses
+import {rawPieceData} from "../piece-data.js"
 
 
 //TODO for now the state variable has some (ideally but not in practice) read-only data, specifically the action names
 // this should be a pure function
 export function getStartingState(){
+	
+	
+	let resultPieces = []
+	for( let i= 0; i < rawPieceData.length; i++){
+		let rawPiece = rawPieceData[i]
+		resultPieces.push({ name:rawPiece.name, position:{onBoard:1, color:Math.floor(Math.random()*2), x:i % 8, y:Math.floor(i/8)}, actionString:rawPiece.action})
+	}
+	
 	let result = {
-		pieces:[
-			{name:"whiteKing", position:{onBoard:1, color:0, x:4, y:4}, actionString: "doLeaperMove( userID,myPieceID,1,0)"},
-			{name:"blackKing", position:{onBoard:1, color:1, x:0, y:7}, actionString: "doLeaperMove( userID,myPieceID,1,0)"},
-			{name:"Wazir", position:{onBoard:0, color:1, x:2, y:7}, actionString: "doLeaperMove( userID,myPieceID,1,0)"},
-			{name:"knight", position:{onBoard:1, color:0, x:3, y:7}, actionString: "doLeaperMove( userID,myPieceID,2,1)"},
-		],
+		// pieces:[
+		// 	{name:"whiteKing", position:{onBoard:1, color:0, x:4, y:4}, actionString: "doLeaperMove( userID,myPieceID,1,0)"},
+		// 	{name:"blackKing", position:{onBoard:1, color:1, x:0, y:7}, actionString: "doLeaperMove( userID,myPieceID,1,0)"},
+		// 	{name:"Wazir", position:{onBoard:0, color:1, x:2, y:7}, actionString: "doLeaperMove( userID,myPieceID,1,0)"},
+		// 	{name:"knight", position:{onBoard:1, color:0, x:3, y:7}, actionString: "doLeaperMove( userID,myPieceID,2,1)"},
+		// ],
+		pieces:resultPieces,
 		isItWhitesTurn:true,
 	}
 	for( let i = 0; i < result.pieces.length; i++){
@@ -108,176 +119,6 @@ function getStartingState(){
 
 
 
-//STUFF ORIGINALLY FROM INDEX.HTML
-
-/*
-const CONGLOMERATE_STARTING_STATE = `
-
-MISC_GETS_PUT_HERE
-UTILS_GETS_PUT_HERE
-PIECE_DATA_GETS_PUT_HERE
-
-
-`
-
-// takes state
-// returns state or a string of the ending result of the game
-function overarchingConstantFunctionNewTest( state){
-	
-	{
-		
-		STATE_STUFFbreak_GETS_PUT_HERE
-		MISC_GETS_breakPUT_HERE
-		UTILS_GETS_PUTbreak_HERE
-		PIECE_DATA_GETS_PUTbreak_HERE
-		
-		for( let i = 0; i < RAW_PIECE_DATA.length; i++){
-			RAW_PIECE_DATA[i].effect
-		}
-		
-		let possibilities = []
-		for( let i = 0; i < state.piecePositions.length; i++){
-			if( isPieceOnBoard(i, state)){
-				console.log()
-				let loc = pieceIDToLoc( i, state)
-				possibilities.push( ...eval("(function(){return RAW_PIECE_DATA[i].action})()"))
-			}
-		}
-		console.log(possibilities)
-		
-		
-		}
-		
-	}
-	
-	let codeToRun ="{" + CONGLOMERATE_STARTING_STATE + ";"
-	
-	codeToRun += "let state = " + JSON.stringify(state) + ";"
-	
-	
-	codeToRun += `
-	for( let i = 0; i < RAW_PIECE_DATA.length; i++){
-		eval(RAW_PIECE_DATA[i].effect)
-	}
-	
-	let possibilities = []
-	for( let i = 0; i < state.piecePositions.length; i++){
-		if( isPieceOnBoard(i, state)){
-			console.log()
-			let loc = pieceIDToLoc( i, state)
-			possibilities.push( ...eval("(function(){return RAW_PIECE_DATA[i].action})()"))
-// 			console.log( eval("(function(){return "+RAW_PIECE_DATA[i].action + "})()"))
-		}
-	}
-	console.log(possibilities)
-	
-	
-	}
-	`
-	
-// 	new Function(codeToRun)()
-	console.log(eval(codeToRun))
-	
-	
-	if(Math.random() < 1/6){
-		return "Stalemate"
-	}
-	
-	return state
-	
-}
-
-
-// takes state
-// returns all the possible states, but a bit more too. It returns an array of {state,startLocX,startLocY, endLocX, endLocY}. The start and end locs are so the UI can know where the person clicks to make that happen
-function overarchingConstantFunction( state){
-	
-	
-	let codeToRun ="(function(){" + CONGLOMERATE_STARTING_STATE + ";"
-	
-	codeToRun += "let state = " + JSON.stringify(state) + ";"
-	
-	
-	codeToRun += `
-	let scope = getDefaultScope()
-	
-	scope = applyEffects(scope)
-	
-	
-	let possibilities = []
-	for( let i = 0; i < state.piecePositions.length; i++){
-		if( scope.isPieceOnBoard( scope, state, i)){
-			
-			let loc = scope.pieceIDToLoc( scope, state, i)
-			possibilities.push( ...eval(RAW_PIECE_DATA[i].action))
-			
-		}
-	}
-	
-	return possibilities
-	})()
-	`
-	
-	possibilities = eval(codeToRun)
-	
-	
-	
-	return possibilities
-	
-}
-
-
-// MAIN THING
-
-let state = getStartingState()
-/*
-
-while(true){
-	let possibilities = overarchingConstantFunction(state)
-	let result = possibilities[0].state
-	if( result.piecePositions ){ // check if it returned a state
-		state = result
-		printState( state)
-	} else {
-		printResult( result)
-		break
-	}
-}* /
-
-let getPossibilities = overarchingConstantFunction
-
-function printState( state){
-	let grid = []
-	for( let i = 0; i < 8; i++){
-		grid[i] = []
-		for( let j = 0; j < 8; j++){
-			grid[i][j] = ""
-		}	
-	}
-	
-	for( let i = 0; i < state.piecePositions.length; i++){
-		let data = JSON.parse(state.piecePositions[i])
-		
-		if( data.onBoard){
-			grid[data.x][data.y] = RAW_PIECE_DATA[i].name
-		}
-	}
-	console.log(grid)
-}
-
-function printResult( state){
-	console.log(state)
-}
-*/
-
-
-
-
-//ORIGINAL CONTENTS OF UTILS.JS
-/*
-function deepCopy( obj){
-	return JSON.parse(JSON.stringify(obj))
-}*/
 
 
 

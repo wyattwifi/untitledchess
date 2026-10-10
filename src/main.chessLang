@@ -18,6 +18,8 @@
 
 # TODO make it be so that the main function returning a string is how the game ends
 
+#TODO leaper move doesnt check to make sure that spaces along the path are empty. Instead, it just captures them
+
 def main():
 	
 	uiUpdateState(1)

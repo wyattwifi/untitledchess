@@ -18,12 +18,6 @@ export function getStartingState(){
 	}
 	
 	let result = {
-		// pieces:[
-		// 	{name:"whiteKing", position:{onBoard:1, color:0, x:4, y:4}, actionString: "doLeaperMove( userID,myPieceID,1,0)"},
-		// 	{name:"blackKing", position:{onBoard:1, color:1, x:0, y:7}, actionString: "doLeaperMove( userID,myPieceID,1,0)"},
-		// 	{name:"Wazir", position:{onBoard:0, color:1, x:2, y:7}, actionString: "doLeaperMove( userID,myPieceID,1,0)"},
-		// 	{name:"knight", position:{onBoard:1, color:0, x:3, y:7}, actionString: "doLeaperMove( userID,myPieceID,2,1)"},
-		// ],
 		pieces:resultPieces,
 		isItWhitesTurn:true,
 	}
@@ -55,9 +49,6 @@ function getStartingState(){
 	
 	
 	
-	function deepCopy( obj){
-		return JSON.parse(JSON.stringify(obj))
-	}
 	
 	
 	// now, the 2 kings start on the board an all the rest of the cards start in the deck. 0 will be the bottom card of the deck. The last 8 cards in the deck will still be counted as in the deck but will actually be part of the market. TODO The code needs updated to reflect these things

@@ -157,6 +157,14 @@ def doLeaperMove( userID, theMovingPieceId, firstAmount, secondAmount):
 		let location = getPieceLocation( theMovingPieceId)
 		let newLocation = getLocOneSpaceInDirection( location, firstDirection)
 		
+		# if !isLocationEmpty( newLocation):#TODO what if it is being blocked by itself, or what if this is the last space in the path
+		# 	# a piece is there. The only way this can move there is if that piece is itself, or if 
+		# 	throwError("err")
+		
+		
+		# TODO do this better
+		if i == firstAmount - 1 & secondAmount == 0: #if it is the last square
+			captureAllPiecesAtLoc(newLocation)
 		
 		movePiece( theMovingPieceId, newLocation)
 			
@@ -167,7 +175,15 @@ def doLeaperMove( userID, theMovingPieceId, firstAmount, secondAmount):
 # 		if !isLocationEmpty( newLocation):#TODO what if it is being blocked by itself
 # 			# a piece is there. The only way this can move there is if that piece is itself, or if 
 # 			throwError()
-# 			
+# 		
+		# TODO make sure there is not a friendly piece there that should not be jumped on
+		
+		
+		# TODO do this better
+		if unused == secondAmount - 1: #if it is the last square
+			captureAllPiecesAtLoc(newLocation)
+		
+		
 		movePiece( theMovingPieceId, newLocation)
 					
 					
@@ -192,10 +208,6 @@ def getPiecesAtLoc( loc):
 def movePiece( theMovingPieceId, newLocation):
 	
 	#TODO do this better
-	# see if there is another piece there already and, if so, capture it
-	let piecesIDsToCapture = getPiecesAtLoc( newLocation)
-	for theID in piecesIDsToCapture:
-		assignArray(state["pieces"][theID]["position"], "onBoard", 0)
 	
 	
 	# the old position still has the correct onBoard and color properties, so we need to not overwrite those
@@ -206,7 +218,11 @@ def movePiece( theMovingPieceId, newLocation):
 	
 
 
-
+def captureAllPiecesAtLoc( loc):
+	let piecesIDsToCapture = getPiecesAtLoc( loc)
+	for theID in piecesIDsToCapture:
+		assignArray(state["pieces"][theID]["position"], "onBoard", 0)
+	
 
 
 
@@ -241,27 +257,7 @@ def getLocOneSpaceInDirection( startingLoc, direction):
 
 
 
-
-
-
-
-def whiteKingMove(a):
-	
-	let choice = getUserChoice( 0, 2)
-	
-	if choice:
-		return doLeaperMove( 0, 0, 1, 0)
-	if !choice:
-		return doLeaperMove( 0, 0, 1, 1)
-	# doLeaperMove( 0, 0, 2, 1) #temporary, for development
-	
-
-
-def whiteKnightMove(a):
-	doLeaperMove( 0, 2, 2, 1)
-
-
-def canPieceMoveThroughLocation( piece, location):
+# def canPieceMoveThroughLocation( piece, location):
 
 
 def getForwardDirection( piece):

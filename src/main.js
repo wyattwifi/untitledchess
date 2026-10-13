@@ -7,6 +7,8 @@ import {getStartingState} from "./chessLang/getStartingState.js"
 
 // some program written in chessLang
 import sampleChesslangCode from "./main.chessLang?raw"
+import piecesChesslangCode from "./pieces.chessLang?raw"
+import utilChesslangCode from "./util.chessLang?raw"
 
 
 let actionFunctionsString = ""
@@ -22,7 +24,7 @@ for( let i = 0; i < state.pieces.length; i++){
 	actionFunctionsString = actionFunctionsString + "def doActionOfPieceWithID" + i + "( userID, myPieceID ):\n" + newString + "\n"
 }
 
-let totalChessCodeString = sampleChesslangCode + "\n" + actionFunctionsString
+let totalChessCodeString = sampleChesslangCode + "\n" + actionFunctionsString + "\n" + piecesChesslangCode + "\n" + utilChesslangCode
 
 
 runChessCode(compileChessCode(totalChessCodeString))

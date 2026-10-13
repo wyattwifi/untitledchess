@@ -16,13 +16,13 @@ theCanvas.height = SQUARE_SIZE * BOARD_SIZE_IN_SQUARES + margins.top + margins.b
 let drawing = theCanvas.getContext("2d")
 window.addEventListener("load",()=>{
 	document.body.appendChild( theCanvas)
-	// drawBoard(state)
 })
 
 
 let lastGottenHint
 export function uiHint( message){
-	// console.log(message)
+	console.warn("depricated")
+	// For now, it is always an array of possible board states
 	lastGottenHint = message
 }
 
@@ -38,8 +38,9 @@ function getPossibilities(){
 
 
 
-export async function uiGetUserChoice( userID, numOfOptions){
+export async function uiGetUserChoice( userID, numOfOptions, explanationOfOptions){
 	
+	lastGottenHint = explanationOfOptions
 	
 	return await waitForInput()
 	
@@ -232,34 +233,48 @@ function onClickInner( squareX, squareY){
 }
 
 // this is the direct callback of the onClick event on the canvas. It gets things ready for onClickInner. It converts screen pixel coordinates to game square coorditates
-function onClickOuter( e){
+
+/*
+ * Handles mouse clicks, touchscreen taps, and stylus input.
+ * Converts screen coordinates into chessboard coordinates.
+ */
+function onClickOuter(e){
+	// Prevent touch gestures such as scrolling while interacting with the board.
+	e.preventDefault()
 	
-	const rect = theCanvas.getBoundingClientRect();
-	let x = event.clientX - rect.left;
-	let y = event.clientY - rect.top;
+	const rect = theCanvas.getBoundingClientRect()
 	
-	//account for the margin
+	// Convert displayed screen coordinates into canvas pixel coordinates.
+	let x = (e.clientX - rect.left) * (theCanvas.width / rect.width)
+	let y = (e.clientY - rect.top) * (theCanvas.height / rect.height)
+	
+	// Account for the margins.
 	x -= margins.left
 	y -= margins.top
 	
-	// change the scale, take off the fraction part and make it an int at the same time
+	// Convert pixels into square coordinates.
 	x = Math.floor(x / SQUARE_SIZE)
 	y = Math.floor(y / SQUARE_SIZE)
 	
-	
-	// The chess game has y == 0 at the bottom, so we need to flip it
+	// The chess game has y == 0 at the bottom, so flip the y-coordinate.
 	y = 7 - y
 	
-	// throw away out of bound clicks
-	if( x < 0 || x >= BOARD_SIZE_IN_SQUARES || y < 0 || y >= BOARD_SIZE_IN_SQUARES){
+	// Ignore input outside the board (including the market).
+	if(
+		x < 0 ||
+		x >= BOARD_SIZE_IN_SQUARES ||
+		y < 0 ||
+		y >= BOARD_SIZE_IN_SQUARES
+	){
 		return
 	}
 	
-	// now, finally, call the function that this wraps
-	onClickInner( x, y)
-	
+	onClickInner(x, y)
 }
-theCanvas.addEventListener( "click", onClickOuter)
+
+// Pointer Events support touchscreen, mouse, and stylus.
+theCanvas.style.touchAction = "none"
+theCanvas.addEventListener("pointerdown", onClickOuter)
 
 
 

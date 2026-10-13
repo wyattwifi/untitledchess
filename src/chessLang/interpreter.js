@@ -136,7 +136,9 @@ let BUILT_IN_API = [
 	},
 	{
 		name:"getUserChoice",
-		effect:async function( userID, numOfOptions){
+		effect:async function( userID, title, explanationOfOptions){
+			
+			let numOfOptions = explanationOfOptions.length
 			
 			if( currentRunningUniverse.amIASim){
 				
@@ -169,7 +171,7 @@ let BUILT_IN_API = [
 			if( numOfOptions <= 0){
 				throw new ChessLangStandardLibraryError("That isn't much of a choice, is it?")
 			}
-			return await uiGetUserChoice( userID, numOfOptions)
+			return await uiGetUserChoice( userID, numOfOptions, explanationOfOptions)
 		}
 	},
 ]
@@ -221,8 +223,8 @@ class Universe{
 		let a = this.getBytecodeWrapperOfFunction( functionName)
 		
 		if( parameterValues.length != a.paramNames.length){ // check to see that it has the expected number of parameters
-			console.log(stack)
-			console.log(bytecode)
+			console.log(this.stack)
+			console.log(this.bytecode)
 			throw new Error("passed wrong number of parameters to a function. The function you tried to call is " + functionName + " with parameters " + parameterValues)
 		}
 		

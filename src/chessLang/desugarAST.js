@@ -10,7 +10,6 @@ import {getNewUniqueIdentifier} from "./astToBytecode.js"
 
 export function desugarAST( ast){
 	// currently all this does is replace FOR loops with WHILE loops
-	desugarFuncallsAndArrayLookups( ast)
 	return desugarForLoops(ast)
 }
 
@@ -21,52 +20,13 @@ export function desugarAST( ast){
 
 
 
-/*
-this takes all expression operations of the form (for example and handy reference):
-{
-	"op": "funcallOrArrayAccess",
-	"contents": {
-		"type": "arrayOrFncall",
-		"firstName": "state",
-		"callChain": [
-			{
-				"type": "arrayLookup",
-				"index": {
-					"op": "stringLiteral",
-					"contents": "pieces"
-				}
-			},
-			{
-				"type": "functionCall",
-				"args": []
-			}
-		]
-	}
-}
-
-and turns them into
-
-
-
-
-
-*/
-
-
-function desugarFuncallsAndArrayLookups( ast){
-	
-	
-	
-	
-	
-}
-
-
 
 function desugarForLoops( ast){
 	
 	for( let functionDeclaration of ast){
 		desugarForLoopsOfStatementArray( functionDeclaration.statements)
+		
+		// that takes care of all the for loops at the lowest level of the function body and other layers too
 	}
 	//TODO also needs to do parts not on the lowest level
 	return ast
@@ -149,7 +109,16 @@ function desugarForLoopsOfStatementArray( arrayOfStatements){
 			arrayOfStatements.splice( i, 0, declarationStatement2)
 			i++ // to account for the new element
 			
-			
+		}
+		// now, we need to take care of non-lowest-level statements too
+		if( arrayOfStatements[i].type == "if"){
+			desugarForLoopsOfStatementArray( arrayOfStatements[i].contents)
+		}
+		if( arrayOfStatements[i].type == "for"){
+			desugarForLoopsOfStatementArray( arrayOfStatements[i].contents)
+		}
+		if( arrayOfStatements[i].type == "while"){
+			desugarForLoopsOfStatementArray( arrayOfStatements[i].contents)
 		}
 	}
 	

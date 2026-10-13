@@ -42,27 +42,15 @@ export async function uiGetUserChoice( userID, numOfOptions){
 	
 	
 	return await waitForInput()
-	/*
-	let result = Number(prompt("Player " + userID +": Make a choice 0 (inclusive) to " + numOfOptions + "(exclusive):"))
-	while( !(result >= 0 && result < numOfOptions) ){
-		result = Number(prompt("Try again to follow the instructions. Player " + userID +": Make a choice 0 (inclusive) to " + numOfOptions + "(exclusive):"))
-	}
-	return result*/
 	
 }
 
 
 let inputResolver
-/*
-let b = document.createElement("button")
-document.body.appendChild(b)*/
+
 function waitForInput() {
 	return new Promise(resolve => {
 		inputResolver = resolve
-		// b.addEventListener("click", () => {
-		// 	console.log("clicked")
-		// 	resolve();
-		// }, { once: true });
 	});
 }
 
@@ -149,7 +137,8 @@ export function uiUpdateState( state){
 			drawing.fillText(grid[i][j], i * SQUARE_SIZE + margins.left, 7 * SQUARE_SIZE - j * SQUARE_SIZE + 15 + margins.top)
 		}	
 	}
-	// drawMarket(state)
+	
+	drawMarket(state)
 	
 	
 }
@@ -275,17 +264,17 @@ theCanvas.addEventListener( "click", onClickOuter)
 
 
 
-/*
+
 
 function drawMarket( state){
 	
 	let market = []
 	
-	for( let i = 0; i < state.piecePositions.length; i++){
-		let data = JSON.parse(state.piecePositions[i])
+	for( let i = 0; i < state.pieces.length; i++){
+		let data = state.pieces[i].position
 		
-		if( data.marketPosition !== undefined){ // it can be 0
-			market[data.marketPosition] = RAW_PIECE_DATA[i]
+		if( data.stackPosition !== undefined){ // it can be 0
+			market[data.stackPosition] = state.pieces[i]
 		}
 	}
 	
@@ -296,10 +285,10 @@ function drawMarket( state){
 	// draw the pieces
 	drawing.fillStyle = "white"
 	for( let i = 0; i < market.length; i++){
-			drawing.fillText(market[i].name + market[i].cost, MARKET_LOCATION.x, MARKET_LOCATION.y + 20 * i + 20)
+			drawing.fillText(market[i].name + ", cost " + market[i].cost, MARKET_LOCATION.x, MARKET_LOCATION.y + 20 * i + 20)
 	}
 	
 }
 
-*/
+
 

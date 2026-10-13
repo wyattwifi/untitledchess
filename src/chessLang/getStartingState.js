@@ -11,11 +11,72 @@ import {rawPieceData} from "../piece-data.js"
 export function getStartingState(){
 	
 	
-	let resultPieces = []
-	for( let i= 0; i < rawPieceData.length; i++){
-		let rawPiece = rawPieceData[i]
-		resultPieces.push({ name:rawPiece.name, position:{onBoard:1, color:Math.floor(Math.random()*2), x:i % 8, y:Math.floor(i/8)}, actionString:rawPiece.action})
+	
+	
+	// now, the 2 kings start on the board an all the rest of the cards start in the deck. 0 will be the bottom card of the deck. The last 8 cards in the deck will still be counted as in the deck but will actually be part of the market. TODO The code needs updated to reflect these things
+	
+	
+	
+	function shuffle(array) {
+		let currentIndex = array.length;
+		
+		// While there remain elements to shuffle...
+		while (currentIndex != 0) {
+			
+			// Pick a remaining element...
+			let randomIndex = Math.floor(Math.random() * currentIndex);
+			currentIndex--;
+			
+			// And swap it with the current element.
+			[array[currentIndex], array[randomIndex]] = [
+				array[randomIndex], array[currentIndex]];
+		}
 	}
+	
+	const NUMBER_OF_KINGS = 2 // for the 2 players
+	const NUM_OF_PIECES_OTHER_THAN_THE_TWO_KINGS = rawPieceData.length - NUMBER_OF_KINGS
+	
+	let positions = []
+	for( let i = 0; i < NUM_OF_PIECES_OTHER_THAN_THE_TWO_KINGS; i++){
+		positions[i] = i
+	}
+	
+	shuffle( positions)
+	
+	let resultPositions = []
+	const MARKET_SIZE = 2
+	for( let i = 0; i < NUM_OF_PIECES_OTHER_THAN_THE_TWO_KINGS; i++){
+		let position = positions[i]
+		// the [i + 2] is because the kings are at the first
+		if( position >= NUM_OF_PIECES_OTHER_THAN_THE_TWO_KINGS - MARKET_SIZE){
+			resultPositions[i + NUMBER_OF_KINGS] = {stackPosition:position - (NUM_OF_PIECES_OTHER_THAN_THE_TWO_KINGS - MARKET_SIZE)}
+		} else {
+			resultPositions[i + NUMBER_OF_KINGS] = {stackPosition:position}
+		}
+		
+	}
+	
+	// now all the other pieces are taken care of, take care of the kings
+	resultPositions[0] = {onBoard:1, x:0, y:0, color:0}
+	resultPositions[1] = {onBoard:1, x:0, y:7, color:1}
+	
+	
+	
+	
+	
+	
+	
+	
+	let resultPieces = []
+	for( let i = 0; i < rawPieceData.length; i++){
+		let rawPiece = rawPieceData[i]
+		resultPieces.push({ name:rawPiece.name, position:resultPositions[i], actionString:rawPiece.action, cost:rawPiece.cost})
+	}
+	
+	
+	
+	
+	
 	
 	let result = {
 		pieces:resultPieces,
@@ -131,9 +192,6 @@ This stuff is from the JS version instead of the chesslang version, so I think i
 function getDefaultScope(){
 	
 	return {
-		getTheFourPerpendicularDirs: function(scope, state){
-			return [DIRECTIONS.NORTH, DIRECTIONS.SOUTH, DIRECTIONS.EAST, DIRECTIONS.WEST]
-		},
 		dirToOffset:function( scope, state, dir){
 			const offsets = {
 				[DIRECTIONS.NORTH]:      { x: 0,  y: 1 },
@@ -166,13 +224,6 @@ function getDefaultScope(){
 
 		},
 
-		isLocOutOfBounds:function( scope, state, loc){
-			if( loc.x < 0){ return true}
-			if( loc.x >= 8){ return true}
-			if( loc.y < 0){ return true}
-			if( loc.y >= 8){ return true}
-			return false
-		},
 
 
 

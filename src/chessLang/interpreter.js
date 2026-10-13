@@ -18,7 +18,7 @@ let BUILT_IN_API = [
 		name:"print",
 		argTypes:["string"],
 		effect: async function(a){
-			console.log(a)
+			console.warn( "Print function used for debugging: " + a)
 		}
 	},
 	{

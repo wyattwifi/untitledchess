@@ -1,0 +1,96 @@
+
+
+
+
+
+
+# WARNING for some unknown reason, using the name "filter" insetad of "filterA" makes it fail with an error
+def filterA( arrayIn, condition):
+	let newArray = createEmptyArray(1)
+	let i = 0
+	for item in arrayIn:
+		if condition(item):
+			assignArray( newArray, i, item)
+			i = i + 1
+	return newArray
+
+
+def isNotErr(thingToCheck):
+	return !(thingToCheck == "err")
+
+
+
+
+def getAllPiecesOnBoardIDs( a):
+	let result = createEmptyArray(1)
+	let i = 0
+	let j = 0
+	for piece in state["pieces"]:
+		if piece["position"]["onBoard"]:
+			assignArray( result, i, j)
+			i = i + 1
+		j = j + 1
+	return result
+
+
+def getAllPiecesOnBoardOfCertainColorIDs( userID):
+	let result = createEmptyArray(1)
+	let i = 0
+	let j = 0
+	for piece in state["pieces"]:
+		if piece["position"]["onBoard"] & piece["position"]["color"] == userID:
+			assignArray( result, i, j)
+			i = i + 1
+		j = j + 1
+	return result
+
+
+def getPieceColor( pieceID):
+	return state["pieces"][pieceID]["position"]["color"]
+
+
+def getAllOrthogonalDirections(unused):
+	return range(4)
+
+def isLocOnBoard( loc):
+	
+	if loc["x"] < 0:
+		return 0
+	if loc["x"] > 7:
+		return 0
+	if loc["y"] < 0:
+		return 0
+	if loc["y"] > 7:
+		return 0
+	return 1
+
+def getUserChoiceOfArray( userID, array, explanations, title):
+	return array[getUserChoice( userID, title, explanations)]
+
+
+
+def getDirectionsPerpendicularToDirection( directionIn):
+	if directionIn == 0 | directionIn == 2:
+		return createArray( 1, 3)
+	if directionIn == 1 | directionIn == 3:
+		return createArray( 0, 2)
+
+
+
+def getPieceLocation( pieceID):
+	return state["pieces"][pieceID]["position"]
+
+
+def getPiecesAtLoc( loc):
+	let result = createEmptyArray(1)
+	let i = 0
+	let j = 0
+	for piece in state["pieces"]:
+		if piece["position"]["onBoard"]:
+			if piece["position"]["x"] == loc["x"] & piece["position"]["y"] == loc["y"]:
+				assignArray( result, i, j)
+				i = i + 1
+		j = j + 1
+	return result
+
+

@@ -1,0 +1,154 @@
+
+
+
+
+
+
+
+
+def doLeaperMove( userID, theMovingPieceId, firstAmount, secondAmount):
+
+	let firstDirection = getUserChoiceOfArray( userID, getAllOrthogonalDirections(1),createArray(0,1,2,3), "Pick a direction")
+	let secondDirection = getUserChoiceOfArray( userID, getDirectionsPerpendicularToDirection( firstDirection),createArray(0,1), "Pick a secondary direction")
+	# walk along the path, making sure that each space is either empty, itself (because when it moves in it will also move out), or (on the last space only) a capturable enemy piece
+
+	for i in range(firstAmount):
+		let location = getPieceLocation( theMovingPieceId)
+		let newLocation = getLocOneSpaceInDirection( location, firstDirection)
+		
+		# if !isLocationEmpty( newLocation):#TODO what if it is being blocked by itself, or what if this is the last space in the path
+		# 	# a piece is there. The only way this can move there is if that piece is itself, or if 
+		# 	throwError("err")
+		
+		
+		# TODO do this better
+		if i == firstAmount - 1 & secondAmount == 0: #if it is the last square
+			captureAllPiecesAtLoc(newLocation)
+		
+		movePiece( theMovingPieceId, newLocation)
+			
+	for unused in range(secondAmount):
+		let location = getPieceLocation( theMovingPieceId)
+		let newLocation = getLocOneSpaceInDirection( location, secondDirection)
+# 		
+# 		if !isLocationEmpty( newLocation):#TODO what if it is being blocked by itself
+# 			# a piece is there. The only way this can move there is if that piece is itself, or if 
+# 			throwError()
+# 		
+		# TODO make sure there is not a friendly piece there that should not be jumped on
+		
+		
+		# TODO do this better
+		if unused == secondAmount - 1: #if it is the last square
+			captureAllPiecesAtLoc(newLocation)
+		
+		
+		movePiece( theMovingPieceId, newLocation)
+					
+					
+				
+				
+				
+
+
+
+
+def doRiderMove( userID, theMovingPieceId, firstAmount, secondAmount):
+
+	let firstDirection = getUserChoiceOfArray( userID, getAllOrthogonalDirections(1),createArray(0,1,2,3), "Pick a direction")
+	let secondDirection = getUserChoiceOfArray( userID, getDirectionsPerpendicularToDirection( firstDirection),createArray(0,1), "Pick a secondary direction")
+	# walk along the path, making sure that each space is either empty, itself (because when it moves in it will also move out), or (on the last space only) a capturable enemy piece
+
+	let done = 0 # this gets set to true/1 when a piece has been captured and it cant move any further
+	
+	for i in range(firstAmount):
+		let location = getPieceLocation( theMovingPieceId)
+		let newLocation = getLocOneSpaceInDirection( location, firstDirection)
+		
+		# if !isLocationEmpty( newLocation):#TODO what if it is being blocked by itself, or what if this is the last space in the path
+		# 	# a piece is there. The only way this can move there is if that piece is itself, or if 
+		# 	throwError("err")
+		
+		
+		# TODO do this better
+		if i == firstAmount - 1 & secondAmount == 0: #if it is the last square
+			if length(getPiecesAtLoc(newLocation)):
+				done = 1
+			captureAllPiecesAtLoc(newLocation)
+		
+		movePiece( theMovingPieceId, newLocation)
+			
+	for unused in range(secondAmount):
+		let location = getPieceLocation( theMovingPieceId)
+		let newLocation = getLocOneSpaceInDirection( location, secondDirection)
+# 		
+# 		if !isLocationEmpty( newLocation):#TODO what if it is being blocked by itself
+# 			# a piece is there. The only way this can move there is if that piece is itself, or if 
+# 			throwError()
+# 		
+		# TODO make sure there is not a friendly piece there that should not be jumped on
+		
+		
+		# TODO do this better
+		if unused == secondAmount - 1: #if it is the last square
+			if length(getPiecesAtLoc(newLocation)):
+				done = 1
+			captureAllPiecesAtLoc(newLocation)
+		
+		
+		movePiece( theMovingPieceId, newLocation)
+					
+					
+				
+	for abc in range(1000):
+		
+		if getUserChoice( userID, "Continue moving?", createArray("Continue","or not")) == 0 | done:
+			return 0
+		
+		for i in range(firstAmount):
+			let location = getPieceLocation( theMovingPieceId)
+			let newLocation = getLocOneSpaceInDirection( location, firstDirection)
+			
+			# if !isLocationEmpty( newLocation):#TODO what if it is being blocked by itself, or what if this is the last space in the path
+			# 	# a piece is there. The only way this can move there is if that piece is itself, or if 
+			# 	throwError("err")
+			
+			
+			# TODO do this better
+			if i == firstAmount - 1 & secondAmount == 0: #if it is the last square
+				if length(getPiecesAtLoc(newLocation)):
+					done = 1
+				captureAllPiecesAtLoc(newLocation)
+			
+			movePiece( theMovingPieceId, newLocation)
+				
+		for unused in range(secondAmount):
+			let location = getPieceLocation( theMovingPieceId)
+			let newLocation = getLocOneSpaceInDirection( location, secondDirection)
+	# 		
+	# 		if !isLocationEmpty( newLocation):#TODO what if it is being blocked by itself
+	# 			# a piece is there. The only way this can move there is if that piece is itself, or if 
+	# 			throwError()
+	# 		
+			# TODO make sure there is not a friendly piece there that should not be jumped on
+			
+			
+			# TODO do this better
+			if unused == secondAmount - 1: #if it is the last square
+				if length(getPiecesAtLoc(newLocation)):
+					done = 1
+				captureAllPiecesAtLoc(newLocation)
+			
+			
+			movePiece( theMovingPieceId, newLocation)
+						
+						
+					
+					
+
+
+
+
+
+
+

@@ -129,6 +129,7 @@ def buyPiece( playerID, placeInMarket):
 	assignArray( piece["position"], "color", playerID)
 	
 	replenishMarket(1)
+	uiUpdateState(1)
 
 
 def getStack(a):
@@ -141,10 +142,21 @@ def getStack(a):
 
 # The high numbers are at the top of the stack. 0 is the bottom card of the stack
 def replenishMarket(a):
+	print(getMarket(1))
 	let stack = getStack(1)
 	for i in range(1000):
-		if length( getMarket(1)) == 2:
+		
+		#First, we need to see if the market has any holes. We cannot just take the length of getMarket, because currently that returns an array with holes in it
+		let numOfMarketCards = 0
+		for piece in getMarket(1):
+			if piece:
+				if piece["position"]:
+					if piece["position"]["inMarket"]:
+						numOfMarketCards = numOfMarketCards + 1
+		if numOfMarketCards == 2:
 			return 1
+		
+		
 		let topPieceOfDeck = stack[length(stack) - 1]
 		assignArray( topPieceOfDeck["position"], "inStack", 0)
 		assignArray( topPieceOfDeck["position"], "inMarket", 1)
@@ -153,13 +165,17 @@ def replenishMarket(a):
 
 
 def getEmptyMarketPosition(a):
+	let MARKET_SIZE = 2
 	let market = getMarket(1)
 	let isThingPresent = createEmptyArray(1)
-	for i in range(2):
+	for i in range(MARKET_SIZE):
 		assignArray( isThingPresent, i, 0)
 	
 	for piece in market:
-		assignArray( isThingPresent, piece["position"]["marketPosition"], 1)
+		if piece:
+			if piece["position"]:
+				if piece["position"]["inMarket"]:
+					assignArray( isThingPresent, piece["position"]["marketPosition"], 1)
 	for i in range(length(isThingPresent)):
 		if !isThingPresent[i]:
 			return i

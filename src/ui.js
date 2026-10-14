@@ -45,8 +45,15 @@ export async function uiGetUserChoice( userID, title, explanationOfOptions){
 	
 	if( title == "Pick an action"){
 		
-		return await waitForActionChoiceInput()
+		whatWaitingFor = "action"
+		return await waitForInput()
 	}
+	if( title == "Market"){
+		
+		whatWaitingFor = "market"
+		return await waitForInput()
+	}
+	throw "error UI does not support this yet"
 	
 	let result = Number(prompt("Player " + userID +": " + title +" Make a choice 0 (inclusive) to " + numOfOptions + "(exclusive):"))
 	while( !(result >= 0 && result < numOfOptions) ){
@@ -57,11 +64,23 @@ export async function uiGetUserChoice( userID, title, explanationOfOptions){
 }
 
 
-let getActionInputResolver
+let whatWaitingFor = null // possible values: "action", "market", "placeNewPiece"
 
+
+// let getActionInputResolver = null
+
+let promiseResolver = null
+/*
 function waitForActionChoiceInput() {
 	return new Promise(resolve => {
 		getActionInputResolver = resolve
+	});
+}
+*/
+
+function waitForInput() {
+	return new Promise(resolve => {
+		promiseResolver = resolve
 	});
 }
 
@@ -168,78 +187,149 @@ let selectedSquare = undefined
 let possibilities = undefined
 
 // this is the functino that handles clicks but is given just the square x and y,
-function onClickInner( squareX, squareY){
+function onClickInner( x, y){
 	
-	// if no square is selected yet, select it if allowed
-	// otherwize, if the move from the selected square to this square is allowed, make the move and go on to the next turn
 	
-	if( selectedSquare){
-		// something was selected already
-		
-		// see if it is a legal move to go from the selected square to the square that was just clicked
-		let isAllowed = false
-		possibilities = getPossibilities()
-		
-		for( let i = 0; i < possibilities.length; i++){
-			let p = possibilities[i]
-			if( p.startLocX == selectedSquare.x && p.startLocY == selectedSquare.y && p.endLocX == squareX && p.endLocY == squareY){
-				isAllowed = true
-				break
-			}
-		}
-		
-		if( isAllowed){
-			// it is a legal move
+	
+	
+	
+	if(promiseResolver == null){ // if we are not currently looking to get a choice from the player...
+		return // in that case do nothing
+	}
+	
+	
+	switch (whatWaitingFor){
+		case "action":{
 			
-			// now that we know the start and end locs of the move, we need to look through the hint that we got most recently to see where it was in the list, so we know what choice number to return to the game engine
-			let resultChoiceNumber
-			for( let i = 0; i < lastGottenHint.length; i++){
-				if(
-					selectedSquare.x == lastGottenHint[i].startLoc.x &&
-					selectedSquare.y == lastGottenHint[i].startLoc.y &&
-					squareX == lastGottenHint[i].endLoc.x &&
-					squareY == lastGottenHint[i].endLoc.y
-				){
-					resultChoiceNumber = i
-					break
-					//TODO there can be multiple different choices, with different resulting states, all coming from the same start loc and end loc
+			
+			// Convert pixels into square coordinates.
+			let squareX = Math.floor(x / SQUARE_SIZE)
+			let squareY = Math.floor(y / SQUARE_SIZE)
+			
+			// The chess game has y == 0 at the bottom, so flip the y-coordinate.
+			squareY = 7 - squareY
+			
+			// Ignore input outside the board (including the market).
+			if(
+				squareX < 0 ||
+				squareX >= BOARD_SIZE_IN_SQUARES ||
+				squareY < 0 ||
+				squareY >= BOARD_SIZE_IN_SQUARES
+			){
+				return
+			}
+			
+			
+			// if no square is selected yet, select it if allowed
+			// otherwize, if the move from the selected square to this square is allowed, make the move and go on to the next turn
+			
+			if( selectedSquare){
+				// something was selected already
+				
+				// see if it is a legal move to go from the selected square to the square that was just clicked
+				let isAllowed = false
+				possibilities = getPossibilities()
+				
+				for( let i = 0; i < possibilities.length; i++){
+					let p = possibilities[i]
+					if( p.startLocX == selectedSquare.x && p.startLocY == selectedSquare.y && p.endLocX == squareX && p.endLocY == squareY){
+						isAllowed = true
+						break
+					}
+				}
+				
+				if( isAllowed){
+					// it is a legal move
+					
+					// now that we know the start and end locs of the move, we need to look through the hint that we got most recently to see where it was in the list, so we know what choice number to return to the game engine
+					let resultChoiceNumber
+					for( let i = 0; i < lastGottenHint.length; i++){
+						if(
+							selectedSquare.x == lastGottenHint[i].startLoc.x &&
+							selectedSquare.y == lastGottenHint[i].startLoc.y &&
+							squareX == lastGottenHint[i].endLoc.x &&
+							squareY == lastGottenHint[i].endLoc.y
+						){
+							resultChoiceNumber = i
+							break
+							//TODO there can be multiple different choices, with different resulting states, all coming from the same start loc and end loc
+						}
+					}
+					
+					promiseResolver( resultChoiceNumber)
+					promiseResolver = null // we are no longer looking for input
+					whatWaitingFor = null
+					
+					selectedSquare = undefined
+					
+				} else {
+					console.log("not allowed")
+				}
+				
+			} else {
+				// is that something that is allowed to be selected?
+				
+				let isAllowed = false
+				possibilities = getPossibilities()
+				
+				for( let i = 0; i < possibilities.length; i++){
+					let p = possibilities[i]
+					if( p.startLocX == squareX && p.startLocY == squareY){
+						isAllowed = true
+						break
+					}
+				}
+				
+				
+				// console.log(possibilities)
+				if( isAllowed){
+					selectedSquare = {x:squareX,y:squareY}
+					uiUpdateState(lastGottenState)
+				} else {
+					console.log("not allowed")
 				}
 			}
-			
-			getActionInputResolver( resultChoiceNumber)
-			
-			selectedSquare = undefined
-			
-		} else {
-			console.log("not allowed")
+			return
 		}
-		
-	} else {
-		// is that something that is allowed to be selected?
-		
-		let isAllowed = false
-		possibilities = getPossibilities()
-		
-		for( let i = 0; i < possibilities.length; i++){
-			let p = possibilities[i]
-			if( p.startLocX == squareX && p.startLocY == squareY){
-				isAllowed = true
-				break
+		case "market":{
+			
+			x -= MARKET_LOCATION.x;
+			y -= MARKET_LOCATION.y;
+			
+			if (
+				x < 0 ||
+				x > MARKET_LOCATION.width ||
+				y < 0 ||
+				y > MARKET_LOCATION.height
+			) {
+				return;
 			}
+			
+			let slotNumber = Math.floor( y / MARKET_SLOT_HEIGHT)
+			
+			let options = [ ...getMarketNames(), "DONE"]
+			
+			if( slotNumber < 0 || slotNumber >= options.length){
+				return
+			}
+			
+			console.log( slotNumber, getMarketNames())
+			
+			promiseResolver(slotNumber)
+			promiseResolver = null // we are no longer looking for input
+			whatWaitingFor = null
+			return
 		}
-		
-		
-		// console.log(possibilities)
-		if( isAllowed){
-			selectedSquare = {x:squareX,y:squareY}
-			uiUpdateState(lastGottenState)
-		} else {
-			console.log("not allowed")
+		default:{
+			throw "err0249"
 		}
 	}
 	
 	
 }
+
+
+
 
 // this is the direct callback of the onClick event on the canvas. It gets things ready for onClickInner. It converts screen pixel coordinates to game square coorditates
 
@@ -261,22 +351,6 @@ function onClickOuter(e){
 	x -= margins.left
 	y -= margins.top
 	
-	// Convert pixels into square coordinates.
-	x = Math.floor(x / SQUARE_SIZE)
-	y = Math.floor(y / SQUARE_SIZE)
-	
-	// The chess game has y == 0 at the bottom, so flip the y-coordinate.
-	y = 7 - y
-	
-	// Ignore input outside the board (including the market).
-	if(
-		x < 0 ||
-		x >= BOARD_SIZE_IN_SQUARES ||
-		y < 0 ||
-		y >= BOARD_SIZE_IN_SQUARES
-	){
-		return
-	}
 	
 	onClickInner(x, y)
 }
@@ -288,16 +362,35 @@ theCanvas.addEventListener("pointerdown", onClickOuter)
 
 
 
+const MARKET_SLOT_HEIGHT = 20
 
+
+function getMarketNames(){
+	
+	let state = lastGottenState
+	
+	let result = []
+	
+	for( let i = 0; i < state.pieces.length; i++){
+		let data = state.pieces[i].position
+		
+		if( data.marketPosition !== undefined){ // it can be 0
+			result[data.marketPosition] = state.pieces[i].name
+		}
+	}
+	
+	return result
+}
 
 function drawMarket( state){
+	
 	
 	let market = []
 	
 	for( let i = 0; i < state.pieces.length; i++){
 		let data = state.pieces[i].position
 		
-		if( data.marketPosition !== undefined){ // it can be 0
+		if( data.inMarket){ // it can be 0
 			market[data.marketPosition] = state.pieces[i]
 		}
 	}
@@ -309,8 +402,9 @@ function drawMarket( state){
 	// draw the pieces
 	drawing.fillStyle = "white"
 	for( let i = 0; i < market.length; i++){
-			drawing.fillText(market[i].name + ", cost " + market[i].cost, MARKET_LOCATION.x, MARKET_LOCATION.y + 20 * i + 20)
+			drawing.fillText(market[i].name + ", cost " + market[i].cost, MARKET_LOCATION.x, MARKET_LOCATION.y + MARKET_SLOT_HEIGHT * i + 20)
 	}
+	
 	
 }
 

@@ -283,7 +283,7 @@ function lexerCore( stringIn){
 		{name:"TAB",regex:/^\t/},
 		{name:"SPACE",regex:/^[ ]/},
 		{name:"NUMBER",regex:/^[0-9]+(?=([^a-z01-9]|$))/},//NOTE currently does not support decimals
-		{name:"IDENTIFIER",regex:/^[a-z][a-zA-Z_0-9]*(?=([^a-z01-9]|$))/},
+		{name:"IDENTIFIER",regex:/^[a-zA-Z][a-zA-Z_0-9]*(?=([^a-z01-9]|$))/},
 		{name:"STRING",regex:/^"[^"]*"(?=([^a-z01-9]|$))/},
 		{name:"COMMENT",regex:/^#[^\n]*(?=\n|$)/},
 		// {name:"",regex://},

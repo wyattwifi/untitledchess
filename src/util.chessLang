@@ -4,6 +4,66 @@
 
 
 
+def movePiece( theMovingPieceId, newLocation):
+	
+	#TODO do this better
+	
+	
+	# the old position still has the correct onBoard and color properties, so we need to not overwrite those
+	assignArray(state["pieces"][theMovingPieceId]["position"], "x", newLocation["x"])
+	assignArray(state["pieces"][theMovingPieceId]["position"], "y", newLocation["y"])
+	
+	
+	
+
+
+def captureAllPiecesAtLoc( loc):
+	let piecesIDsToCapture = getPiecesAtLoc( loc)
+	for theID in piecesIDsToCapture:
+		assignArray(state["pieces"][theID]["position"], "onBoard", 0)
+	
+
+
+
+
+
+
+
+
+
+def getLocOneSpaceInDirection( startingLoc, direction):
+	let newLoc = "placeholder"
+	if direction == 0:
+		newLoc = createLoc( startingLoc["x"] + 0, startingLoc["y"] + 1)
+	if direction == 1:
+		newLoc = createLoc( startingLoc["x"] + 1, startingLoc["y"] + 0)
+	if direction == 2:
+		newLoc = createLoc( startingLoc["x"] + 0, startingLoc["y"] - 1)
+	if direction == 3:
+		newLoc = createLoc( startingLoc["x"] - 1, startingLoc["y"] + 0)
+	# if direction == 0:
+	# 	newLoc = createLoc( pieceLoc["x"] + 1, pieceLoc["y"] + 1)
+	# if direction == 0:
+	# 	newLoc = createLoc( pieceLoc["x"] + 1, pieceLoc["y"] + 1)
+	# if direction == 0:
+	# 	newLoc = createLoc( pieceLoc["x"] + 1, pieceLoc["y"] + 1)
+	# if direction == 0:
+	# 	newLoc = createLoc( pieceLoc["x"] + 1, pieceLoc["y"] + 1)
+	if !isLocOnBoard( newLoc):
+		throwError("Tried to move off of the board")
+	return newLoc
+	# throwError("not a valid direction")
+
+
+
+
+
+def getForwardDirection( piece):
+	#this returns the direction that is forward for a piece. This varies piece-to-piece because the different colors head in opposite directions
+
+
+
+
 # WARNING for some unknown reason, using the name "filter" insetad of "filterA" makes it fail with an error
 def filterA( arrayIn, condition):
 	let newArray = createEmptyArray(1)

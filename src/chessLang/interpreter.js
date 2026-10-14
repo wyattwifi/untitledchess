@@ -13,12 +13,22 @@ class ChessLangStandardLibraryError extends Error{
 
 //TODO chessLang does not support assigning to arrays
 
+
+function fixStateRefrences(thread){
+	for( let i = 0; i < thread.stack.length; i++){
+		let frame = thread.stack[i]
+		frame.localVariables["state"] = thread.state
+	}
+}
+
+
 let BUILT_IN_API = [
 	{
 		name:"print",
 		argTypes:["string"],
 		effect: async function(a){
 			console.warn( "Print function used for debugging: " + a)
+			console.warn( "Or, if this is more helpful,: " + JSON.stringify(a))
 		}
 	},
 	{
@@ -53,6 +63,13 @@ let BUILT_IN_API = [
 		name:"createArray",
 		effect: async function( ...values){
 			return values
+		}
+	},
+	{
+		name:"setState",
+		effect: async function( newState){
+			currentRunningUniverse.state = newState
+			fixStateRefrences(currentRunningUniverse)
 		}
 	},
 	{
@@ -109,9 +126,14 @@ let BUILT_IN_API = [
 			
 			let a = new Universe( currentRunningUniverse.bytecode, structuredClone(currentRunningUniverse.state))
 			
+			
+			
 			currentSimThreads = [a]
 			a.idNum = Math.random()
 			a.jumpToFunction(functionToCall, parameters)
+			
+			fixStateRefrences(a)
+			
 			while(currentSimThreads.length > 0){
 				
 				let t = currentSimThreads[0]
@@ -148,6 +170,9 @@ let BUILT_IN_API = [
 					let newThread = new Universe( currentRunningUniverse.bytecode, structuredClone(currentRunningUniverse.state))
 					newThread.stack = structuredClone(currentRunningUniverse.stack)
 					currentSimThreads.push(newThread)
+					
+					fixStateRefrences(newThread)
+					
 					// now we need to run the rest of the instruction, since it is not mid-instruction currently
 					let t = newThread // for easy typing
 					t.idNum = Math.random()
@@ -171,7 +196,7 @@ let BUILT_IN_API = [
 			if( numOfOptions <= 0){
 				throw new ChessLangStandardLibraryError("That isn't much of a choice, is it?")
 			}
-			return await uiGetUserChoice( userID, numOfOptions, explanationOfOptions)
+			return await uiGetUserChoice( userID, title, explanationOfOptions)
 		}
 	},
 ]

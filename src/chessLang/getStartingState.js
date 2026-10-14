@@ -49,16 +49,16 @@ export function getStartingState(){
 		let position = positions[i]
 		// the [i + 2] is because the kings are at the first
 		if( position >= NUM_OF_PIECES_OTHER_THAN_THE_TWO_KINGS - MARKET_SIZE){
-			resultPositions[i + NUMBER_OF_KINGS] = {stackPosition:position - (NUM_OF_PIECES_OTHER_THAN_THE_TWO_KINGS - MARKET_SIZE)}
+			resultPositions[i + NUMBER_OF_KINGS] = {inMarket:1, marketPosition:position - (NUM_OF_PIECES_OTHER_THAN_THE_TWO_KINGS - MARKET_SIZE)}
 		} else {
-			resultPositions[i + NUMBER_OF_KINGS] = {stackPosition:position}
+			resultPositions[i + NUMBER_OF_KINGS] = {inStack:1, stackPosition:position}
 		}
 		
 	}
 	
 	// now all the other pieces are taken care of, take care of the kings
-	resultPositions[0] = {onBoard:1, x:0, y:0, color:0}
-	resultPositions[1] = {onBoard:1, x:0, y:7, color:1}
+	resultPositions[0] = {onBoard:1, x:4, y:0, color:0}
+	resultPositions[1] = {onBoard:1, x:4, y:7, color:1}
 	
 	
 	

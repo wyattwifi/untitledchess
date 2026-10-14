@@ -26,6 +26,8 @@ def main():
 	
 	for i in range(9999):#TODO while loop wasnt working
 		
+		let WHITE_ID = 0
+		let BLACK_ID = 1
 		
 		#TODO I dont know why this check is needed, but without it it fails with an error
 		if length(getAllPiecesOnBoardOfCertainColorIDs(0)) == 0:
@@ -39,16 +41,18 @@ def main():
 			endGame("Black won")
 			return "Black won"
 		
-		let choice = getUserChoice( 0, "Pick an action", viableChoices)
-		assignArray(state, "pieces", viableChoices[choice]["pieces"])#TODO it should assign the entire state. Currently this deletes important parts of the state
 		
+		let choice = getUserChoice( 0, "Pick an action", viableChoices)
+		# assignArray(state, "pieces", viableChoices[choice]["pieces"])#TODO it should assign the entire state. Currently this deletes important parts of the state
+		setState(viableChoices[choice]) #TODO i should be able to just do state = blablabla, but that does not work for now with the interpreter
 		
 		uiUpdateState(1)
 		
 		# Now do the buying part
-		let marketSize = 4
+		buyPhase(WHITE_ID)
 		
 		
+		uiUpdateState(1)
 		
 		if length(getAllPiecesOnBoardOfCertainColorIDs(1)) == 0:
 			endGame("White won")
@@ -68,78 +72,13 @@ def main():
 		
 		uiUpdateState(1)
 		
-	
-
-
-
-def movePiece( theMovingPieceId, newLocation):
-	
-	#TODO do this better
-	
-	
-	# the old position still has the correct onBoard and color properties, so we need to not overwrite those
-	assignArray(state["pieces"][theMovingPieceId]["position"], "x", newLocation["x"])
-	assignArray(state["pieces"][theMovingPieceId]["position"], "y", newLocation["y"])
-	
-	
-	
-
-
-def captureAllPiecesAtLoc( loc):
-	let piecesIDsToCapture = getPiecesAtLoc( loc)
-	for theID in piecesIDsToCapture:
-		assignArray(state["pieces"][theID]["position"], "onBoard", 0)
-	
-
-
-
-
-
-
-
-
-
-def getLocOneSpaceInDirection( startingLoc, direction):
-	let newLoc = "placeholder"
-	if direction == 0:
-		newLoc = createLoc( startingLoc["x"] + 0, startingLoc["y"] + 1)
-	if direction == 1:
-		newLoc = createLoc( startingLoc["x"] + 1, startingLoc["y"] + 0)
-	if direction == 2:
-		newLoc = createLoc( startingLoc["x"] + 0, startingLoc["y"] - 1)
-	if direction == 3:
-		newLoc = createLoc( startingLoc["x"] - 1, startingLoc["y"] + 0)
-	# if direction == 0:
-	# 	newLoc = createLoc( pieceLoc["x"] + 1, pieceLoc["y"] + 1)
-	# if direction == 0:
-	# 	newLoc = createLoc( pieceLoc["x"] + 1, pieceLoc["y"] + 1)
-	# if direction == 0:
-	# 	newLoc = createLoc( pieceLoc["x"] + 1, pieceLoc["y"] + 1)
-	# if direction == 0:
-	# 	newLoc = createLoc( pieceLoc["x"] + 1, pieceLoc["y"] + 1)
-	if !isLocOnBoard( newLoc):
-		throwError("Tried to move off of the board")
-	return newLoc
-	# throwError("not a valid direction")
-
-
-
-
-
-def getForwardDirection( piece):
-	#this returns the direction that is forward for a piece. This varies piece-to-piece because the different colors head in opposite directions
-
-def jumpForwardOne( piece):
-	# this is a very simple piece that just jumps forward one space, capturing if able
-
-	let location = getPieceLocation( piece)
-	let newLocation = getLocationInDirectionFromLocation( location, getForwardDirection(piece))
-	let canMove = canPieceMoveToLocation(newLocation)
-	if canMove:
-		movePiece( piece, newLocation)
+		# Now do the buying part
+		buyPhase(BLACK_ID)
 		
-	if !canMove:
-		throwError("aaa")
+		uiUpdateState(1)
+	
+
+
 
 
 
@@ -159,13 +98,80 @@ def doPlayerTurn(playerID):
 	
 	# UI hint stuff
 	let loc = getPieceLocation( idOfPieceToMove)
-	# assignArray(state, "endLoc", createLoc(loc["x"],loc["y"])) #While not strictly required, this is really helpful for the UI
-	let b = createEmptyArray(1)
-	assignArray(b, "endLoc", createLoc(loc["x"],loc["y"]))
-	uiHint(b) #I dont know why the assiging to state thing worked for the first part but not for the second part. For whatever reason it wasnt working so I did this UI hint thing
+	assignArray(state, "endLoc", createLoc(loc["x"],loc["y"])) #While not strictly required, this is really helpful for the UI
+	# let b = createEmptyArray(1)
+	# assignArray(b, "endLoc", createLoc(loc["x"],loc["y"]))
+	# uiHint(b) #I dont know why the assiging to state thing worked for the first part but not for the second part. For whatever reason it wasnt working so I did this UI hint thing
 	
 	# uiUpdateState(1) #This would do nothing since this is in a sim
 
 
+def buyPhase( playerID):
+	
+	for i in range(1000):
+		
+		let options = getMarket(1)
+		assignArray( options, length(options), "Done")
+		let choice = getUserChoice( playerID, "Market", options)
+		
+		if choice == length(options) - 1:
+			return 1
+		
+		buyPiece( playerID, choice)
+
+def buyPiece( playerID, placeInMarket):
+	let piece = getMarket(1)[placeInMarket]
+	
+	assignArray( piece["position"], "inMarket", 0)
+	assignArray( piece["position"], "onBoard", 1)
+	assignArray( piece["position"], "x", 1)
+	assignArray( piece["position"], "y", 1)
+	assignArray( piece["position"], "color", playerID)
+	
+	replenishMarket(1)
+
+
+def getStack(a):
+	let result = createEmptyArray(1)
+	for piece in state["pieces"]:
+		if piece["position"]["inStack"]:
+			assignArray( result, piece["position"]["stackPosition"], piece)
+	return result
+
+
+# The high numbers are at the top of the stack. 0 is the bottom card of the stack
+def replenishMarket(a):
+	let stack = getStack(1)
+	for i in range(1000):
+		if length( getMarket(1)) == 2:
+			return 1
+		let topPieceOfDeck = stack[length(stack) - 1]
+		assignArray( topPieceOfDeck["position"], "inStack", 0)
+		assignArray( topPieceOfDeck["position"], "inMarket", 1)
+		assignArray( topPieceOfDeck["position"], "marketPosition", getEmptyMarketPosition(1))
+
+
+
+def getEmptyMarketPosition(a):
+	let market = getMarket(1)
+	let isThingPresent = createEmptyArray(1)
+	for i in range(2):
+		assignArray( isThingPresent, i, 0)
+	
+	for piece in market:
+		assignArray( isThingPresent, piece["position"]["marketPosition"], 1)
+	for i in range(length(isThingPresent)):
+		if !isThingPresent[i]:
+			return i
+
+
+def getMarket(a):
+	let result = createEmptyArray(1)
+	# let i = 0
+	for piece in state["pieces"]:
+		if piece["position"]["inMarket"]: #TODO do this better
+			assignArray( result, piece["position"]["marketPosition"], piece)
+			# i = i + 1
+	return result
 
 

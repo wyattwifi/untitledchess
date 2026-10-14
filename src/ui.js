@@ -38,20 +38,30 @@ function getPossibilities(){
 
 
 
-export async function uiGetUserChoice( userID, numOfOptions, explanationOfOptions){
+export async function uiGetUserChoice( userID, title, explanationOfOptions){
 	
+	let numOfOptions = explanationOfOptions.length
 	lastGottenHint = explanationOfOptions
 	
-	return await waitForInput()
+	if( title == "Pick an action"){
+		
+		return await waitForActionChoiceInput()
+	}
+	
+	let result = Number(prompt("Player " + userID +": " + title +" Make a choice 0 (inclusive) to " + numOfOptions + "(exclusive):"))
+	while( !(result >= 0 && result < numOfOptions) ){
+		result = Number(prompt("Try again to follow the instructions. Player " + userID +": Make a choice 0 (inclusive) to " + numOfOptions + "(exclusive):"))
+	}
+	return result
 	
 }
 
 
-let inputResolver
+let getActionInputResolver
 
-function waitForInput() {
+function waitForActionChoiceInput() {
 	return new Promise(resolve => {
-		inputResolver = resolve
+		getActionInputResolver = resolve
 	});
 }
 
@@ -148,7 +158,6 @@ export function uiUpdateState( state){
 
 
 
-//It is possible that a lot of this code is still usable, but I commented it all out while switching from js to chesslang
 
 
 
@@ -197,7 +206,7 @@ function onClickInner( squareX, squareY){
 				}
 			}
 			
-			inputResolver( resultChoiceNumber)
+			getActionInputResolver( resultChoiceNumber)
 			
 			selectedSquare = undefined
 			
@@ -288,8 +297,8 @@ function drawMarket( state){
 	for( let i = 0; i < state.pieces.length; i++){
 		let data = state.pieces[i].position
 		
-		if( data.stackPosition !== undefined){ // it can be 0
-			market[data.stackPosition] = state.pieces[i]
+		if( data.marketPosition !== undefined){ // it can be 0
+			market[data.marketPosition] = state.pieces[i]
 		}
 	}
 	

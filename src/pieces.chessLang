@@ -149,6 +149,18 @@ def doRiderMove( userID, theMovingPieceId, firstAmount, secondAmount):
 
 
 
+def jumpForwardOne( piece):
+	# this is a very simple piece that just jumps forward one space, capturing if able
+
+	let location = getPieceLocation( piece)
+	let newLocation = getLocationInDirectionFromLocation( location, getForwardDirection(piece))
+	let canMove = canPieceMoveToLocation(newLocation)
+	if canMove:
+		movePiece( piece, newLocation)
+		
+	if !canMove:
+		throwError("aaa")
+
 
 
 

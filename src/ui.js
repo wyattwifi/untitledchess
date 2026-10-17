@@ -40,7 +40,7 @@ function getPossibilities(){
 
 export async function uiGetUserChoice( userID, title, explanationOfOptions){
 	
-	let numOfOptions = explanationOfOptions.length
+	// let numOfOptions = explanationOfOptions.length
 	lastGottenHint = explanationOfOptions
 	
 	if( title == "Pick an action"){
@@ -55,30 +55,27 @@ export async function uiGetUserChoice( userID, title, explanationOfOptions){
 		displayText("Pick something to buy")
 		return await waitForInput()
 	}
+	if( title == "Where to put the new piece?"){
+		
+		whatWaitingFor = "placePurchace"
+		displayText("Pick a place to put your new hireling")
+		return await waitForInput()
+	}
 	throw "error UI does not support this yet"
-	
+	/*
 	let result = Number(prompt("Player " + userID +": " + title +" Make a choice 0 (inclusive) to " + numOfOptions + "(exclusive):"))
 	while( !(result >= 0 && result < numOfOptions) ){
 		result = Number(prompt("Try again to follow the instructions. Player " + userID +": Make a choice 0 (inclusive) to " + numOfOptions + "(exclusive):"))
 	}
-	return result
+	return result*/
 	
 }
 
 
-let whatWaitingFor = null // possible values: "action", "market", "placeNewPiece"
+let whatWaitingFor = null // possible values: "action", "market", "placePurchace"
 
-
-// let getActionInputResolver = null
 
 let promiseResolver = null
-/*
-function waitForActionChoiceInput() {
-	return new Promise(resolve => {
-		getActionInputResolver = resolve
-	});
-}
-*/
 
 function waitForInput() {
 	return new Promise(resolve => {
@@ -291,6 +288,50 @@ function onClickInner( x, y){
 					console.log("not allowed")
 				}
 			}
+			return
+		}
+		case "placePurchace":{
+			
+			
+			// Convert pixels into square coordinates.
+			let squareX = Math.floor(x / SQUARE_SIZE)
+			let squareY = Math.floor(y / SQUARE_SIZE)
+			
+			// The chess game has y == 0 at the bottom, so flip the y-coordinate.
+			squareY = 7 - squareY
+			
+			// Ignore input outside the board (including the market).
+			if(
+				squareX < 0 ||
+				squareX >= BOARD_SIZE_IN_SQUARES ||
+				squareY < 0 ||
+				squareY >= BOARD_SIZE_IN_SQUARES
+			){
+				return
+			}
+			
+			let resultChoiceNumber = null
+			for( let i = 0; i < lastGottenHint.length; i++){
+				if(
+					squareX == lastGottenHint[i].x &&
+					squareY == lastGottenHint[i].y
+				){
+					resultChoiceNumber = i
+					break
+				}
+			}
+			
+			if( resultChoiceNumber === null){
+				return // it was not a valid choice of spot
+			}
+			
+			
+			promiseResolver( resultChoiceNumber)
+			promiseResolver = null // we are no longer looking for input
+			whatWaitingFor = null
+			
+			uiUpdateState(lastGottenState)
+			
 			return
 		}
 		case "market":{

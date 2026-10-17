@@ -118,13 +118,44 @@ def buyPhase( playerID):
 		
 		buyPiece( playerID, choice)
 
+def getAllLocs():
+	let result = createEmptyArray()
+	for i in range(8):
+		for j in range(8):
+			let loc = createEmptyArray()
+			assignArray( loc, "x", i)
+			assignArray( loc, "y", j)
+			assignArray( result, i + j * 8, loc)
+	return result
+
+
+def getAllLocsABoughtPieceCanGo( playerID):
+	let result = createEmptyArray()
+	for loc in getAllLocs():
+		if playerID == 0 & loc["y"] < 2:
+			assignArray( result, length(result), loc)
+		if playerID == 1 & loc["y"] > 5:
+			assignArray( result, length(result), loc)
+	
+	result = filterA( result, "isLocOccupied")
+	
+	return result
+
+
+def isLocOccupied( loc):
+	return length(getPiecesAtLoc( loc)) == 0
+
+
 def buyPiece( playerID, placeInMarket):
 	let piece = getMarket()[placeInMarket]
 	
+	let locationToPlace = getUserChoiceOfArray( playerID, getAllLocsABoughtPieceCanGo( playerID), getAllLocsABoughtPieceCanGo( playerID), "Where to put the new piece?")
+	
+	
 	assignArray( piece["position"], "inMarket", 0)
 	assignArray( piece["position"], "onBoard", 1)
-	assignArray( piece["position"], "x", 1)
-	assignArray( piece["position"], "y", 1)
+	assignArray( piece["position"], "x", locationToPlace["x"])
+	assignArray( piece["position"], "y", locationToPlace["y"])
 	assignArray( piece["position"], "color", playerID)
 	
 	replenishMarket()

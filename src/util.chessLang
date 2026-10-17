@@ -126,6 +126,7 @@ def getForwardDirection( piece):
 
 
 # WARNING for some unknown reason, using the name "filter" insetad of "filterA" makes it fail with an error
+#TODO make it be so that it is called like filterA( array, functionName) instead of filterA( array, functionNameString)
 def filterA( arrayIn, condition):
 	let newArray = createEmptyArray()
 	let i = 0

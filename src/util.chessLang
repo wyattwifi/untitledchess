@@ -1,7 +1,33 @@
 
 
 
+def canPieceLandOnSpace( piece, loc):
+	
+	assertLocIsOnBoard(loc)
+	
+	#By default, it can only land on it if there are no pieces on it that it cannot capture
+	let piecesAtLoc = getPiecesAtLoc(loc)
+	
+	for attackedPiece in piecesAtLoc:
+		if !canPieceCapturePiece( piece, attackedPiece):
+			return 0
+	return 1
 
+
+def canPieceCapturePiece( attackingPiece, defendingPiece):
+	
+	#friends cannot attack each other
+	if attackingPiece["position"]["color"] == defendingPiece["position"]["color"]:
+		return 0
+	
+	return 1
+
+
+
+#This ignores capturing etc but does handle staying on the board
+def movePieceInDirection( theMovingPieceId, direction):
+	
+	movePiece( theMovingPieceId, getLocOneSpaceInDirection( getPieceLocation(theMovingPieceId), direction))
 
 
 def movePiece( theMovingPieceId, newLocation):
@@ -125,6 +151,9 @@ def isNotErr(thingToCheck):
 	return !(thingToCheck == "err")
 
 
+def assertLocIsOnBoard(loc):
+	if !isLocOnBoard(loc):
+		throwError("Tried to move off of the board")
 
 
 def getAllPiecesOnBoardIDs():

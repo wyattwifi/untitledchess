@@ -7,7 +7,7 @@ import {rawPieceData} from "../piece-data.js"
 
 
 //TODO for now the state variable has some (ideally but not in practice) read-only data, specifically the action names
-// this should be a pure function
+//NOTE this function is NOT deterministic or pure function, it uses randomness to shuffle the cards
 export function getStartingState(){
 	
 	
@@ -70,7 +70,7 @@ export function getStartingState(){
 	let resultPieces = []
 	for( let i = 0; i < rawPieceData.length; i++){
 		let rawPiece = rawPieceData[i]
-		resultPieces.push({ name:rawPiece.name, position:resultPositions[i], actionString:rawPiece.action, cost:rawPiece.cost})
+		resultPieces.push({ name:rawPiece.name, position:resultPositions[i], actionString:rawPiece.action, cost:rawPiece.cost, effects:rawPiece.effects})
 	}
 	
 	
@@ -88,87 +88,9 @@ export function getStartingState(){
 	return result
 }
 
-//STUFF ORIGINALLY FROM GETSTARTINGSTATE.JS
-
 /*
 
 This commented-out section is from when I was trying to do it with JS and is now obsolete but might be handy for something still
-
-//NOTE this function is NOT deterministic, it uses randomness to shuffle the cards
-function getStartingState(){
-	
-	
-	
-	// INITIALIZE STATE
-	let state = {
-		piecePositions:[],
-		tokens:[],
-		whiteTurn:true,
-		coinPositions:[],
-	}
-	
-	
-	
-	
-	
-	
-	// now, the 2 kings start on the board an all the rest of the cards start in the deck. 0 will be the bottom card of the deck. The last 8 cards in the deck will still be counted as in the deck but will actually be part of the market. TODO The code needs updated to reflect these things
-	
-	
-	
-	function shuffle(array) {
-		let currentIndex = array.length;
-
-		// While there remain elements to shuffle...
-		while (currentIndex != 0) {
-
-			// Pick a remaining element...
-			let randomIndex = Math.floor(Math.random() * currentIndex);
-			currentIndex--;
-
-			// And swap it with the current element.
-			[array[currentIndex], array[randomIndex]] = [
-			array[randomIndex], array[currentIndex]];
-		}
-	}
-
-
-	//TODO take out king from stack properly
-	
-	let piecesBesideKings = RAW_PIECE_DATA.filter( e => e.name != "White King" && e.name != "Black King")
-	
-	let positions = []
-	for( let i = 0; i < piecesBesideKings.length; i++){
-		positions[i] = i
-	}
-	
-	shuffle( positions)
-	
-
-	const MARKET_SIZE = 2
-	for( let i = 0; i < piecesBesideKings.length; i++){
-		let position = positions[i]
-		// the [i + 2] is because the kings are at the first
-		if( position >= piecesBesideKings.length - MARKET_SIZE){//TODO see if i did the math right
-			state.piecePositions[i + 2] = JSON.stringify({marketPosition:position - (piecesBesideKings.length - MARKET_SIZE)})
-		} else {
-			state.piecePositions[i + 2] = JSON.stringify({stackPosition:position})
-		}
-		
-	}
-	
-	// now all the other pieces are taken care of, take care of the kings
-	state.piecePositions[0] = JSON.stringify({onBoard:true, x:0, y:0, color:"white"})
-	state.piecePositions[1] = JSON.stringify({onBoard:true, x:0, y:7, color:"black"})
-	
-	
-	return state
-
-}
-
-*/
-
-
 
 
 
@@ -192,37 +114,6 @@ This stuff is from the JS version instead of the chesslang version, so I think i
 function getDefaultScope(){
 	
 	return {
-		dirToOffset:function( scope, state, dir){
-			const offsets = {
-				[DIRECTIONS.NORTH]:      { x: 0,  y: 1 },
-				[DIRECTIONS.SOUTH]:      { x: 0,  y: -1 },
-				[DIRECTIONS.EAST]:       { x: 1,  y: 0 },
-				[DIRECTIONS.WEST]:       { x: -1, y: 0 },
-				[DIRECTIONS.NORTH_EAST]: { x: 1,  y: 1 },
-				[DIRECTIONS.NORTH_WEST]: { x: -1, y: 1 },
-				[DIRECTIONS.SOUTH_EAST]: { x: 1,  y: -1 },
-				[DIRECTIONS.SOUTH_WEST]: { x: -1, y: -1 },
-			};
-
-			return offsets[dir] ?? { x: 0, y: 0 };
-		},
-
-		getLocInDir:function( scope, state, direction, startLoc ){
-			
-			
-			direction = deepCopy(direction)
-			
-
-			let offset = scope.dirToOffset( scope, state, direction)
-
-			let newLoc = {
-				x: startLoc.x + offset.x,
-				y: startLoc.y + offset.y,
-			}
-
-			return newLoc
-
-		},
 
 
 

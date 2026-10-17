@@ -38,6 +38,12 @@ let BUILT_IN_API = [
 		}
 	},
 	{
+		name:"mod",
+		effect: async function(a, b){
+			return a % b
+		}
+	},
+	{
 		name:"range",
 		effect: async function(a){
 			let result = []
@@ -241,6 +247,18 @@ class Universe{
 	}
 	
 	jumpToFunction( functionName, parameterValues){
+		
+		// first, we need to see if there is an effect in effect that overrides what function gets called
+		for( let i = 0; i < this.state.pieces.length; i++){
+			let piece = this.state.pieces[i]
+			if( piece.position["onBoard"]){
+				if( piece.effects.length){
+					if( functionName == piece.effects[0].replacedFunction){
+						functionName = piece.effects[0].newFunction
+					}
+				}
+			}
+		}
 		
 		
 		let localVariables = [] // indexed by strings of the name

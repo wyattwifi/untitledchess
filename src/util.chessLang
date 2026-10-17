@@ -24,7 +24,17 @@ def captureAllPiecesAtLoc( loc):
 	
 
 
-
+def getAllAdjacentLocs(loc):
+	let dirs = getAllDirections()
+	let locs = createEmptyArray()
+	let i = 0
+	for dir in dirs:
+		assignArray( locs, i, getLocOneSpaceInDirectionErrorless( loc, dir))
+		i = i + 1
+	
+	locs = filterA( locs, "isLocOnBoard")
+	# print(locs)
+	return locs
 
 
 
@@ -41,14 +51,15 @@ def getLocOneSpaceInDirection( startingLoc, direction):
 		newLoc = createLoc( startingLoc["x"] + 0, startingLoc["y"] - 1)
 	if direction == 3:
 		newLoc = createLoc( startingLoc["x"] - 1, startingLoc["y"] + 0)
-	# if direction == 0:
-	# 	newLoc = createLoc( pieceLoc["x"] + 1, pieceLoc["y"] + 1)
-	# if direction == 0:
-	# 	newLoc = createLoc( pieceLoc["x"] + 1, pieceLoc["y"] + 1)
-	# if direction == 0:
-	# 	newLoc = createLoc( pieceLoc["x"] + 1, pieceLoc["y"] + 1)
-	# if direction == 0:
-	# 	newLoc = createLoc( pieceLoc["x"] + 1, pieceLoc["y"] + 1)
+	if direction == 4:
+		newLoc = createLoc( startingLoc["x"] + 1, startingLoc["y"] + 1)
+	if direction == 5:
+		newLoc = createLoc( startingLoc["x"] + 1, startingLoc["y"] - 1)
+	if direction == 6:
+		newLoc = createLoc( startingLoc["x"] - 1, startingLoc["y"] - 1)
+	if direction == 7:
+		newLoc = createLoc( startingLoc["x"] - 1, startingLoc["y"] + 1)
+	
 	if !isLocOnBoard( newLoc):
 		throwError("Tried to move off of the board")
 	return newLoc
@@ -56,6 +67,30 @@ def getLocOneSpaceInDirection( startingLoc, direction):
 
 
 
+
+
+
+
+def getLocOneSpaceInDirectionErrorless( startingLoc, direction):
+	let newLoc = "placeholder"
+	if direction == 0:
+		newLoc = createLoc( startingLoc["x"] + 0, startingLoc["y"] + 1)
+	if direction == 1:
+		newLoc = createLoc( startingLoc["x"] + 1, startingLoc["y"] + 0)
+	if direction == 2:
+		newLoc = createLoc( startingLoc["x"] + 0, startingLoc["y"] - 1)
+	if direction == 3:
+		newLoc = createLoc( startingLoc["x"] - 1, startingLoc["y"] + 0)
+	if direction == 4:
+		newLoc = createLoc( startingLoc["x"] + 1, startingLoc["y"] + 1)
+	if direction == 5:
+		newLoc = createLoc( startingLoc["x"] + 1, startingLoc["y"] - 1)
+	if direction == 6:
+		newLoc = createLoc( startingLoc["x"] - 1, startingLoc["y"] - 1)
+	if direction == 7:
+		newLoc = createLoc( startingLoc["x"] - 1, startingLoc["y"] + 1)
+	
+	return newLoc
 
 
 def getForwardDirection( piece):
@@ -66,7 +101,7 @@ def getForwardDirection( piece):
 
 # WARNING for some unknown reason, using the name "filter" insetad of "filterA" makes it fail with an error
 def filterA( arrayIn, condition):
-	let newArray = createEmptyArray(1)
+	let newArray = createEmptyArray()
 	let i = 0
 	for item in arrayIn:
 		if condition(item):
@@ -75,14 +110,25 @@ def filterA( arrayIn, condition):
 	return newArray
 
 
+
+
+# WARNING for some unknown reason, using the name "filter" insetad of "filterA" makes it fail with an error
+def mapA( arrayIn, theFunction):
+	let newArray = createEmptyArray()
+	let i = 0
+	for item in arrayIn:
+		assignArray( newArray, i, theFunction(item))
+		i = i + 1
+	return newArray
+
 def isNotErr(thingToCheck):
 	return !(thingToCheck == "err")
 
 
 
 
-def getAllPiecesOnBoardIDs( a):
-	let result = createEmptyArray(1)
+def getAllPiecesOnBoardIDs():
+	let result = createEmptyArray()
 	let i = 0
 	let j = 0
 	for piece in state["pieces"]:
@@ -94,7 +140,7 @@ def getAllPiecesOnBoardIDs( a):
 
 
 def getAllPiecesOnBoardOfCertainColorIDs( userID):
-	let result = createEmptyArray(1)
+	let result = createEmptyArray()
 	let i = 0
 	let j = 0
 	for piece in state["pieces"]:
@@ -109,7 +155,10 @@ def getPieceColor( pieceID):
 	return state["pieces"][pieceID]["position"]["color"]
 
 
-def getAllOrthogonalDirections(unused):
+def getAllDirections():
+	return range(8)
+
+def getAllOrthogonalDirections():
 	return range(4)
 
 def isLocOnBoard( loc):
@@ -142,7 +191,7 @@ def getPieceLocation( pieceID):
 
 
 def getPiecesAtLoc( loc):
-	let result = createEmptyArray(1)
+	let result = createEmptyArray()
 	let i = 0
 	let j = 0
 	for piece in state["pieces"]:

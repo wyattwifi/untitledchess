@@ -8,7 +8,7 @@
 
 def doLeaperMove( userID, theMovingPieceId, firstAmount, secondAmount):
 
-	let firstDirection = getUserChoiceOfArray( userID, getAllOrthogonalDirections(1),createArray(0,1,2,3), "Pick a direction")
+	let firstDirection = getUserChoiceOfArray( userID, getAllOrthogonalDirections(),createArray(0,1,2,3), "Pick a direction")
 	let secondDirection = getUserChoiceOfArray( userID, getDirectionsPerpendicularToDirection( firstDirection),createArray(0,1), "Pick a secondary direction")
 	# walk along the path, making sure that each space is either empty, itself (because when it moves in it will also move out), or (on the last space only) a capturable enemy piece
 
@@ -55,7 +55,7 @@ def doLeaperMove( userID, theMovingPieceId, firstAmount, secondAmount):
 
 def doRiderMove( userID, theMovingPieceId, firstAmount, secondAmount):
 
-	let firstDirection = getUserChoiceOfArray( userID, getAllOrthogonalDirections(1),createArray(0,1,2,3), "Pick a direction")
+	let firstDirection = getUserChoiceOfArray( userID, getAllOrthogonalDirections(),createArray(0,1,2,3), "Pick a direction")
 	let secondDirection = getUserChoiceOfArray( userID, getDirectionsPerpendicularToDirection( firstDirection),createArray(0,1), "Pick a secondary direction")
 	# walk along the path, making sure that each space is either empty, itself (because when it moves in it will also move out), or (on the last space only) a capturable enemy piece
 

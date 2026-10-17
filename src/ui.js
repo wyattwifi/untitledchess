@@ -46,11 +46,13 @@ export async function uiGetUserChoice( userID, title, explanationOfOptions){
 	if( title == "Pick an action"){
 		
 		whatWaitingFor = "action"
+		displayText("Make a move")
 		return await waitForInput()
 	}
 	if( title == "Market"){
 		
 		whatWaitingFor = "market"
+		displayText("Pick something to buy")
 		return await waitForInput()
 	}
 	throw "error UI does not support this yet"
@@ -307,13 +309,12 @@ function onClickInner( x, y){
 			
 			let slotNumber = Math.floor( y / MARKET_SLOT_HEIGHT)
 			
-			let options = [ ...getMarketNames(), "DONE"]
+			let options = getMarketSlotSrings()
 			
 			if( slotNumber < 0 || slotNumber >= options.length){
 				return
 			}
 			
-			console.log( slotNumber, getMarketNames())
 			
 			promiseResolver(slotNumber)
 			promiseResolver = null // we are no longer looking for input
@@ -365,7 +366,7 @@ theCanvas.addEventListener("pointerdown", onClickOuter)
 const MARKET_SLOT_HEIGHT = 20
 
 
-function getMarketNames(){
+function getMarketSlotSrings(){
 	
 	let state = lastGottenState
 	
@@ -374,10 +375,12 @@ function getMarketNames(){
 	for( let i = 0; i < state.pieces.length; i++){
 		let data = state.pieces[i].position
 		
-		if( data.marketPosition !== undefined){ // it can be 0
-			result[data.marketPosition] = state.pieces[i].name
+		if( data.inMarket){ // it can be 0
+			result[data.marketPosition] = state.pieces[i].name + ", cost " + state.pieces[i].cost
 		}
 	}
+	
+	result.push("Done")
 	
 	return result
 }
@@ -385,15 +388,7 @@ function getMarketNames(){
 function drawMarket( state){
 	
 	
-	let market = []
-	
-	for( let i = 0; i < state.pieces.length; i++){
-		let data = state.pieces[i].position
-		
-		if( data.inMarket){ // it can be 0
-			market[data.marketPosition] = state.pieces[i]
-		}
-	}
+	let market = getMarketSlotSrings()
 	
 	// clear the market
 	drawing.fillStyle = "black"
@@ -402,11 +397,34 @@ function drawMarket( state){
 	// draw the pieces
 	drawing.fillStyle = "white"
 	for( let i = 0; i < market.length; i++){
-			drawing.fillText(market[i].name + ", cost " + market[i].cost, MARKET_LOCATION.x, MARKET_LOCATION.y + MARKET_SLOT_HEIGHT * i + 20)
+			drawing.fillText(market[i], MARKET_LOCATION.x, MARKET_LOCATION.y + MARKET_SLOT_HEIGHT * i + 20)
 	}
 	
 	
 }
+
+
+
+
+
+
+function displayText(message){
+	document.getElementById("messageDisplayer").innerHTML = message
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

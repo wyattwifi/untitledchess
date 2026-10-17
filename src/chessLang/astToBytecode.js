@@ -279,7 +279,7 @@ function getBytecodeOfExpression( expressionAst){
 		}
 		
 		case "NOT":{
-			//WARNING currently this just returns 1-x when given x
+			//WARNING currently this just returns x == 0 when given x
 			
 			let resultName = getNewUniqueIdentifier()
 			let operand_setup = getBytecodeOfExpression( expressionAst.operand)
@@ -287,10 +287,10 @@ function getBytecodeOfExpression( expressionAst){
 			let resultCode = []
 			resultCode.push( ...operand_setup.bytecodeInstructions)
 			
-			let one_variable_name = getNewUniqueIdentifier()
-			resultCode.push( {type:"assignFromLiteral", lval:one_variable_name, rval:1})
+			let zeroVariableName = getNewUniqueIdentifier()
+			resultCode.push( {type:"assignFromLiteral", lval:zeroVariableName, rval:0})
 			
-			resultCode.push({type:"assignMath", lval:resultName, lOperand:one_variable_name, operation:"-", rOperand:operand_setup.resultVariableName})
+			resultCode.push({type:"assignMath", lval:resultName, lOperand:zeroVariableName, operation:"TESTEQUAL", rOperand:operand_setup.resultVariableName})
 			
 			return {bytecodeInstructions:resultCode, resultVariableName:resultName}
 		}

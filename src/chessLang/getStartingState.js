@@ -44,7 +44,7 @@ export function getStartingState(){
 	shuffle( positions)
 	
 	let resultPositions = []
-	const MARKET_SIZE = 2
+	const MARKET_SIZE = 8
 	for( let i = 0; i < NUM_OF_PIECES_OTHER_THAN_THE_TWO_KINGS; i++){
 		let position = positions[i]
 		// the [i + 2] is because the kings are at the first

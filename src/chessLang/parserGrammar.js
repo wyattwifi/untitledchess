@@ -195,80 +195,26 @@ export let grammar = {
 		}
 	},
 	//"expression" is handled separately, in a Pratt parser
-	/*arrayOrFncall:{
-		raw:[
-			{type:"token",tokenType:"IDENTIFIER"},
-			{type:"subrule",subrule:"arrayOrFncallGroup"},
-			{type:"subrule",subrule:"arrayOrFncallGroup",repeatZeroOrMore:true},
-		],
-		polish: rawParse => {
-			let callChain = []
-			callChain.push(polishParse(rawParse[1]))
-			callChain.push(...rawParse[2].map(polishParse))
-			
-			return {type:"arrayOrFncall", firstName: rawParse[0], callChain: callChain}
-		}
-	},
-	arrayOrFncallGroup:{
-		raw:[
-			{type:"oneOfChoices",options:[
-				{type:"group",subgroup:[
-					{type:"token", tokenType:"LPAREN"},
-					{type:"group", subgroup:[
-						{type:"subrule", subrule:"expression"},
-						{type:"group", subgroup:[
-							{type:"token", tokenType:"COMMA"},
-							{type:"subrule", subrule:"expression"}
-						],repeatZeroOrMore:true}
-					], optional:true},
-					{type:"token", tokenType:"RPAREN"},
-				],name:"funcall"},
-				{type:"group",subgroup:[
-					{type:"token", tokenType:"LBRACKET"},
-					{type:"subrule", subrule:"expression"},
-					{type:"token", tokenType:"RBRACKET"},
-				],name:"arrayAccess"},
-			]},
-		],
-		polish: rawParse => {
-			if( rawParse[0].name == "funcall"){
-				
-				let args = []
-				let rawParseMiddlePart = rawParse[0].contents
-				
-				if( rawParseMiddlePart[1]){
-					// there are some args
-					args.push(polishParse(rawParseMiddlePart[1][0]))
-					
-					for( let a of rawParseMiddlePart[1][1]){
-						args.push(polishParse(a[1]))
-					}
-				}
-				
-				
-				return {type:"functionCall", args: args }
-			} else if( rawParse[0].name == "arrayAccess"){
-				return {type:"arrayLookup", index: polishParse(rawParse[0].contents[1])}
-			} else {
-				throw "errA"
-			}
-		}
-	},
-	*/
 	functionCallArgumentsIncludingParens:{
 		raw:[
 			{type:"token", tokenType:"LPAREN"},
-			{type:"subrule", subrule:"expression"},
 			{type:"group", subgroup:[
-				{type:"token", tokenType:"COMMA"},
-				{type:"subrule", subrule:"expression"}
-			],repeatZeroOrMore:true},
+				{type:"subrule", subrule:"expression"},
+				{type:"group", subgroup:[
+					{type:"token", tokenType:"COMMA"},
+					{type:"subrule", subrule:"expression"}
+				],repeatZeroOrMore:true},
+			], optional:true},
 			{type:"token", tokenType:"RPAREN"},
 		],
 		polish: rawParse => {
-			let args = [ rawParse[1]]
-			for( let i = 0; i < rawParse[2].length; i++){
-				args.push( rawParse[2][i][1])
+			
+			let args = []
+			if( rawParse[1]){
+				args = [ rawParse[1][0]]
+				for( let i = 0; i < rawParse[1][1].length; i++){
+					args.push( rawParse[1][1][i][1])
+				}
 			}
 			return args
 		},

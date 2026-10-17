@@ -300,6 +300,10 @@ export function parse(tokenList){
 			}
 			
 			if (currentToken.type === "LPAREN") {
+				// it is a functioncall. There may or may not be arguments
+				
+				
+				
 				//TODO the args need to be optional
 				const argsRaw = parseArrayOfSymbols(grammar["functionCallArgumentsIncludingParens"].raw)
 				

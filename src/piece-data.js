@@ -80,7 +80,13 @@ if !choice:
 {
 	name: "Queen",
 	cost: 7,
-	action: `doLeaperMove( userID, myPieceID, 1, 0)`,
+	action: `
+let choice = getUserChoice( userID, "Pick a move type", createArray("Move orthogonally","Move diagonally"))
+if choice:
+	doRiderMove( userID, myPieceID, 1, 0)
+if !choice:
+	doRiderMove( userID, myPieceID, 1, 1)
+`,
 	effect: ""
 },
 {
@@ -92,7 +98,26 @@ if !choice:
 {
 	name: "Bishop",
 	cost: 7,
-	action: `doLeaperMove( userID, myPieceID, 1, 0)`,
+	action: `doRiderMove( userID, myPieceID, 1, 1)`,
 	effect: ""
-}
+},
+{
+	name: "Disney Shadow",
+	cost: 17,
+	action: `
+let choice = getUserChoice( userID, "Pick a move type", createArray("Move Knightly","Move Queenly"))
+if choice:
+	doLeaperMove( userID, myPieceID, 2, 1)
+if !choice:
+	let choice2 = getUserChoice( userID, "Pick a move type", createArray("Move orthogonally","Move diagonally"))
+	if choice2:
+		doRiderMove( userID, myPieceID, 1, 0)
+	if !choice2:
+		doRiderMove( userID, myPieceID, 1, 1)
+for loc in getAllAdjacentLocs(getPieceLocation(myPieceID)):
+	#print(loc)
+	captureAllPiecesAtLoc( loc)
+`,
+			effect: ""
+},
 ]

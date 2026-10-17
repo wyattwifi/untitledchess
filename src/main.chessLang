@@ -22,7 +22,7 @@
 
 def main():
 	
-	uiUpdateState(1)
+	uiUpdateState()
 	
 	for i in range(9999):#TODO while loop wasnt working
 		
@@ -30,11 +30,11 @@ def main():
 		let BLACK_ID = 1
 		
 		#TODO I dont know why this check is needed, but without it it fails with an error
-		if length(getAllPiecesOnBoardOfCertainColorIDs(0)) == 0:
+		if length(getAllPiecesOnBoardOfCertainColorIDs(WHITE_ID)) == 0:
 			endGame("Black won")
 			return "Black won"
 		
-		let choices = simulateAllChoicesInFunction("doPlayerTurn", 0)
+		let choices = simulateAllChoicesInFunction("doPlayerTurn", WHITE_ID)
 		
 		let viableChoices = filterA( choices, "isNotErr")
 		if length(viableChoices) == 0:
@@ -42,23 +42,22 @@ def main():
 			return "Black won"
 		
 		
-		let choice = getUserChoice( 0, "Pick an action", viableChoices)
+		let choice = getUserChoice( WHITE_ID, "Pick an action", viableChoices)
 		# assignArray(state, "pieces", viableChoices[choice]["pieces"])#TODO it should assign the entire state. Currently this deletes important parts of the state
 		setState(viableChoices[choice]) #TODO i should be able to just do state = blablabla, but that does not work for now with the interpreter
 		
-		uiUpdateState(1)
+		uiUpdateState()
 		
 		# Now do the buying part
 		buyPhase(WHITE_ID)
 		
+		uiUpdateState()
 		
-		uiUpdateState(1)
-		
-		if length(getAllPiecesOnBoardOfCertainColorIDs(1)) == 0:
+		if length(getAllPiecesOnBoardOfCertainColorIDs(BLACK_ID)) == 0:
 			endGame("White won")
 			return "White won"
 		
-		let choices2 = simulateAllChoicesInFunction("doPlayerTurn", 1)
+		let choices2 = simulateAllChoicesInFunction("doPlayerTurn", BLACK_ID)
 		
 		let viableChoices2 = filterA( choices2, "isNotErr")
 		if length(viableChoices2) == 0:
@@ -66,16 +65,16 @@ def main():
 			return "White won"
 		
 		
-		let choice2 = getUserChoice( 1, "Pick an action", viableChoices2)
+		let choice2 = getUserChoice( BLACK_ID, "Pick an action", viableChoices2)
 		assignArray(state, "pieces", viableChoices2[choice2]["pieces"])
 		
 		
-		uiUpdateState(1)
+		uiUpdateState()
 		
 		# Now do the buying part
 		buyPhase(BLACK_ID)
 		
-		uiUpdateState(1)
+		uiUpdateState()
 	
 
 
@@ -110,7 +109,7 @@ def buyPhase( playerID):
 	
 	for i in range(1000):
 		
-		let options = getMarket(1)
+		let options = getMarket()
 		assignArray( options, length(options), "Done")
 		let choice = getUserChoice( playerID, "Market", options)
 		
@@ -120,7 +119,7 @@ def buyPhase( playerID):
 		buyPiece( playerID, choice)
 
 def buyPiece( playerID, placeInMarket):
-	let piece = getMarket(1)[placeInMarket]
+	let piece = getMarket()[placeInMarket]
 	
 	assignArray( piece["position"], "inMarket", 0)
 	assignArray( piece["position"], "onBoard", 1)
@@ -128,66 +127,90 @@ def buyPiece( playerID, placeInMarket):
 	assignArray( piece["position"], "y", 1)
 	assignArray( piece["position"], "color", playerID)
 	
-	replenishMarket(1)
-	uiUpdateState(1)
+	replenishMarket()
+	uiUpdateState()
 
 
-def getStack(a):
-	let result = createEmptyArray(1)
+def getStack():
+	let result = createEmptyArray()
 	for piece in state["pieces"]:
 		if piece["position"]["inStack"]:
 			assignArray( result, piece["position"]["stackPosition"], piece)
 	return result
 
 
+
+
+
 # The high numbers are at the top of the stack. 0 is the bottom card of the stack
-def replenishMarket(a):
-	print(getMarket(1))
-	let stack = getStack(1)
+def replenishMarket():
+	
+	
+	let MARKET_SIZE = 8
+	
+	# print(getMarket(1))
+	
+	let stack = getStack()
+	
+	if !length(stack):
+		throwError("Ran out of cards, cannot replenish the market")
+	
+	
 	for i in range(1000):
 		
 		#First, we need to see if the market has any holes. We cannot just take the length of getMarket, because currently that returns an array with holes in it
 		let numOfMarketCards = 0
-		for piece in getMarket(1):
+		for piece in getMarket():
 			if piece:
 				if piece["position"]:
 					if piece["position"]["inMarket"]:
 						numOfMarketCards = numOfMarketCards + 1
-		if numOfMarketCards == 2:
+		
+		if numOfMarketCards == MARKET_SIZE:
 			return 1
 		
 		
 		let topPieceOfDeck = stack[length(stack) - 1]
 		assignArray( topPieceOfDeck["position"], "inStack", 0)
 		assignArray( topPieceOfDeck["position"], "inMarket", 1)
-		assignArray( topPieceOfDeck["position"], "marketPosition", getEmptyMarketPosition(1))
+		assignArray( topPieceOfDeck["position"], "marketPosition", getEmptyMarketPosition())
+		
+	uiUpdateState()
+	
 
 
 
-def getEmptyMarketPosition(a):
-	let MARKET_SIZE = 2
-	let market = getMarket(1)
-	let isThingPresent = createEmptyArray(1)
+def getEmptyMarketPosition():
+	
+	let MARKET_SIZE = 8
+	let market = getMarket()
+	let isThingPresent = createEmptyArray()
+	
+	
 	for i in range(MARKET_SIZE):
 		assignArray( isThingPresent, i, 0)
+	
 	
 	for piece in market:
 		if piece:
 			if piece["position"]:
 				if piece["position"]["inMarket"]:
 					assignArray( isThingPresent, piece["position"]["marketPosition"], 1)
+	
+	
 	for i in range(length(isThingPresent)):
 		if !isThingPresent[i]:
 			return i
+	
+	throwError("Error tried to get an empty market spot, but the market is all full")
+	
 
 
-def getMarket(a):
-	let result = createEmptyArray(1)
-	# let i = 0
+def getMarket():
+	let result = createEmptyArray()
 	for piece in state["pieces"]:
-		if piece["position"]["inMarket"]: #TODO do this better
+		if piece["position"]["inMarket"]:
 			assignArray( result, piece["position"]["marketPosition"], piece)
-			# i = i + 1
 	return result
 
 

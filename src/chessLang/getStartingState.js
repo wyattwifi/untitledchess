@@ -70,7 +70,7 @@ export function getStartingState(){
 	let resultPieces = []
 	for( let i = 0; i < rawPieceData.length; i++){
 		let rawPiece = rawPieceData[i]
-		resultPieces.push({ name:rawPiece.name, position:resultPositions[i], actionString:rawPiece.action, cost:rawPiece.cost, effects:rawPiece.effects})
+		resultPieces.push({ name:rawPiece.name, position:resultPositions[i], actionString:rawPiece.action, purchaseCostString:rawPiece.purchaseCostFunction, effects:rawPiece.effects})
 	}
 	
 	
@@ -81,9 +81,13 @@ export function getStartingState(){
 	let result = {
 		pieces:resultPieces,
 		isItWhitesTurn:true,
+		coinLocations:[], // there are an unlimited amount of coins
 	}
 	for( let i = 0; i < result.pieces.length; i++){
 		result.pieces[i].actionFunction = "doActionOfPieceWithID" + i
+	}
+	for( let i = 0; i < result.pieces.length; i++){
+		result.pieces[i].doPurchaseCost = "doPurchaseCostOfPieceWithID" + i
 	}
 	return result
 }

@@ -1,7 +1,7 @@
 export const rawPieceData = [
 {
 	name: "White King",
-	cost: 3,
+	purchaseCostFunction: `havePlayerPay( playerID, 3)`,
 	action: `
 let choice = getUserChoice( userID, "Pick a move type",createArray("Move orthogonally","Move diagonally"))
 if choice:
@@ -13,7 +13,7 @@ if !choice:
 },
 {
 	name: "Black King",
-	cost: 3,
+	purchaseCostFunction: `havePlayerPay( playerID, 3)`,
 	action: `
 let choice = getUserChoice( userID, "Pick a move type", createArray("Move orthogonally","Move diagonally"))
 if choice:
@@ -25,75 +25,76 @@ if !choice:
 },
 {
 	name: "Wazir",
-	cost: 3,
+	purchaseCostFunction: `havePlayerPay( playerID, 3)`,
 	simpleRule:"ACTION: Move 1 space vertically or horizontally.",
 	action: `doLeaperMove( userID, myPieceID, 1, 0)`,
-	effects: [
+	effects: [],
+	/*effects: [ This is a test of the effect code
 		{
 			replacedFunction:"doLeaperMove",
 			newFunction:"doRiderMove",
 		},
-	],
+	],*/
 },
 {
 	name: "Dababa",
-	cost: 3,
+	purchaseCostFunction: `havePlayerPay( playerID, 3)`,
 	simpleRule:"ACTION: Move 2 spaces vertically or horizontally, jumping over pieces.",
 	action: `doLeaperMove( userID, myPieceID, 2, 0)`,
 	effects: [],
 },
 {
 	name: "03",
-	cost: 3,
+	purchaseCostFunction: `havePlayerPay( playerID, 3)`,
 	simpleRule:"ACTION: Move 3 spaces vertically or horizontally, jumping over pieces.",
 	action: `doLeaperMove( userID, myPieceID, 3, 0)`,
 	effects: [],
 },
 {
 	name: "Dusk",
-	cost: 3,
+	purchaseCostFunction: `havePlayerPay( playerID, 3)`,
 	simpleRule:"ACTION: Move 4 spaces vertically or horizontally, jumping over pieces.",
 	action: `doLeaperMove( userID, myPieceID, 4, 0)`,
 	effects: [],
 },
 {
 	name: "7",
-	cost: 3,
+	purchaseCostFunction: `havePlayerPay( playerID, 3)`,
 	simpleRule:"ACTION: Move 5 spaces vertically or horizontally, jumping over pieces.",
 	action: `doLeaperMove( userID, myPieceID, 5, 0)`,
 	effects: [],
 },
 {
 	name: "Wheel",
-	cost: 3,
+	purchaseCostFunction: `havePlayerPay( playerID, 3)`,
 	simpleRule:"ACTION: Move 6 spaces vertically or horizontally, jumping over pieces.",
 	action: `doLeaperMove( userID, myPieceID, 6, 0)`,
 	effects: [],
 },
 {
 	name: "Sliced Bread",
-	cost: 3,
+	purchaseCostFunction: `havePlayerPay( playerID, 3)`,
 	simpleRule:"ACTION: Move 7 spaces vertically or horizontally, jumping over pieces.",
 	action: `doLeaperMove( userID, myPieceID, 7, 0)`,
 	effects: [],
 },
 {
 	name: "Knight",
-	cost: 3,
+	purchaseCostFunction: `havePlayerPay( playerID, 3)`,
 	simpleRule:"ACTION: Move 2 spaces vertically or horizontally and then 1 space in a direction perpendicular to that.",
 	action: `doLeaperMove( userID, myPieceID, 2, 1)`,
 	effects: [],
 },
 {
 	name: "Flamingo",
-	cost: 3,
+	purchaseCostFunction: `havePlayerPay( playerID, 3)`,
 	simpleRule:"ACTION: Move 6 spaces vertically or horizontally and then 1 space in a direction perpendicular to that.",
 	action: `doLeaperMove( userID, myPieceID, 6, 1)`,
 	effects: [],
 },
 {
 	name: "Queen",
-	cost: 7,
+	purchaseCostFunction: `havePlayerPay( playerID, 7)`,
 	simpleRule:"ACTION: Move any number of spaces vertically, horizontally, or diagonally.",
 	action: `
 let choice = getUserChoice( userID, "Pick a move type", createArray("Move orthogonally","Move diagonally"))
@@ -106,21 +107,21 @@ if !choice:
 },
 {
 	name: "Rook",
-	cost: 7,
+	purchaseCostFunction: `havePlayerPay( playerID, 5)`,
 	simpleRule:"ACTION: Move any number of spaces vertically or horizontally.",
 	action: `doRiderMove( userID, myPieceID, 1, 0)`,
 	effects: [],
 },
 {
 	name: "Bishop",
-	cost: 7,
+	purchaseCostFunction: `havePlayerPay( playerID, 3)`,
 	simpleRule:"ACTION: Move any number of spaces diagonally.",
 	action: `doRiderMove( userID, myPieceID, 1, 1)`,
 	effects: [],
 },
 {
 	name: "Disney Shadow",
-	cost: 17,
+	purchaseCostFunction: `havePlayerPay( playerID, 17)`,
 	simpleRule:"ACTION: Move like a Queen or Knight, then capture all oponent pieces adjacent to this.",
 	action: `
 let choice = getUserChoice( userID, "Pick a move type", createArray("Move Knightly","Move Queenly"))
@@ -140,7 +141,7 @@ for loc in getAllAdjacentLocs(getPieceLocation(myPieceID)):
 },
 {
 	name: "Barbarian",
-	cost: 3,
+	purchaseCostFunction: `havePlayerPay( playerID, 3)`,
 	simpleRule:"ACTION: Move any odd number of squares vertically and then one horizontally.",
 	action: `
 

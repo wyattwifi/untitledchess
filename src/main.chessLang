@@ -20,14 +20,51 @@
 # TODO make it be so that the main function returning a string is how the game ends
 
 
+
+
+
+def getMoneyPlayerHas( playerID):
+	let result = 0
+	for coin in state["coinLocations"]:
+		if coin == playerID:
+			result = result + 1
+	return result
+
+
+def givePlayerMoney( playerID, amount):
+	for i in range(amount):
+		assignArray( state["coinLocations"], length(state["coinLocations"]), playerID)
+
+def havePlayerPay( playerID, amount):
+	
+	
+	let result = 0
+	let i = 0
+	for coin in state["coinLocations"]:
+		
+		if amount > 0:
+			if coin == playerID:
+				amount = amount - 1
+				assignArray( state["coinLocations"], i, "bank") #TODO remove it from the array
+		i = i + 1
+	
+	
+	if amount > 0:
+		throwError("Player ran out of money")
+
+
 def main():
+	
+	let WHITE_ID = 0
+	let BLACK_ID = 1
+	
+	givePlayerMoney( WHITE_ID, 15)
+	givePlayerMoney( BLACK_ID, 15)
 	
 	uiUpdateState()
 	
 	for i in range(9999):#TODO while loop wasnt working
 		
-		let WHITE_ID = 0
-		let BLACK_ID = 1
 		
 		#TODO I dont know why this check is needed, but without it it fails with an error
 		if length(getAllPiecesOnBoardOfCertainColorIDs(WHITE_ID)) == 0:
@@ -147,6 +184,12 @@ def isLocOccupied( loc):
 
 
 def buyPiece( playerID, placeInMarket):
+	
+	
+	# let choices = simulateAllChoicesInFunction("doPlayerTurn", playerID, getMarket()[placeInMarket])
+	state["pieces"][0]["doPurchaseCost"]( playerID, 0)
+	
+	
 	let piece = getMarket()[placeInMarket]
 	
 	let locationToPlace = getUserChoiceOfArray( playerID, getAllLocsABoughtPieceCanGo( playerID), getAllLocsABoughtPieceCanGo( playerID), "Where to put the new piece?")

@@ -36,7 +36,18 @@ function getPossibilities(){
 	return result
 }
 
-
+function getPlayerMoneyAmounts(){
+	let results = []
+	for( let i = 0; i < 2; i++){
+		results[i] = 0
+		for( let j = 0; j < lastGottenState.coinLocations.length; j++){
+			if( i == lastGottenState.coinLocations[j]){
+				results[i]++
+			}
+		}
+	}
+	return results
+}
 
 export async function uiGetUserChoice( userID, title, explanationOfOptions){
 	
@@ -46,13 +57,13 @@ export async function uiGetUserChoice( userID, title, explanationOfOptions){
 	if( title == "Pick an action"){
 		
 		whatWaitingFor = "action"
-		displayText("Make a move")
+		displayText("Make a move" + getPlayerMoneyAmounts())
 		return await waitForInput()
 	}
 	if( title == "Market"){
 		
 		whatWaitingFor = "market"
-		displayText("Pick something to buy")
+		displayText("Pick something to buy" + getPlayerMoneyAmounts())
 		return await waitForInput()
 	}
 	if( title == "Where to put the new piece?"){

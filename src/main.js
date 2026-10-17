@@ -12,6 +12,7 @@ import utilChesslangCode from "./util.chessLang?raw"
 
 
 let actionFunctionsString = ""
+let purchaseCostFunctionStrings = ""
 let state = getStartingState() // this should be a pure function, so it is okay to call it elsewhere too
 
 for( let i = 0; i < state.pieces.length; i++){
@@ -22,9 +23,18 @@ for( let i = 0; i < state.pieces.length; i++){
 	let newString = lines.join("\n")
 	
 	actionFunctionsString = actionFunctionsString + "def doActionOfPieceWithID" + i + "( userID, myPieceID ):\n" + newString + "\n"
+	
+	
+	// we need to add one level of indentation to each action string
+	let originalCostString = state.pieces[i].purchaseCostString
+	lines = originalCostString.split("\n")
+	lines = lines.map( l => "\t" + l )
+	let newCostString = lines.join("\n")
+	
+	purchaseCostFunctionStrings = purchaseCostFunctionStrings + "def doPurchaseCostOfPieceWithID" + i + "( playerID, myPieceID ):\n" + newCostString + "\n"
 }
 
-let totalChessCodeString = sampleChesslangCode + "\n" + actionFunctionsString + "\n" + piecesChesslangCode + "\n" + utilChesslangCode
+let totalChessCodeString = sampleChesslangCode + "\n" + actionFunctionsString + "\n" + purchaseCostFunctionStrings + "\n" + piecesChesslangCode + "\n" + utilChesslangCode
 
 
 runChessCode(compileChessCode(totalChessCodeString))

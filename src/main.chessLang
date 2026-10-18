@@ -58,6 +58,9 @@ def main():
 	let WHITE_ID = 0
 	let BLACK_ID = 1
 	
+	let WHITE_KING_ID = 0
+	let BLACK_KING_ID = 1
+	
 	givePlayerMoney( WHITE_ID, 15)
 	givePlayerMoney( BLACK_ID, 15)
 	
@@ -67,7 +70,10 @@ def main():
 		
 		
 		#TODO I dont know why this check is needed, but without it it fails with an error
-		if length(getAllPiecesOnBoardOfCertainColorIDs(WHITE_ID)) == 0:
+		# if length(getAllPiecesOnBoardOfCertainColorIDs(WHITE_ID)) == 0:
+		# 	endGame("Black won")
+		# 	return "Black won"
+		if !state["pieces"][WHITE_KING_ID]["position"]["onBoard"]:
 			endGame("Black won")
 			return "Black won"
 		
@@ -75,8 +81,8 @@ def main():
 		
 		let viableChoices = filterA( choices, "isNotErr")
 		if length(viableChoices) == 0:
-			endGame("Black won")
-			return "Black won"
+			endGame("Stalemate")
+			return "Stalemate"
 		
 		
 		let choice = getUserChoice( WHITE_ID, "Pick an action", viableChoices)
@@ -86,11 +92,15 @@ def main():
 		uiUpdateState()
 		
 		# Now do the buying part
+		givePlayerMoney( WHITE_ID, 1)
 		buyPhase(WHITE_ID)
 		
 		uiUpdateState()
 		
-		if length(getAllPiecesOnBoardOfCertainColorIDs(BLACK_ID)) == 0:
+		# if length(getAllPiecesOnBoardOfCertainColorIDs(BLACK_ID)) == 0:
+		# 	endGame("White won")
+		# 	return "White won"
+		if !state["pieces"][BLACK_KING_ID]["position"]["onBoard"]:
 			endGame("White won")
 			return "White won"
 		
@@ -98,8 +108,8 @@ def main():
 		
 		let viableChoices2 = filterA( choices2, "isNotErr")
 		if length(viableChoices2) == 0:
-			endGame("White won")
-			return "White won"
+			endGame("Stalemate")
+			return "Stalemate"
 		
 		
 		let choice2 = getUserChoice( BLACK_ID, "Pick an action", viableChoices2)
@@ -109,6 +119,7 @@ def main():
 		uiUpdateState()
 		
 		# Now do the buying part
+		givePlayerMoney( BLACK_ID, 1)
 		buyPhase(BLACK_ID)
 		
 		uiUpdateState()

@@ -57,13 +57,13 @@ export async function uiGetUserChoice( userID, title, explanationOfOptions){
 	if( title == "Pick an action"){
 		
 		whatWaitingFor = "action"
-		displayText("Make a move" + getPlayerMoneyAmounts())
+		displayText("Make a move" + " --- Wallet Sizes White: " + getPlayerMoneyAmounts()[0] + " Black: " + getPlayerMoneyAmounts()[1])
 		return await waitForInput()
 	}
 	if( title == "Market"){
 		
 		whatWaitingFor = "market"
-		displayText("Pick something to buy" + getPlayerMoneyAmounts())
+		displayText("Pick something to buy" + " --- Wallet Sizes White: " + getPlayerMoneyAmounts()[0] + " Black: " + getPlayerMoneyAmounts()[1])
 		return await waitForInput()
 	}
 	if( title == "Where to put the new piece?"){

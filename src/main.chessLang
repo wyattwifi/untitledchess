@@ -50,7 +50,7 @@ def havePlayerPay( playerID, amount):
 	
 	
 	if amount > 0:
-		throwError("Player ran out of money")
+		throwError("Tried to move off of the board")
 
 
 def main():
@@ -80,7 +80,7 @@ def main():
 		
 		
 		let choice = getUserChoice( WHITE_ID, "Pick an action", viableChoices)
-		# assignArray(state, "pieces", viableChoices[choice]["pieces"])#TODO it should assign the entire state. Currently this deletes important parts of the state
+		
 		setState(viableChoices[choice]) #TODO i should be able to just do state = blablabla, but that does not work for now with the interpreter
 		
 		uiUpdateState()
@@ -183,14 +183,33 @@ def isLocOccupied( loc):
 	return length(getPiecesAtLoc( loc)) == 0
 
 
+def payCostOfBuyingPiece( playerID, piece):
+	piece["doPurchaseCost"]( playerID, piece["id"])
+
 def buyPiece( playerID, placeInMarket):
 	
 	
 	# let choices = simulateAllChoicesInFunction("doPlayerTurn", playerID, getMarket()[placeInMarket])
-	state["pieces"][0]["doPurchaseCost"]( playerID, 0)
 	
 	
 	let piece = getMarket()[placeInMarket]
+	
+	#To see if the player can pay the cost of the piece, we simulate doing the cost function. The cost function is almost always making the player pay money to the bank, but it can be any function in general
+	let resultStates = simulateAllChoicesInFunction("payCostOfBuyingPiece", playerID, piece)
+	
+	#There could be a user choice within the cost function, so account for that possibility
+	let viableChoices = filterA( resultStates, "isNotErr")
+	if length(viableChoices) == 0:
+		#There are no cases where the player can pay the cost
+		print("cant buy that, too expensive")
+		return 1 #return without actually buying the piece
+	
+	if length(viableChoices) > 1:
+		throwError("TODO not supported yet")
+	
+	setState(viableChoices[0]) #TODO i should be able to just do state = blablabla, but that does not work for now with the interpreter
+	
+	let piece = getMarket()[placeInMarket] #we need to reset it because it no longer corresponds to the actual piece because the state has been reset TODO make it so this is not needed
 	
 	let locationToPlace = getUserChoiceOfArray( playerID, getAllLocsABoughtPieceCanGo( playerID), getAllLocsABoughtPieceCanGo( playerID), "Where to put the new piece?")
 	

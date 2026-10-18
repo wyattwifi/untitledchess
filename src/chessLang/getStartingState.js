@@ -89,6 +89,9 @@ export function getStartingState(){
 	for( let i = 0; i < result.pieces.length; i++){
 		result.pieces[i].doPurchaseCost = "doPurchaseCostOfPieceWithID" + i
 	}
+	for( let i = 0; i < result.pieces.length; i++){
+		result.pieces[i].id = i
+	}
 	return result
 }
 

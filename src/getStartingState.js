@@ -3,7 +3,7 @@
 
 
 // The base of the piece information is saved in the file "piece-data.js". That file started out as a JSON file, but it no longer is one because I wanted to have multiline strings in it. This file loads that file data and then puts it into the format that the rest of the code uses
-import {rawPieceData} from "../piece-data.js"
+import {rawPieceData} from "./piece-data.js"
 
 
 //TODO for now the state variable has some (ideally but not in practice) read-only data, specifically the action names

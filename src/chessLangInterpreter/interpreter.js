@@ -1,7 +1,7 @@
 
 
 import {InternalCompilerError} from "./parseChessLang.js"
-import {getStartingState} from "./getStartingState.js"
+import {getStartingState} from "../getStartingState.js"
 
 import {uiUpdateState, uiHint, uiGetUserChoice} from "./../ui.js"
 

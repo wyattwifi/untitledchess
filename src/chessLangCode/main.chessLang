@@ -55,6 +55,11 @@ def havePlayerPay( playerID, amount):
 
 def main():
 	
+	let a = 0
+	while a < 12:
+		print(a)
+		a = a + 1
+	
 	let WHITE_ID = 0
 	let BLACK_ID = 1
 	

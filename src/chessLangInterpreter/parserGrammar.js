@@ -191,7 +191,7 @@ export let grammar = {
 			if( rawParse[3]){ // remember that the body can be empty
 				statements = polishParse(rawParse[3])
 			}
-			return {type:"for",condition: polishParse(rawParse[1]), contents:statements}
+			return {type:"while",condition: polishParse(rawParse[1]), contents:statements}
 		}
 	},
 	//"expression" is handled separately, in a Pratt parser

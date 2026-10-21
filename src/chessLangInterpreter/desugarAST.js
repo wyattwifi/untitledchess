@@ -28,7 +28,6 @@ function desugarForLoops( ast){
 		
 		// that takes care of all the for loops at the lowest level of the function body and other layers too
 	}
-	//TODO also needs to do parts not on the lowest level
 	return ast
 }
 
@@ -110,6 +109,7 @@ function desugarForLoopsOfStatementArray( arrayOfStatements){
 			i++ // to account for the new element
 			
 		}
+		
 		// now, we need to take care of non-lowest-level statements too
 		if( arrayOfStatements[i].type == "if"){
 			desugarForLoopsOfStatementArray( arrayOfStatements[i].contents)

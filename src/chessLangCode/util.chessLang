@@ -14,6 +14,18 @@ def canPieceLandOnSpace( piece, loc):
 	return 1
 
 
+def canPieceLandOnSpaceWithoutCapturing( piece, loc):
+	
+	assertLocIsOnBoard(loc)
+	
+	#By default, it can only land on it if there are no pieces on it that it cannot capture
+	let piecesAtLoc = getPiecesAtLoc(loc)
+	
+	if length( piecesAtLoc) > 0:
+		return 0
+	return 1
+
+
 def canPieceCapturePiece( attackingPiece, defendingPiece):
 	
 	#friends cannot attack each other
@@ -44,10 +56,44 @@ def movePiece( theMovingPieceId, newLocation):
 
 
 def captureAllPiecesAtLoc( loc):
-	let piecesIDsToCapture = getPiecesAtLoc( loc)
-	for theID in piecesIDsToCapture:
-		assignArray(state["pieces"][theID]["position"], "onBoard", 0)
 	
+	let piecesIDsToCapture = getPiecesAtLoc( loc)
+	
+	for pieceID in piecesIDsToCapture:
+		capturePiece(pieceID)
+
+
+def capturePiece( pieceID):
+	assignArray(state["pieces"][pieceID]["position"], "onBoard", 0)
+
+
+def capturePieceBrickVariant( pieceID):
+	if pieceID == 0:
+		givePlayerMoney( 0, 2)
+	assignArray(state["pieces"][pieceID]["position"], "onBoard", 0)
+
+
+
+def moveWithoutCapturing( piece, direction):
+	
+	let startingLoc = piece["position"] #this has some other information too, but for now it is good enough
+	
+	let newLoc = getLocOneSpaceInDirection( startingLoc, direction)
+	
+	if !canPieceLandOnSpaceWithoutCapturing( piece, newLoc):
+		throwError("Tried to move off of the board")
+	
+	movePiece(piece["id"], newLoc)
+
+
+
+def putCardOnTopOfStack( piece):
+	let stackLength = length(getStack())
+	assignArray( result, piece["position"]["inMarket"], 0)
+	assignArray( result, piece["position"]["onBoard"], 0)
+	assignArray( result, piece["position"]["inStack"], 1)
+	assignArray( result, piece["position"]["stackPosition"], stackLength)
+
 
 
 def getAllAdjacentLocs(loc):

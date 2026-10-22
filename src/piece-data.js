@@ -32,12 +32,6 @@ if !choice:
 	simpleRule:"ACTION: Move 1 space vertically or horizontally.",
 	action: `doLeaperMove( userID, myPieceID, 1, 0)`,
 	effects: [],
-	/*effects: [ This is a test of the effect code
-		{
-			replacedFunction:"doLeaperMove",
-			newFunction:"doRiderMove",
-		},
-	],*/
 },
 {
 	name: "Dababa",
@@ -379,6 +373,18 @@ if choice:
 	action: `
 moveWithoutCapturing( state["pieces"][myPieceID], getUserChoiceOfArray( userID, getAllDirections(), getAllDirections(), "Pick a move direction"))
 `,
-	effects: [],
+effects: [
+	{
+		replacedFunction:"capturePiece",
+		newFunction:"capturePieceBrickVariant",
+	},],
+	effectCode:`
+
+def capturePieceBrickVariant( pieceID):
+	let WHITE_ID = 0 #TODO get actual owner
+	if pieceID == THIS_PIECE_ID:
+		givePlayerMoney( state["pieces"][THIS_PIECE_ID]["position"]["color"], 2)
+	assignArray(state["pieces"][pieceID]["position"], "onBoard", 0)
+`
 },
 ]

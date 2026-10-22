@@ -70,13 +70,9 @@ def main():
 	
 	uiUpdateState()
 	
-	for i in range(9999):#TODO while loop wasnt working
+	while 1:
 		
 		
-		#TODO I dont know why this check is needed, but without it it fails with an error
-		# if length(getAllPiecesOnBoardOfCertainColorIDs(WHITE_ID)) == 0:
-		# 	endGame("Black won")
-		# 	return "Black won"
 		if !state["pieces"][WHITE_KING_ID]["position"]["onBoard"]:
 			endGame("Black won")
 			return "Black won"
@@ -101,9 +97,7 @@ def main():
 		
 		uiUpdateState()
 		
-		# if length(getAllPiecesOnBoardOfCertainColorIDs(BLACK_ID)) == 0:
-		# 	endGame("White won")
-		# 	return "White won"
+		
 		if !state["pieces"][BLACK_KING_ID]["position"]["onBoard"]:
 			endGame("White won")
 			return "White won"
@@ -117,7 +111,7 @@ def main():
 		
 		
 		let choice2 = getUserChoice( BLACK_ID, "Pick an action", viableChoices2)
-		assignArray(state, "pieces", viableChoices2[choice2]["pieces"])
+		setState(viableChoices2[choice2]) #TODO i should be able to just do state = blablabla, but that does not work for now with the interpreter
 		
 		
 		uiUpdateState()
@@ -132,8 +126,7 @@ def main():
 
 
 
-
-#TODO the uiHint function needs some simplifying. Currently if not in a sim it gives the possibilities. If in a sim it sets the startLoc or endLoc (whichever is specified)
+#TODO hinting to the UI where each move starts and ends could be done better
 def doPlayerTurn(playerID):
 	
 	let idOfPieceToMove = getUserChoiceOfArray( playerID, getAllPiecesOnBoardOfCertainColorIDs(playerID), range(length(getAllPiecesOnBoardOfCertainColorIDs(playerID))), "Pick a piece to move" )
@@ -150,9 +143,6 @@ def doPlayerTurn(playerID):
 	# UI hint stuff
 	loc = getPieceLocation( idOfPieceToMove)
 	assignArray(state, "endLoc", createLoc(loc["x"],loc["y"])) #While not strictly required, this is really helpful for the UI
-	# let b = createEmptyArray(1)
-	# assignArray(b, "endLoc", createLoc(loc["x"],loc["y"]))
-	# uiHint(b) #I dont know why the assiging to state thing worked for the first part but not for the second part. For whatever reason it wasnt working so I did this UI hint thing
 	
 	# uiUpdateState(1) #This would do nothing since this is in a sim
 

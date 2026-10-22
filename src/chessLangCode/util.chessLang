@@ -67,10 +67,6 @@ def capturePiece( pieceID):
 	assignArray(state["pieces"][pieceID]["position"], "onBoard", 0)
 
 
-def capturePieceBrickVariant( pieceID):
-	if pieceID == 0:
-		givePlayerMoney( 0, 2)
-	assignArray(state["pieces"][pieceID]["position"], "onBoard", 0)
 
 
 

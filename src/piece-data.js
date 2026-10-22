@@ -377,7 +377,7 @@ if choice:
 	costUIString:"$2",
 	simpleRule:"ACTION: Move (without capturing) one space in any direction. EFFECT: When this pieces is captured, gain $2.",
 	action: `
-moveWithoutCapturing( piece, getUserChoiceOfArray( userID, getAllDirections(), getAllDirections(), "Pick a move direction"))
+moveWithoutCapturing( state["pieces"][myPieceID], getUserChoiceOfArray( userID, getAllDirections(), getAllDirections(), "Pick a move direction"))
 `,
 	effects: [],
 },

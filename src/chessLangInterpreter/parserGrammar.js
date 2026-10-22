@@ -116,7 +116,7 @@ export let grammar = {
 		],
 		polish: rawParse => {
 			if( rawParse[0].name == "standaloneFuncall"){
-				return {type:"assignment", lVal:"bitBucket", rVal: polishParse(rawParse[0].contents[0])}//TODO make this more intuitive
+				return {type:"assignment", lVal:{op:"variable",contents:"bitBucket"}, rVal: polishParse(rawParse[0].contents[0])}//TODO make this more intuitive
 			}
 			return polishParse(rawParse[0])
 		}
@@ -129,7 +129,7 @@ export let grammar = {
 			{type:"token",tokenType:"NEWLINE"},
 		],
 		polish: rawParse => {
-			return {type:"assignment", lVal:rawParse[0], rVal: polishParse(rawParse[2])}
+			return {type:"assignment", lVal:polishParse(rawParse[0]), rVal: polishParse(rawParse[2])}
 		}
 	},
 	declarationAssignment:{

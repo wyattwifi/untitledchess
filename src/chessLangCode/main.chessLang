@@ -55,10 +55,7 @@ def havePlayerPay( playerID, amount):
 
 def main():
 	
-	let a = 0
-	while a < 12:
-		print(a)
-		a = a + 1
+	
 	
 	let WHITE_ID = 0
 	let BLACK_ID = 1
@@ -68,6 +65,8 @@ def main():
 	
 	givePlayerMoney( WHITE_ID, 15)
 	givePlayerMoney( BLACK_ID, 15)
+	
+	
 	
 	uiUpdateState()
 	
@@ -149,7 +148,7 @@ def doPlayerTurn(playerID):
 	
 	
 	# UI hint stuff
-	let loc = getPieceLocation( idOfPieceToMove)
+	loc = getPieceLocation( idOfPieceToMove)
 	assignArray(state, "endLoc", createLoc(loc["x"],loc["y"])) #While not strictly required, this is really helpful for the UI
 	# let b = createEmptyArray(1)
 	# assignArray(b, "endLoc", createLoc(loc["x"],loc["y"]))
@@ -225,7 +224,7 @@ def buyPiece( playerID, placeInMarket):
 	
 	setState(viableChoices[0]) #TODO i should be able to just do state = blablabla, but that does not work for now with the interpreter
 	
-	let piece = getMarket()[placeInMarket] #we need to reset it because it no longer corresponds to the actual piece because the state has been reset TODO make it so this is not needed
+	piece = getMarket()[placeInMarket] #we need to reset it because it no longer corresponds to the actual piece because the state has been reset TODO make it so this is not needed
 	
 	let locationToPlace = getUserChoiceOfArray( playerID, getAllLocsABoughtPieceCanGo( playerID), getAllLocsABoughtPieceCanGo( playerID), "Where to put the new piece?")
 	

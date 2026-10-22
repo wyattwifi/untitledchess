@@ -89,10 +89,10 @@ def moveWithoutCapturing( piece, direction):
 
 def putCardOnTopOfStack( piece):
 	let stackLength = length(getStack())
-	assignArray( result, piece["position"]["inMarket"], 0)
-	assignArray( result, piece["position"]["onBoard"], 0)
-	assignArray( result, piece["position"]["inStack"], 1)
-	assignArray( result, piece["position"]["stackPosition"], stackLength)
+	assignArray( piece["position"], "inMarket", 0)
+	assignArray( piece["position"], "onBoard", 0)
+	assignArray( piece["position"], "inStack", 1)
+	assignArray( piece["position"], "stackPosition", stackLength)
 
 
 

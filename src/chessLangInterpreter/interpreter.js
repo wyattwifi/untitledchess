@@ -247,6 +247,9 @@ class Universe{
 	}
 	
 	jumpToFunction( functionName, parameterValues){
+		// functionName is a string of the function name
+		// parameterValues is an array of plain values of the parameters (eg ints themselves)
+		
 		
 		// first, we need to see if there is an effect in effect that overrides what function gets called
 		for( let i = 0; i < this.state.pieces.length; i++){
@@ -269,6 +272,16 @@ class Universe{
 			console.log(this.stack)
 			console.log(this.bytecode)
 			throw new Error("passed wrong number of parameters to a function. The function you tried to call is " + functionName + " with parameters " + parameterValues)
+		}
+		
+		
+		// check to see that all parameters are defined
+		for( let param of parameterValues){
+			if( param === undefined){
+				console.log(this.stack)
+				console.log(this.bytecode)
+				throw "Error, param undefined"
+			}
 		}
 		
 		// add the parameters to the local variables
@@ -308,7 +321,14 @@ class Universe{
 			switch (instruction.type){
 				case "assignFromVariable":{
 					let localVars = thisFrame.localVariables
-					localVars[instruction.lval] = localVars[instruction.rval]
+					
+					// Currently, the only lval that this accepts is an expression of a variable
+					let lval = instruction.lval.contents
+					if( lval === undefined || instruction.lval.op != "variable"){
+						throw new InternalCompilerError("Invalid Assignment LVal!")
+					}
+					
+					localVars[lval] = localVars[instruction.rval]
 					thisFrame.instructionPointer++
 					break}
 				case "assignFromArrayAcces":{

@@ -68,6 +68,12 @@ def capturePiece( pieceID):
 
 
 
+def getAllAdjacentPieces( loc):
+	let result = createEmptyArray()
+	for adjLoc in getAllAdjacentLocs(loc):
+		for pieceID in getPiecesAtLoc( adjLoc):
+			assignArray( result, length(result), state["pieces"][pieceID])
+	return result
 
 
 def moveWithoutCapturing( piece, direction):
@@ -262,6 +268,7 @@ def getPieceLocation( pieceID):
 	return state["pieces"][pieceID]["position"]
 
 
+#WARNING this returns piece IDs, not pieces
 def getPiecesAtLoc( loc):
 	let result = createEmptyArray()
 	let i = 0

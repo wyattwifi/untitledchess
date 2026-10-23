@@ -381,10 +381,61 @@ effects: [
 	effectCode:`
 
 def capturePieceBrickVariant( pieceID):
-	let WHITE_ID = 0 #TODO get actual owner
 	if pieceID == THIS_PIECE_ID:
 		givePlayerMoney( state["pieces"][THIS_PIECE_ID]["position"]["color"], 2)
 	assignArray(state["pieces"][pieceID]["position"], "onBoard", 0)
 `
+},
+{
+	name: "Hypotenuse",
+	purchaseCostFunction: `havePlayerPay( playerID, 6)`,
+	costUIString:"$6",
+	simpleRule:"ACTION: Gain $3.",
+	action: `givePlayerMoney( userID, 3)`,
+	effects: [],
+},
+{
+	name: "Jabisky",
+	purchaseCostFunction: `havePlayerPay( playerID, 5)`,
+	costUIString:"$5",
+	simpleRule:"ACTION: Jump over two spaces and then move one diagonally in the direction its heading. Gain $1.",
+	action: `
+#TODO for now I am simplifying it to just have it move as a leaper. The real version should end up in the same spot, but the last move should be along the diagonal and not visit the space in between
+doLeaperMove( userID, myPieceID, 3, 1)
+givePlayerMoney( userID, 1)`,
+	effects: [],
+},
+{
+	name: "Not Destiny",
+	purchaseCostFunction: `havePlayerPay( playerID, 1)`,
+	costUIString:"$1",
+	simpleRule:"ACTION: Move up to two spaces perpendicularly.",
+	action: `
+let choice = getUserChoice( userID, "Pick a move type", createArray("Move 1","Move 2"))
+if choice:
+	doLeaperMove( userID, myPieceID, 1, 0)
+if !choice:
+	doLeaperMove( userID, myPieceID, 2, 0)
+`,
+			effects: [],
+},
+{
+	name: "Phone",
+	purchaseCostFunction: `havePlayerPay( playerID, 1)`,
+	costUIString:"$1",
+	simpleRule:"ACTION: Move up to two spaces perpendicularly.",
+	action: `
+for i in range(2):
+	let thisPieceLoc = state["pieces"][myPieceID]["position"]
+	
+	#first, we need to make sure that there is a piece to copy. If not, Phone cannot move
+	if length(getAllAdjacentPieces(thisPieceLoc)) == 0:
+		throwError("Tried to move off of the board")
+	
+	let pieceToCopy = getUserChoiceOfArray( userID, getAllAdjacentPieces(thisPieceLoc), getAllAdjacentPieces(thisPieceLoc), "Pick a piece to copy")
+	
+	pieceToCopy["actionFunction"]( userID, myPieceID)
+`,
+			effects: [],
 },
 ]

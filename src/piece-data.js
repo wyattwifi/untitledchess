@@ -421,9 +421,9 @@ if !choice:
 },
 {
 	name: "Phone",
-	purchaseCostFunction: `havePlayerPay( playerID, 1)`,
-	costUIString:"$1",
-	simpleRule:"ACTION: Move up to two spaces perpendicularly.",
+	purchaseCostFunction: `havePlayerPay( playerID, 4)`,
+	costUIString:"$4",
+	simpleRule:"ACTION: Repeat 2 times: move and capture like a piece next to this.",
 	action: `
 for i in range(2):
 	let thisPieceLoc = state["pieces"][myPieceID]["position"]

@@ -31,7 +31,7 @@ function desugarDeclarationAssignments( ast){
 					oldStatement.type = "assignment"
 					
 					// now, put in the declaration just before the assignment
-					let declarationStatement = {type:"declaration", name:oldStatement.lVal}
+					let declarationStatement = {type:"declaration", name:oldStatement.lVal, variableType:null}
 					arrayOfStatements.splice( i, 0, declarationStatement)
 					i++ // to account for the new element
 					

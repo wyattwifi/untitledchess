@@ -119,6 +119,15 @@ function astToBytecodeForArrayOfStatements( statements){
 				
 				break
 			}
+			case "standaloneFuncall":{
+				
+				let expressionLowered = getBytecodeOfExpression( statement.expression)
+				
+				resultCode.push(...expressionLowered.bytecodeInstructions)
+				
+				break
+			}
+			
 			default:
 				throw new InternalCompilerError("An unknown statement type was given to the astToBytecode stuff. The type is: " + statement.type +"The whole statement was " + JSON.stringify(statement))
 		
@@ -318,6 +327,14 @@ function getBytecodeOfExpression( expressionAst){
 		case "OR":
 		case "AND":
 			return get_result_for_binary_op( expressionAst)
+			
+		case "arrayDeclaration":
+			throw "TODO"
+			let resultName = getNewUniqueIdentifier()
+			for( let element of expressionAst.elements){
+				
+			}
+			
 			
 		default:
 			throw new InternalCompilerError("An unknown expression operation was given to the astToBytecode stuff. The expression is: " + JSON.stringify(expressionAst))

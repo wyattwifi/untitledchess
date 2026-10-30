@@ -5,10 +5,14 @@ import {parse} from "./parseChessLang.js"
 import {astToBytecode} from "./astToBytecode.js"
 import {interpretChessLang} from "./interpreter.js"
 import {desugarAST} from "./desugarAST.js"
-import {verifyAST} from "./verifyAST.js"
+import {verifyAST, removeVariableDeclarations, verifyAllVarsDeclared} from "./verifyAST.js"
+import {inferTypes} from "./type-stuff.js"
 
 // returns the array of the bytecode
 export function compileChessCode( sourceCodeString){
+	
+	
+	// sourceCodeString = simpleTestCode // temporary, for dev
 	
 	// let tokens = lexer(sampleChesslangCode)
 	let tokens = lexer(sourceCodeString)
@@ -17,10 +21,18 @@ export function compileChessCode( sourceCodeString){
 	// console.log( JSON.stringify(ast))
 	ast = desugarAST( ast)
 	
+	verifyAllVarsDeclared(ast)
+	
+	//TODO make sure all vars declared before doing type stuff
+	// inferTypes(ast)
+	
+	console.log(JSON.stringify(ast))
+	
+	//WARNING verifyAST takes out all the variable declarations, needed for type stuff
+	removeVariableDeclarations(ast)
 	
 	
-	// console.log( JSON.stringify(ast))
-	verifyAST(ast)
+	
 	
 	let bytecode = astToBytecode(ast)
 	// console.log(JSON.stringify(bytecode))
@@ -139,6 +151,7 @@ functiondef main():
 
 let simpleTestCode = `
 
+
 def test():
 	for i in range(10):
 		print(i)
@@ -149,9 +162,15 @@ def main():
 	test()
 
 def factorial(a):
+	
+	
+	let j = "hohoho"
+	let k = j
+	
+	
 	if a:
-		return multiply(factorial(a - 1), a)
-	if not(a):
+		return a * factorial(a - 1)
+	if !a:
 		return 1
 `
 

@@ -262,21 +262,32 @@ function lexerCore( stringIn){
 		{name:"MINUS",regex:/^-/},
 		{name:"ASTERISK",regex:/^\*/},
 		{name:"SLASH",regex:/^\//},
-		{name:"TESTEQUAL",regex:/^==/},
+		{name:"TESTEQUAL",regex:/^==/}, // although it would also work to just do = and tell what it is based on the location, that would probably cause more errors when people switch to other languages
 		{name:"TESTGREATERTHAN",regex:/^>/},
 		{name:"TESTLESSTHAN",regex:/^</},
 		{name:"TESTGREATERTHANOREQUALTO",regex:/^>=/},
 		{name:"TESTLESSTHANOREQUALTO",regex:/^<=/},
 		{name:"EQUALS",regex:/^=/},
+		
+		
+		// it used to be C-like, now switching to Pythonlike, currently both are supported
+		{name:"NOT",regex:/^not(?=([^a-z01-9]|$))/},
+		{name:"AND",regex:/^and(?=([^a-z01-9]|$))/},
+		{name:"OR",regex:/^\or(?=([^a-z01-9]|$))/},
 		{name:"NOT",regex:/^!/},
 		{name:"AND",regex:/^&/},
 		{name:"OR",regex:/^\|/},
+		
+		
 		{name:"COLON",regex:/^:/},
 		{name:"COMMA",regex:/^,/},
 		{name:"LPAREN",regex:/^\(/},
 		{name:"RPAREN",regex:/^\)/},
-		{name:"LBRACE",regex:/^{/},
-		{name:"RBRACE",regex:/^}/},
+		
+		// currently there are no use for these, so I commented them out
+		// {name:"LBRACE",regex:/^{/},
+		// {name:"RBRACE",regex:/^}/},
+		
 		{name:"LBRACKET",regex:/^\[/},
 		{name:"RBRACKET",regex:/^\]/},
 		{name:"NEWLINE",regex:/^\n/},

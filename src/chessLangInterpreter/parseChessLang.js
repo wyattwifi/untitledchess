@@ -229,8 +229,8 @@ export function parse(tokenList){
 		consume(currentToken.type)
 		let left
 		
-		//TODO support unary operators
 		
+		// take care of the primary expression
 		switch( currentToken.type){
 			case "IDENTIFIER":{
 				left = {op:"variable", contents:currentToken.contents}
@@ -262,10 +262,32 @@ export function parse(tokenList){
 					return {success:false}
 				}
 				
-				left = {op:"parengroup", contents:potentialInnerExpression.contents}
+				left = potentialInnerExpression.contents // there is no need to remember that it was a parengroup. The order of operations has already been taken care of now
 				if( !consume("RPAREN").success){
 					return {success:false}
 				}
+				break}
+			case "LBRACKET":{
+				// it is an array declaration
+				// it is of the form LBRACKET expression [COMMA expression]* RBRACKET
+				// the stuff already consumed the first bracket, so we just do the stuff after that
+				
+				
+				const elementsRaw = parseArrayOfSymbols(grammar["arrayDeclarationBesidesFirstBracket"].raw)
+				
+				if (!elementsRaw.success) {
+					return {success: false}
+				}
+				
+				const elements = polishParse({name:"arrayDeclarationBesidesFirstBracket",contents:elementsRaw.contents}) //.map(a=>a.contents)
+				
+				console.log(elements)
+				
+				left = {
+					op: "arrayDeclaration",
+					elements: elements,
+				}
+				
 				break}
 			default:{
 				registerError( "identifier, number, minus, string or lparen", peek())
@@ -277,6 +299,8 @@ export function parse(tokenList){
 			
 			
 			// handle postfix operations
+			
+			// handle array access
 			if (currentToken.type === "LBRACKET") {
 				consume("LBRACKET")
 				
@@ -299,12 +323,12 @@ export function parse(tokenList){
 				continue
 			}
 			
+			
+			// handle function call
 			if (currentToken.type === "LPAREN") {
 				// it is a functioncall. There may or may not be arguments
 				
-				
-				
-				//TODO the args need to be optional
+				// the args being optional is handled in the grammar declaration
 				const argsRaw = parseArrayOfSymbols(grammar["functionCallArgumentsIncludingParens"].raw)
 				
 				if (!argsRaw.success) {

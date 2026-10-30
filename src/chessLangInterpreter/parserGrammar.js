@@ -85,7 +85,9 @@ export let grammar = {
 			return {
 				name:rawParse[1],
 				params: params,
+				paramTypes: params.map(a=>null),
 				statements:statements,
+				returnType:null,
 			}
 		}
 	},
@@ -109,14 +111,14 @@ export let grammar = {
 				{type:"subrule", subrule:"whileBlock"},
 				{type:"subrule", subrule:"returnRule"},
 				{type:"group", subgroup:[
-					{type:"subrule", subrule:"expression"}, //TODO the only type of expression that should be allowed is a functioncall
+					{type:"subrule", subrule:"expression"}, //NOTE the only type of expression that should be allowed is a functioncall
 					{type:"token",tokenType:"NEWLINE"},
 				], name:"standaloneFuncall"},
 			]},
 		],
 		polish: rawParse => {
 			if( rawParse[0].name == "standaloneFuncall"){
-				return {type:"assignment", lVal:{op:"variable",contents:"bitBucket"}, rVal: polishParse(rawParse[0].contents[0])}//TODO make this more intuitive
+				return {type:"standaloneFuncall", expression: polishParse(rawParse[0].contents[0])}//TODO make this more intuitive
 			}
 			return polishParse(rawParse[0])
 		}
@@ -222,14 +224,45 @@ export let grammar = {
 	returnRule:{
 		raw:[
 			{type:"token",tokenType:"RETURN"},
-			{type:"subrule",subrule:"expression"},
+			{type:"subrule",subrule:"expression", optional:true},
 			{type:"token",tokenType:"NEWLINE"},
 		],
 		polish: rawParse => {
-			return {
-				type:"returnStatement",
-				value:polishParse(rawParse[1]),
+			if( rawParse[1]){
+				return {
+					type:"returnStatement",
+					value:polishParse(rawParse[1]),
+				}
+			} else {
+				return {
+					type:"returnStatement",
+					value:"NONE", // TODO do this better
+				}
 			}
+		}
+	},
+	arrayDeclarationBesidesFirstBracket:{
+		raw:[
+			// {type:"token",tokenType:"LBRACKET"},// the expression stuff already consumest that
+			{type:"group", subgroup:[
+				{type:"subrule", subrule:"expression"},
+				{type:"group", subgroup:[
+					{type:"token", tokenType:"COMMA"},
+					{type:"subrule", subrule:"expression"}
+				],repeatZeroOrMore:true},
+			], optional:true},
+			{type:"token",tokenType:"RBRACKET"},
+		],
+		polish: rawParse => {
+			
+			let elements = []
+			if( rawParse[0]){
+				elements = [ rawParse[0][0].contents]
+				for( let i = 0; i < rawParse[0][1].length; i++){
+					elements.push( rawParse[0][1][i][1].contents)
+				}
+			}
+			return elements
 		}
 	},
 }

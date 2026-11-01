@@ -346,6 +346,51 @@ export function parse(tokenList){
 				continue
 			}
 			
+			// handle member access: object.member
+			if (currentToken.type === "PERIOD") {
+				consume("PERIOD")
+				
+				const member = peek()
+				
+				if (member.type !== "IDENTIFIER") {
+					registerError("identifier after period", member)
+					return {success: false}
+				}
+				
+				consume("IDENTIFIER")
+				
+				left = {
+					op: "memberAccess",
+					object: left,
+					member: member.contents
+				}
+				
+				continue
+			}
+			
+			/*
+			// handle properties and methods
+			if (currentToken.type === "PERIOD") {
+				// it is a method access
+				
+				// the args being optional is handled in the grammar declaration
+				const argsRaw = parseArrayOfSymbols(grammar["functionCallArgumentsIncludingParens"].raw)
+				
+				if (!argsRaw.success) {
+					return {success: false}
+				}
+				
+				const args = polishParse({name:"functionCallArgumentsIncludingParens",contents:argsRaw.contents}).map(a=>a.contents)
+				
+				left = {
+					op: "methodAccess",
+					obj: left,
+					method: args
+				}
+				
+				continue
+			}*/
+			
 			
 			
 			
@@ -362,6 +407,7 @@ export function parse(tokenList){
 				MINUS:{left:50,right:51},
 				ASTERISK:{left:60,right:61},
 				SLASH:{left:60,right:61},
+				PERIOD:{left:70,right:71}, // member access
 			}
 			
 			if( !bindingPowers[currentToken.type]){
@@ -380,7 +426,11 @@ export function parse(tokenList){
 				return {success:false}
 			}
 			
-			left = {op:currentToken.type, left:left, right:potentialRight.contents}
+			if( currentToken.type == "PERIOD"){
+				left = {op:"METHOD_ACCESS", left:left, right:potentialRight.contents}
+			} else {
+				left = {op:currentToken.type, left:left, right:potentialRight.contents}
+			}
 			
 		}
 		return {success:true, contents:left}

@@ -281,6 +281,7 @@ function lexerCore( stringIn){
 		
 		{name:"COLON",regex:/^:/},
 		{name:"COMMA",regex:/^,/},
+		{name:"PERIOD",regex:/^\./},
 		{name:"LPAREN",regex:/^\(/},
 		{name:"RPAREN",regex:/^\)/},
 		

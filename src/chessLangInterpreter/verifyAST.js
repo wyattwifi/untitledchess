@@ -123,8 +123,10 @@ export function verifyAllVarsDeclared( ast){
 			case "number":
 			case "stringLiteral":
 				break
-			case "parengroup":
-				verifyForExpression( expression.contents)
+			case "memberAccess":
+				// member access
+				verifyForExpression( expression.object)
+				//NOTE this does not verify that members are declared
 				break
 			case "PLUS":
 			case "MINUS":

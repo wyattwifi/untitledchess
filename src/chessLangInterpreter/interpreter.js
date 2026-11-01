@@ -213,6 +213,7 @@ let currentSimThreads = []
 // assign( lval variable, rval variable, array access (based on a variable), function call( variable parameters), or literal value, maybe anything im forgetting too)
 //{type:"assignFromVariable", lval:stringName, rval:variableName }
 //{type:"assignFromArrayAcces", lval:stringName, nameOfVarHoldingArray:string,index:variableName}
+//{type:"assignFromMemberAcces", lval:stringName, nameOfVarHoldingObject:string,memberStringName:stringName}
 //{type:"assignFromFunctionCall", lval:stringName, varHoldingFunctionName:string,parameters:[variableNames]}
 //{type:"assignFromLiteral", lval:stringName, rval:integer}
 //{type:"assignFromLiteralString", lval:varName, rval:string}
@@ -341,7 +342,19 @@ class Universe{
 					localVars[instruction.lval] = theArrayItself[indexValue]
 					thisFrame.instructionPointer++
 					break}
-					break
+				
+				//{type:"assignFromMemberAcces", lval:stringName, nameOfVarHoldingObject:string,memberStringName:stringName}
+				case "assignFromMemberAcces":{
+					// note, this is similar to assignFromArrayAcces
+					throw "TODO"
+// 					let localVars = thisFrame.localVariables
+// 					let objectValue = localVars[nameOfVarHoldingObject]
+// 					
+// 					localVars[instruction.lval] = theArrayItself[indexValue]
+// 					thisFrame.instructionPointer++
+// 					break}
+// 					
+				
 				case "assignFromLiteral":{
 					let localVars = thisFrame.localVariables
 					localVars[instruction.lval] = instruction.rval

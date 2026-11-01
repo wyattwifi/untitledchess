@@ -311,9 +311,10 @@ function getBytecodeOfExpression( expressionAst){
 			}
 			
 		}
-		case "parengroup":
+		case "memberAccess":
+			// member access
 			
-			return getBytecodeOfExpression( expressionAst.contents)
+			throw "TODO"
 			
 		case "PLUS":
 		case "MINUS":

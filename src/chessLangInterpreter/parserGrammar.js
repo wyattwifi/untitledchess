@@ -49,7 +49,7 @@ export let grammar = {
 	
 	main:{
 		raw:[
-			{type:"subrule",subrule:"functiondef", repeatZeroOrMore:true}
+			{type:"subrule",subrule:"statementOrSubblock", repeatZeroOrMore:true}
 		],
 		polish: rawParse => {
 			return rawParse[0].map(polishParse) // the first symbol is repeatZeroOrMore, so the parse of that symbol is actually an array. That's why just rawParse.map(polishParse) doesnt work
@@ -83,6 +83,7 @@ export let grammar = {
 				statements = polishParse( rawParse[6])
 			}
 			return {
+				type:"functionDefinition",
 				name:rawParse[1],
 				params: params,
 				paramTypes: params.map(a=>null),
@@ -114,6 +115,7 @@ export let grammar = {
 					{type:"subrule", subrule:"expression"}, //NOTE the only type of expression that should be allowed is a functioncall
 					{type:"token",tokenType:"NEWLINE"},
 				], name:"standaloneFuncall"},
+				{type:"subrule",subrule:"functiondef"},
 			]},
 		],
 		polish: rawParse => {

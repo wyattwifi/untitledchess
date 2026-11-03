@@ -116,7 +116,7 @@ def getAllAdjacentLocs(loc):
 
 
 def getLocOneSpaceInDirection( startingLoc, direction):
-	let newLoc = "placeholder"
+	let newLoc = startingLoc #"placeholder"
 	if direction == 0:
 		newLoc = createLoc( startingLoc["x"] + 0, startingLoc["y"] + 1)
 	if direction == 1:
@@ -146,7 +146,7 @@ def getLocOneSpaceInDirection( startingLoc, direction):
 
 
 def getLocOneSpaceInDirectionErrorless( startingLoc, direction):
-	let newLoc = "placeholder"
+	let newLoc = startingLoc#"placeholder"
 	if direction == 0:
 		newLoc = createLoc( startingLoc["x"] + 0, startingLoc["y"] + 1)
 	if direction == 1:

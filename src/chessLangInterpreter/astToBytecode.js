@@ -1,7 +1,7 @@
 
 
 
-import {InternalCompilerError} from "./parseChessLang.js"
+import {InternalCompilerError} from "./compiler-utils.js"
 
 
 export {
@@ -235,34 +235,6 @@ function getBytecodeOfExpression( expressionAst){
 				resultVariableName: resultVariableName,
 			}
 		}
-		
-// 		case "arrayAccess":{
-// 			
-// 			let resultVariableName = getNewUniqueIdentifier()
-// 			
-// 			let resultBytecode = []
-// 			
-// 			
-// 			let indexExpressionLowered = getBytecodeOfExpression(expressionAst.index)
-// 			
-// 			resultBytecode.push(...indexExpressionLowered.bytecodeInstructions)
-// 			
-// 			let stuffToGetArrayName = getBytecodeOfExpression( expressionAst.array)
-// 			let varHoldingArrayName = stuffToGetArrayName.resultVariableName
-// 			let codeToSetUpArrayName = stuffToGetArrayName.bytecodeInstructions
-// 			
-// 			resultBytecode.push( ...codeToSetUpArrayName)
-// 			
-// 			
-// 			resultBytecode.push({type:"assignFromArrayAcces", lval:resultVariableName, nameOfVarHoldingArray:varHoldingArrayName, index:indexExpressionLowered.resultVariableName})
-// 			
-// 			
-// 			
-// 			return {
-// 				bytecodeInstructions: resultBytecode,
-// 				resultVariableName: resultVariableName,
-// 			}
-// 		}
 		case "arrayAccess":{
 			
 			let resultVariableName = getNewUniqueIdentifier()

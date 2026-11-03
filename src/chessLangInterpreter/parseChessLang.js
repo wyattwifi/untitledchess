@@ -12,12 +12,6 @@ import {lexer} from "./lexer.js" //temporarily, for dev
 
 
 
-export class InternalCompilerError extends Error{
-	constructor(message){
-		super("Internal Compiler Error. User, this isn't your fault. Apparently the compiler is coded wrong. If you want it, here's the error message:" + message)
-	}
-}
-
 //I'm afraid the AST is not very polished yet.
 
 // I am trying to redo the parser

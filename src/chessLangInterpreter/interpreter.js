@@ -1,6 +1,6 @@
 
 
-import {InternalCompilerError} from "./parseChessLang.js"
+import {InternalCompilerError} from "./compiler-utils.js"
 import {getStartingState} from "../getStartingState.js"
 
 import {uiUpdateState, uiHint, uiGetUserChoice} from "./../ui.js"
@@ -346,16 +346,6 @@ class Universe{
 					this.heap[address] = localVars[instruction.localVarHoldingValue]
 					thisFrame.instructionPointer++
 					break}
-// 				case "assignFromArrayAcces":{
-// 					let localVars = thisFrame.localVariables
-// 					let indexVariableName = instruction.index
-// 					let indexValue = localVars[indexVariableName]
-// 					let theArrayItself = localVars[instruction.nameOfVarHoldingArray]
-// 					
-// 					
-// 					localVars[instruction.lval] = theArrayItself[indexValue]
-// 					thisFrame.instructionPointer++
-// 					break}
 				case "assignFromHeap":{
 					// {type:"assignFromHeap", lvalLocalVarName:stringOfVarName, localVarHoldingAddress:stringOfVarName}
 					let localVars = thisFrame.localVariables

@@ -3,7 +3,7 @@
 
 
 
-import {InternalCompilerError} from "./parseChessLang.js"
+import {InternalCompilerError} from "./compiler-utils.js"
 
 
 
@@ -111,9 +111,8 @@ function doPassOfInferingTypes( ast){
 	
 	
 	
-	function inferForStatementArray( arrayOfStatements, scopeIdentifier){
+	doForEachStatementArray(ast, ( arrayOfStatements, scopeIdentifier) => {
 		
-		scopeIdentifier = clone(scopeIdentifier)
 		
 		for( let i = 0; i < arrayOfStatements.length; i++){
 			let statement = arrayOfStatements[i]
@@ -161,32 +160,22 @@ function doPassOfInferingTypes( ast){
 				case "for":{
 					
 					inferForExpression( statement.iterable, scopeIdentifier, ast)
-					
-					let newScopeIdentifier = clone(scopeIdentifier)
-					newScopeIdentifier.push(i)
-					inferForStatementArray( statement.contents, newScopeIdentifier)
 					break}
 					
 				case "if":
 				case "while":{
 					
 					inferForExpression( statement.condition, scopeIdentifier, ast)
-					
-					let newScopeIdentifier = clone(scopeIdentifier)
-					newScopeIdentifier.push(i)
-					inferForStatementArray( statement.contents, newScopeIdentifier)
 					break}
 				default:
 					throw "still need to account for " + JSON.stringify(arrayOfStatements[i])
 			}
 		}
-	}
+		
+	})
 	
 	
-	for( let fundef of ast){
-		let scopeIdentifier = [fundef.name]
-		inferForStatementArray(fundef.statements, clone(scopeIdentifier))
-	}
+	
 	
 }
 
@@ -432,7 +421,7 @@ function getVariableDeclarationStatement( varName, scopeIdentifier, ast){
 	
 	
 	// if it is the state variable, ignore it for now TODO do this better
-	if( varName == "state"){return {variableType:"placeholder"}}
+	if( varName == "state"){return {variableType:null}}
 	
 	
 	let startingScopeIdentifier = clone(scopeIdentifier)
@@ -651,8 +640,15 @@ function setTypeOfExpression( expression, scopeIdentifier, ast, theType){
 			setFunctionReturnType( expression.theFunction.contents, theType, ast)
 			return
 		case "arrayAccess":
-			//TODO we now know the type of the elements of it
-			throw "TODO"
+			// we now know the type of the elements of it
+			
+			// first, set the main type
+			setTypeOfExpression( expression.array, scopeIdentifier, ast, theType)
+			
+			// now, set the type of the index to int, which it always is
+			setTypeOfExpression( expression.index, scopeIdentifier, ast, new Type("int"))
+			
+			break
 		case "arrayDeclaration":
 			
 			for( let element of expression.elements){
@@ -678,7 +674,8 @@ function setTypeOfExpression( expression, scopeIdentifier, ast, theType){
 		case "TESTLESSTHAN":
 		case "TESTGREATERTHANOREQUALTO":
 		case "TESTLESSTHANOREQUALTO":
-			throw "errE this shouldnt be reached"
+			return // these types are intuitive
+			//throw "errE this shouldnt be reached"
 		default:
 			throw new InternalCompilerError("Expression OP not supported. Here is the expression: " + JSON.stringify(expression))
 	}

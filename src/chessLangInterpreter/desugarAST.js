@@ -3,7 +3,7 @@
 
 
 
-import {InternalCompilerError} from "./parseChessLang.js"
+import {InternalCompilerError} from "./compiler-utils.js"
 
 import {getNewUniqueIdentifier} from "./astToBytecode.js"
 

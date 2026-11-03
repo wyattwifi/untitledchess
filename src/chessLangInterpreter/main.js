@@ -154,6 +154,7 @@ functiondef main():
 
 let simpleTestCode = `
 
+let hohoho = 37
 
 def test():
 	for i in range(10):
@@ -167,6 +168,8 @@ def main():
 	let c = [1,2,3]
 	#c[2] = 4
 	print(c[2])
+	
+	print(hohoho)
 
 def factorial(a):
 	

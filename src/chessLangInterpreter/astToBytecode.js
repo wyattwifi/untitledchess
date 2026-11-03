@@ -235,6 +235,34 @@ function getBytecodeOfExpression( expressionAst){
 				resultVariableName: resultVariableName,
 			}
 		}
+		
+// 		case "arrayAccess":{
+// 			
+// 			let resultVariableName = getNewUniqueIdentifier()
+// 			
+// 			let resultBytecode = []
+// 			
+// 			
+// 			let indexExpressionLowered = getBytecodeOfExpression(expressionAst.index)
+// 			
+// 			resultBytecode.push(...indexExpressionLowered.bytecodeInstructions)
+// 			
+// 			let stuffToGetArrayName = getBytecodeOfExpression( expressionAst.array)
+// 			let varHoldingArrayName = stuffToGetArrayName.resultVariableName
+// 			let codeToSetUpArrayName = stuffToGetArrayName.bytecodeInstructions
+// 			
+// 			resultBytecode.push( ...codeToSetUpArrayName)
+// 			
+// 			
+// 			resultBytecode.push({type:"assignFromArrayAcces", lval:resultVariableName, nameOfVarHoldingArray:varHoldingArrayName, index:indexExpressionLowered.resultVariableName})
+// 			
+// 			
+// 			
+// 			return {
+// 				bytecodeInstructions: resultBytecode,
+// 				resultVariableName: resultVariableName,
+// 			}
+// 		}
 		case "arrayAccess":{
 			
 			let resultVariableName = getNewUniqueIdentifier()
@@ -246,14 +274,23 @@ function getBytecodeOfExpression( expressionAst){
 			
 			resultBytecode.push(...indexExpressionLowered.bytecodeInstructions)
 			
+			
 			let stuffToGetArrayName = getBytecodeOfExpression( expressionAst.array)
-			let varHoldingArrayName = stuffToGetArrayName.resultVariableName
-			let codeToSetUpArrayName = stuffToGetArrayName.bytecodeInstructions
-			
-			resultBytecode.push( ...codeToSetUpArrayName)
+			resultBytecode.push( ...stuffToGetArrayName.bytecodeInstructions)
 			
 			
-			resultBytecode.push({type:"assignFromArrayAcces", lval:resultVariableName, nameOfVarHoldingArray:varHoldingArrayName, index:indexExpressionLowered.resultVariableName})
+			//TODO account for the elements being different sizes
+			// let elementSize = 1
+			
+			
+			// we have the pointer to the array now. Now, we just add the offset to get to the element that we want
+			// we store the address in a new var so we do not modify the original array position var
+			let addressVarName = getNewUniqueIdentifier()
+			resultBytecode.push({type:"assignFromVariable", lval:{op:"variable", contents:addressVarName}, rval:stuffToGetArrayName.resultVariableName })
+			
+			resultBytecode.push({type:"assignMath", lval:addressVarName, lOperand:addressVarName, operation:"+", rOperand:indexExpressionLowered.resultVariableName})
+			
+			resultBytecode.push({type:"assignFromHeap", lvalLocalVarName:resultVariableName, localVarHoldingAddress:addressVarName})
 			
 			
 			
@@ -313,7 +350,7 @@ function getBytecodeOfExpression( expressionAst){
 		}
 		case "memberAccess":
 			// member access
-			
+			return {bytecodeInstructions:[],resultVariableName:expressionAst.object}// I know this isnt right TODO
 			throw "TODO"
 			
 		case "PLUS":
@@ -330,12 +367,33 @@ function getBytecodeOfExpression( expressionAst){
 			return get_result_for_binary_op( expressionAst)
 			
 		case "arrayDeclaration":
-			throw "TODO"
-			let resultName = getNewUniqueIdentifier()
-			for( let element of expressionAst.elements){
-				
-			}
 			
+			let resultName = getNewUniqueIdentifier()
+			
+			let resultCode = []
+			
+			resultCode.push({type:"malloc", amount:expressionAst.elements.length * expressionAst.bytesPerElement, placeToStoreAddress:resultName})
+			
+			let localVarHoldingAddress = getNewUniqueIdentifier() // this will start out at the location we got from the heap. Then, we will increase it as we go along to set all the elements
+			resultCode.push({type:"assignFromVariable", lval:{op:"variable", contents:localVarHoldingAddress}, rval:resultName })
+			
+			
+			let localVarHoldingElementSize = getNewUniqueIdentifier()
+			resultCode.push({type:"assignFromLiteral", lval:localVarHoldingElementSize, rval:expressionAst.bytesPerElement})
+			
+			for( let i = 0; i < expressionAst.elements.length; i++){
+				let element = expressionAst.elements[i]
+				
+				let stuffToGetElement = getBytecodeOfExpression(element)
+				
+				// first, we assign it
+				resultCode.push(...stuffToGetElement.bytecodeInstructions)
+				resultCode.push({type:"assignToHeap", localVarHoldingAddress:localVarHoldingAddress, localVarHoldingValue:stuffToGetElement.resultVariableName})
+				
+				// then, we increase the pointer to where to put the next thing
+				resultCode.push({type:"assignMath", lval:localVarHoldingAddress, lOperand:localVarHoldingAddress, operation:"+", rOperand:localVarHoldingElementSize})
+			}
+			return {bytecodeInstructions:resultCode,resultVariableName:resultName}
 			
 		default:
 			throw new InternalCompilerError("An unknown expression operation was given to the astToBytecode stuff. The expression is: " + JSON.stringify(expressionAst))

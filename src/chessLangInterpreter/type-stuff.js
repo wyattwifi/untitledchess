@@ -129,31 +129,53 @@ function doPassOfInferingTypes( ast){
 					if(getTypeOfExpression( statement.lVal, scopeIdentifier, ast) != null && getTypeOfExpression( statement.rVal, scopeIdentifier, ast) == null){
 						setTypeOfExpression( statement.rVal, scopeIdentifier, ast, getTypeOfExpression( statement.lVal, scopeIdentifier, ast))
 					}
+					
+					inferForExpression( statement.lVal, scopeIdentifier, ast)
+					inferForExpression( statement.rVal, scopeIdentifier, ast)
+					
 					break
 				case "returnStatement":
 					// we know that the value of this expression and the function return type must be the same
 					
 					let functionName = scopeIdentifier[0] // this is the function we are in
 					
-					if(getTypeOfExpression(statement.value, scopeIdentifier, ast) != null){
-						let theType = getTypeOfExpression(statement.value, scopeIdentifier, ast)
-						setFunctionReturnType( functionName, theType, ast)
+					let thisValueType = getTypeOfExpression(statement.value, scopeIdentifier, ast)
+					
+					if( thisValueType != null){
+						setFunctionReturnType( functionName, thisValueType, ast)
 					}
+					if( getFunctionReturnType(functionName, ast) != null && thisValueType == null){
+						setTypeOfExpression(statement.value, scopeIdentifier, ast, getFunctionReturnType(functionName, ast))
+					}
+					
+					
+					inferForExpression( statement.value, scopeIdentifier, ast)
 					break
 					
 				case "declaration":
 					break
 				case "standaloneFuncall":
-					inferForExpression( statement.expression, scopeIdentifier)
+					inferForExpression( statement.expression, scopeIdentifier, ast)
 					break
 					
-				case "if":
-				case "for":
-				case "while":
+				case "for":{
+					
+					inferForExpression( statement.iterable, scopeIdentifier, ast)
+					
 					let newScopeIdentifier = clone(scopeIdentifier)
 					newScopeIdentifier.push(i)
 					inferForStatementArray( statement.contents, newScopeIdentifier)
-					break
+					break}
+					
+				case "if":
+				case "while":{
+					
+					inferForExpression( statement.condition, scopeIdentifier, ast)
+					
+					let newScopeIdentifier = clone(scopeIdentifier)
+					newScopeIdentifier.push(i)
+					inferForStatementArray( statement.contents, newScopeIdentifier)
+					break}
 				default:
 					throw "still need to account for " + JSON.stringify(arrayOfStatements[i])
 			}
@@ -170,7 +192,7 @@ function doPassOfInferingTypes( ast){
 
 
 function areTypesEqual(a,b){
-	if( a.mainType != b.mainType && a.mainType != "array"){ return true}
+	if( a.mainType != b.mainType){ return false}
 	
 	if( a.mainType == "array" && b.mainType == "array"){ return areTypesEqual( a.elementType, b.elementType)}
 	
@@ -179,61 +201,113 @@ function areTypesEqual(a,b){
 
 
 
-
-function inferForExpression( expression, scopeIdentifier){
+function inferForExpression( expression, scopeIdentifier, ast){
 	// this can do some stuff, because for example if you compare 2 things with each other they should be the same type as each other
 	
 	scopeIdentifier = clone(scopeIdentifier)
 	
-	return //TODO impliment
 	
 	switch( expression.op){
 		
 		case "variable":
-			return getTypeOfVariable(expression.contents, scopeIdentifier, ast)
+			return
 		case "functionCall":
+			
+			
+			//TODO not yet supporting functions stored in stuff
+			if( expression.theFunction.op != "variable"){
+				return
+			}
+			
 			// we look through the ast to find the function with that name, then return the returnType of it
 			//TODO this does not work with pointers to functions yet
+			let theFundec
 			for( let fundec of ast){
 				if( fundec.name == expression.theFunction.contents){
-					return fundec.returnType
+					theFundec = fundec
 				}
 			}
 			
 			// now, we need to check for imported functions
 			for( let fundec of importedFunctionDeclarations){
 				if( fundec.name == expression.theFunction.contents){
-					return fundec.returnType
+					theFundec = fundec
 				}
 			}
 			
-			console.log(expression)
-			throw new InternalCompilerError("Tried to get type of function that does not exist")
+			if( theFundec == undefined){
+				
+				throw new InternalCompilerError("Tried to get type of function that does not exist")
+			}
+			
+			// now, we go through and make sure that the parameter types and arg types are the same, or infer as needed
+			for( let i = 0; i < theFundec.paramTypes.length; i++){
+				
+				let paramType = theFundec.paramTypes[i]
+				let argType = getTypeOfExpression( expression.args[i], scopeIdentifier, ast)
+				
+				if( paramType === null && argType !== null){
+					theFundec.paramTypes[i] = argType
+				}
+				if( argType === null && paramType !== null){
+					setTypeOfExpression( expression.args[i], scopeIdentifier, ast, paramType)
+				}
+				
+				
+			}
+			
 			
 		case "arrayAccess":
-			//TODO need to support nested arrays, or anything where the array is not just a variable
-			let arrayType = getTypeOfVariable(expression.array.contents, scopeIdentifier, ast)
-			return arrayType.elementType
+			//TODO implement
+			return
+		case "arrayDeclaration":
+			
+			// first, infer for each element of the array
+			for( let element of expression.elements){
+				inferForExpression( element, scopeIdentifier, ast)
+			}
+			
+			
+			// we know that all the elements need to be the same type
+			let theType = null
+			for( let i = 0; i < expression.elements.length; i++){
+				let element = expression.elements[i]
+				if(getTypeOfExpression( element, scopeIdentifier, ast)){
+					theType = getTypeOfExpression( element, scopeIdentifier, ast)
+					break
+				}
+			}
+			
+			if( theType == null){
+				// we do not know the type of any elements in the array
+				return
+			}
+			
+			// now, we know the type of the array, so set every element to that if we do not already know its type
+			for( let element of expression.elements){
+				if(getTypeOfExpression( element, scopeIdentifier, ast) == null){
+					setTypeOfExpression( element, scopeIdentifier, ast, theType)
+				}
+			}
+			break
 		case "UNARYMINUS":
-			return new Type("int")
 		case "NOT":
-			return new Type("bool")
 		case "number":
-			return new Type("int")
 		case "stringLiteral":
-			return new Type("string")
+			return
+		case "AND":
+		case "OR":
 		case "PLUS":
 		case "MINUS":
 		case "ASTERISK":
 		case "SLASH":
-			//TODO add support for overwritting operators and string concatenation
-			return new Type("int")
 		case "TESTEQUAL":
 		case "TESTGREATERTHAN":
 		case "TESTLESSTHAN":
 		case "TESTGREATERTHANOREQUALTO":
 		case "TESTLESSTHANOREQUALTO":
-			return new Type("bool")
+			//TODO implement
+			return
 		default:
 			throw new InternalCompilerError("Expression OP not supported. Here is the expression: " + JSON.stringify(expression))
 	}
@@ -296,6 +370,31 @@ function setFunctionReturnType( functionName, theType, ast){
 	// we didnt find the function anywhere
 	throw new InternalCompilerError("function not defined: " + functionName)
 }
+
+
+
+
+
+function getFunctionReturnType( functionName, ast){
+	
+	for( let fundec of ast){
+		if( fundec.name == functionName){
+			return fundec.returnType
+		}
+	}
+	for( let fundec of importedFunctionDeclarations){
+		if( fundec.name == functionName){
+			return fundec.returnType
+		}
+	}
+	
+	
+	// we didnt find the function anywhere
+	throw new InternalCompilerError("function not defined: " + functionName)
+}
+
+
+
 
 
 
@@ -444,6 +543,13 @@ function getTypeOfExpression( expression, scopeIdentifier, ast){
 		case "variable":
 			return getTypeOfVariable(expression.contents, scopeIdentifier, ast)
 		case "functionCall":
+			
+			//TODO not yet supporting functions stored in stuff
+			if( expression.theFunction.op != "variable"){
+				return
+			}
+			
+			
 			// we look through the ast to find the function with that name, then return the returnType of it
 			//TODO this does not work with pointers to functions yet
 			for( let fundec of ast){
@@ -463,10 +569,31 @@ function getTypeOfExpression( expression, scopeIdentifier, ast){
 			throw new InternalCompilerError("Tried to get type of function that does not exist")
 			
 		case "arrayAccess":
-			//TODO need to support nested arrays, or anything where the array is not just a variable
-			let arrayType = getTypeOfVariable(expression.array.contents, scopeIdentifier, ast)
+			
+			let arrayType = getTypeOfExpression( expression.array, scopeIdentifier, ast)
 			if( arrayType == null){ return null}
 			return arrayType.elementType
+		case "arrayDeclaration":
+			
+			
+			// we know that all the elements need to be the same type
+			let theType = null
+			for( let i = 0; i < expression.elements.length; i++){
+				let element = expression.elements[i]
+				if(getTypeOfExpression( element, scopeIdentifier, ast)){
+					theType = getTypeOfExpression( element, scopeIdentifier, ast)
+					break
+				}
+			}
+			
+			if( theType == null){
+				// we do not know the type of any elements in the array
+				return null
+			}
+			return {mainType:"array", elementType: theType}
+			
+			
+			
 		case "UNARYMINUS":
 			return new Type("int")
 		case "NOT":
@@ -487,6 +614,8 @@ function getTypeOfExpression( expression, scopeIdentifier, ast){
 		case "TESTGREATERTHANOREQUALTO":
 		case "TESTLESSTHANOREQUALTO":
 			return new Type("bool")
+		case "memberAccess":
+			return new Type("int")//TODO not just have a placeholder
 		default:
 			throw new InternalCompilerError("Expression OP not supported. Here is the expression: " + JSON.stringify(expression))
 	}
@@ -524,6 +653,17 @@ function setTypeOfExpression( expression, scopeIdentifier, ast, theType){
 		case "arrayAccess":
 			//TODO we now know the type of the elements of it
 			throw "TODO"
+		case "arrayDeclaration":
+			
+			for( let element of expression.elements){
+				if(getTypeOfExpression( element, scopeIdentifier, ast) == null){
+					setTypeOfExpression( element, scopeIdentifier, ast, theType.elementType)
+				}
+			}
+			
+			
+			break
+			
 		case "UNARYMINUS":
 		case "NOT":
 		case "number":

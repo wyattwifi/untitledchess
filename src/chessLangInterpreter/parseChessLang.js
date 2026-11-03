@@ -281,11 +281,11 @@ export function parse(tokenList){
 				
 				const elements = polishParse({name:"arrayDeclarationBesidesFirstBracket",contents:elementsRaw.contents}) //.map(a=>a.contents)
 				
-				console.log(elements)
 				
 				left = {
 					op: "arrayDeclaration",
 					elements: elements,
+					bytesPerElement:1,//WARNING this needs some work, for now it is actually more like ints per element
 				}
 				
 				break}

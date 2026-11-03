@@ -22,13 +22,13 @@
 
 
 
-
-def getMoneyPlayerHas( playerID):
-	let result = 0
-	for coin in state["coinLocations"]:
-		if coin == playerID:
-			result = result + 1
-	return result
+# 
+# def getMoneyPlayerHas( playerID):
+# 	let result = 0
+# 	for coin in state["coinLocations"]:
+# 		if coin == playerID:
+# 			result = result + 1
+# 	return result
 
 
 def givePlayerMoney( playerID, amount):

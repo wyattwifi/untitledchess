@@ -7,12 +7,13 @@ import {interpretChessLang} from "./interpreter.js"
 import {desugarAST} from "./desugarAST.js"
 import {verifyAST, removeVariableDeclarations, verifyAllVarsDeclared} from "./verifyAST.js"
 import {inferTypes} from "./type-stuff.js"
+import {pruneAST} from "./pruneAST.js"
 
 // returns the array of the bytecode
 export function compileChessCode( sourceCodeString){
 	
 	
-	// sourceCodeString = simpleTestCode // temporary, for dev
+	sourceCodeString = simpleTestCode // temporary, for dev
 	
 	// let tokens = lexer(sampleChesslangCode)
 	let tokens = lexer(sourceCodeString)
@@ -23,8 +24,10 @@ export function compileChessCode( sourceCodeString){
 	
 	verifyAllVarsDeclared(ast)
 	
+	// pruneAST(ast)
+	
 	//TODO make sure all vars declared before doing type stuff
-	// inferTypes(ast)
+	inferTypes(ast)
 	
 	console.log(JSON.stringify(ast))
 	
@@ -154,14 +157,19 @@ let simpleTestCode = `
 
 def test():
 	for i in range(10):
-		print(i)
+		#print(i)
 
 
 def main():
-	print(factorial(5))
+	#print(factorial(5))
 	test()
+	
+	let c = [1,2,3]
+	#c[2] = 4
+	print(c[2])
 
 def factorial(a):
+	
 	
 	
 	let j = "hohoho"

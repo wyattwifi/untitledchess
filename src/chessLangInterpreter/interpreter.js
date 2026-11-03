@@ -223,6 +223,10 @@ let currentSimThreads = []
 // {type:"unconditionalJump", destination:integer}
 // {type:"nop"} - No OPeration
 //{type:"return",value:variableName}
+// {type:"malloc", amount:intAmount, placeToStoreAddress:nameOfLocalVar}
+// {type:"assignToHeap", localVarHoldingAddress:localVarHoldingAddress, localVarHoldingValue:stuffToGetElement.resultVariableName}
+// {type:"assignFromHeap", lvalLocalVarName:stringOfVarName, localVarHoldingAddress:stringOfVarName}
+
 
 //WIP
 //TODO i forgot i need to support setting arrays too, not just reading from them. Hence it needs references, because array can be in arrays
@@ -245,6 +249,9 @@ class Universe{
 		this.bytecode = bytecode
 		this.ifSimChoicesMade = []
 		this.amIASim = true // if not this needs to be overwritten manually
+		
+		this.heap = [] // TODO make this work with universe cloning, and TODO have actual memory management
+		this.heapEnd = 0
 	}
 	
 	jumpToFunction( functionName, parameterValues){
@@ -324,6 +331,7 @@ class Universe{
 					let localVars = thisFrame.localVariables
 					
 					// Currently, the only lval that this accepts is an expression of a variable
+					//TODO do this better
 					let lval = instruction.lval.contents
 					if( lval === undefined || instruction.lval.op != "variable"){
 						throw new InternalCompilerError("Invalid Assignment LVal!")
@@ -332,19 +340,33 @@ class Universe{
 					localVars[lval] = localVars[instruction.rval]
 					thisFrame.instructionPointer++
 					break}
-				case "assignFromArrayAcces":{
+				case "assignToHeap":{
 					let localVars = thisFrame.localVariables
-					let indexVariableName = instruction.index
-					let indexValue = localVars[indexVariableName]
-					let theArrayItself = localVars[instruction.nameOfVarHoldingArray]
+					let address = localVars[instruction.localVarHoldingAddress]
+					this.heap[address] = localVars[instruction.localVarHoldingValue]
+					thisFrame.instructionPointer++
+					break}
+// 				case "assignFromArrayAcces":{
+// 					let localVars = thisFrame.localVariables
+// 					let indexVariableName = instruction.index
+// 					let indexValue = localVars[indexVariableName]
+// 					let theArrayItself = localVars[instruction.nameOfVarHoldingArray]
+// 					
+// 					
+// 					localVars[instruction.lval] = theArrayItself[indexValue]
+// 					thisFrame.instructionPointer++
+// 					break}
+				case "assignFromHeap":{
+					// {type:"assignFromHeap", lvalLocalVarName:stringOfVarName, localVarHoldingAddress:stringOfVarName}
+					let localVars = thisFrame.localVariables
+					let address = localVars[instruction.localVarHoldingAddress]
 					
-					
-					localVars[instruction.lval] = theArrayItself[indexValue]
+					localVars[instruction.lvalLocalVarName] = this.heap[address]
 					thisFrame.instructionPointer++
 					break}
 				
 				//{type:"assignFromMemberAcces", lval:stringName, nameOfVarHoldingObject:string,memberStringName:stringName}
-				case "assignFromMemberAcces":{
+				case "assignFromMemberAcces":
 					// note, this is similar to assignFromArrayAcces
 					throw "TODO"
 // 					let localVars = thisFrame.localVariables
@@ -366,6 +388,14 @@ class Universe{
 				case "assignFromLiteralString":{
 					let localVars = thisFrame.localVariables
 					localVars[instruction.lval] = instruction.rval
+					thisFrame.instructionPointer++
+					break}
+				case "malloc":{
+					
+					// {type:"malloc", amount:intAmount, placeToStoreAddress:nameOfLocalVar}
+					let localVars = thisFrame.localVariables
+					localVars[instruction.placeToStoreAddress] = this.heapEnd
+					this.heapEnd += instruction.amount
 					thisFrame.instructionPointer++
 					break}
 				case "assignFromFunctionCall":{

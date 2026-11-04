@@ -528,12 +528,13 @@ class Universe{
 		let thisFrame = this.stack[this.stack.length - 1]
 		let localVars = thisFrame.localVariables
 		localVars[name] = value
+		//TODO what if it is from a lower scope
 	}
 	getVariable( name){
 		// if it is in the current scope, return that
 		let thisFrame = this.stack[this.stack.length - 1]
 		let localVars = thisFrame.localVariables
-		if( localVars[name]){
+		if( localVars[name] !== undefined){
 			return localVars[name]
 		}
 		
@@ -542,7 +543,7 @@ class Universe{
 		// now, it must be in an outer scope that this has access to. So, we just go down the stack, making sure it has access
 		for( let i = this.stack.length - 1; i >= 0; i--){
 			let thatFrame = this.stack[i]
-			if( accessibleScopes.includes(thatFrame.functionName) && thatFrame.localVariables[name]){
+			if( accessibleScopes.includes(thatFrame.functionName) && thatFrame.localVariables[name] !== undefined){
 				return thatFrame.localVariables[name]
 			}
 		}

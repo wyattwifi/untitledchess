@@ -257,7 +257,17 @@ function lexerCore( stringIn){
 		{name:"LET",regex:/^let(?=([^a-z01-9]|$))/},
 		{name:"RETURN",regex:/^return(?=([^a-z01-9]|$))/},
 		{name:"ELSE",regex:/^else(?=([^a-z01-9]|$))/},
+		
 		{name:"IN",regex:/^in(?=([^a-z01-9]|$))/},
+		
+		{name:"CLASSDEF",regex:/^class(?=([^a-z01-9]|$))/},
+		{name:"INHERITS",regex:/^inherits(?=([^a-z01-9]|$))/},
+		{name:"STATIC",regex:/^static(?=([^a-z01-9]|$))/},
+		{name:"PUBLIC",regex:/^public(?=([^a-z01-9]|$))/},
+		{name:"PRIVATE",regex:/^private(?=([^a-z01-9]|$))/},
+		{name:"PROTECTED",regex:/^protected(?=([^a-z01-9]|$))/},
+		
+		
 		{name:"PLUS",regex:/^\+/},
 		{name:"MINUS",regex:/^-/},
 		{name:"ASTERISK",regex:/^\*/},

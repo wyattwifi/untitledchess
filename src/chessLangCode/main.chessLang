@@ -126,7 +126,7 @@ def main():
 		uiUpdateState()
 	
 
-
+main()
 
 
 #TODO hinting to the UI where each move starts and ends could be done better

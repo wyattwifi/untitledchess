@@ -19,10 +19,10 @@ export function compileChessCode( sourceCodeString){
 	let tokens = lexer(sourceCodeString)
 	// console.log( tokens)
 	let ast = parse(tokens)
-	// console.log( JSON.stringify(ast))
+	console.log( JSON.stringify(ast))
 	ast = desugarAST( ast)
 	
-	console.log(JSON.stringify(ast))
+	// console.log(JSON.stringify(ast))
 	verifyAllVarsDeclared(ast)
 	
 	// pruneAST(ast)
@@ -32,7 +32,7 @@ export function compileChessCode( sourceCodeString){
 	rearrangeFunctions(ast)
 	
 	
-	console.log(JSON.stringify(ast))
+	// console.log(JSON.stringify(ast))
 	
 	//WARNING verifyAST takes out all the variable declarations, needed for type stuff
 	removeVariableDeclarations(ast)
@@ -50,10 +50,44 @@ export function runChessCode( bytecode){
 	interpretChessLang(bytecode)
 }
 
-
-
+let exampleClass = `
+class Dog inherits Animal,Trustable:
+	let weight = 100 #default initialization
+	let name
+	private let ssn
+	static let isLiked = True #classwide property
+	def init( name):
+		self.name = name
+	def bark():
+		print(self.name + " says bark")
+	private def leakSSN():
+		print(self.ssn)
+	static def becomeWolves():
+		static.isLiked = False
+		
+`
 
 let simpleTestCode = `
+
+
+
+
+
+#TODO declarations without defaults not allowed yet
+class Dog inherits Animal,Trustable:
+	let weight = 100 #default initialization
+	let name = "fido"
+	private let ssn = 123456
+	static let isLiked = True #classwide property
+	def init( name):
+		selfname = name
+	def bark():
+		print(selfname)
+	private def leakSSN():
+		print(selfssn)
+	static def becomeWolves():
+		staticisLiked = False
+
 
 let hohoho = 37
 

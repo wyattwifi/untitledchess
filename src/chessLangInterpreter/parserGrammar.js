@@ -2,6 +2,7 @@
 
 import {polishParse} from "./parseChessLang.js"
 
+import {InternalCompilerError} from "./compiler-utils.js"
 // this takes a thing with no blank lines
 
 
@@ -92,6 +93,126 @@ export let grammar = {
 			}
 		}
 	},
+	
+	/*
+	here is the format of a class declaration:
+	
+	class Dog inherits Animal,Trustable:
+		let weight = 100 #default initialization
+		let name
+		private let ssn
+		static let isLiked = True #classwide property
+		def init( name):
+			self.name = name
+		def bark():
+			print(self.name + " says bark")
+		private def leakSSN():
+			print(self.ssn)
+		static def becomeWolves():
+			static.isLiked = False
+	
+	
+	
+	
+	*/
+	
+	classDef:{
+		raw:[
+			{type:"token", tokenType:"CLASSDEF"},
+			{type:"token", tokenType:"IDENTIFIER"},
+			{type:"group", subgroup:[ // the optional inheritance
+				{type:"token", tokenType:"INHERITS"},
+				{type:"token", tokenType:"IDENTIFIER"},
+				{type:"group", subgroup:[
+					{type:"token",tokenType:"COMMA"},
+					{type:"token",tokenType:"IDENTIFIER"},
+				], repeatZeroOrMore:true}
+			], optional:true},
+			{type:"token",tokenType:"COLON"},
+			{type:"token",tokenType:"INCREASE_INDENT"},
+			{type:"subrule", subrule:"classDefElement", repeatZeroOrMore:true},
+			{type:"token",tokenType:"DECREASE_INDENT"},
+			{type:"token",tokenType:"NEWLINE"},
+		],
+		polish: rawParse => {
+			
+			let ancestorNames = []
+			if( rawParse[2]){
+				ancestorNames.push(rawParse[2][1])
+				ancestorNames.push(...rawParse[2][2].map(e => e[1]))
+			}
+			
+			
+			return {
+				type:"classDefinition",
+				name:rawParse[1],
+				ancestorNames:ancestorNames,
+				contents:rawParse[5].map(polishParse),
+			}
+		}
+	},
+	classDefElement:{
+		raw:[
+			{type:"token", tokenType:"STATIC", optional:true},
+			{type:"subrule", subrule:"classMemberVisibilityModifier", optional:true},
+			{type:"oneOfChoices",options:[
+				{type:"subrule", subrule:"declarationAssignment"},
+				{type:"subrule", subrule:"functiondef"},
+			]},
+		],
+		polish: rawParse => {
+			console.log(rawParse)
+			
+			let visibility = "PUBLIC" // the default
+			if( rawParse[1] != null){
+				visibility = rawParse[1].contents[0].name
+			}
+			
+			if( rawParse[2].name == "declarationAssignment"){
+				
+				return {
+					type:"property",
+					isStatic: rawParse[0] !== null,
+					visibility: visibility,
+					contents:polishParse(rawParse[2])
+				}
+			} else if( rawParse[2].name == "functiondef"){
+				
+				return {
+					type:"method",
+					isStatic: rawParse[0] !== null,
+					visibility: visibility,
+					contents:polishParse(rawParse[2])
+				}
+			} else {
+				throw new InternalCompilerError("This should never be reached")
+			}
+			
+		}
+	},
+	classMemberVisibilityModifier:{
+		raw:[
+			{type:"oneOfChoices",options:[
+				{type:"token",tokenType:"PRIVATE", name:"PRIVATE"},
+				{type:"token",tokenType:"PUBLIC", name:"PUBLIC"},
+				{type:"token",tokenType:"PROTECTED", name:"PROTECTED"},
+			]},
+		],
+		polish: rawParse => {
+			throw new InternalCompilerError("Not needed this shouldnt ever get called")
+		}
+	},
+	
+	
+	
+	
+	//TODO in classes and in general support declaring without assignment
+	//TODO potentially support defining types within classes for use within that class only
+	
+	
+	
+	
+	
 	block:{
 		raw:[
 			{type:"token",tokenType:"INCREASE_INDENT"},
@@ -116,6 +237,7 @@ export let grammar = {
 					{type:"token",tokenType:"NEWLINE"},
 				], name:"standaloneFuncall"},
 				{type:"subrule",subrule:"functiondef"},
+				{type:"subrule",subrule:"classDef"},
 			]},
 		],
 		polish: rawParse => {

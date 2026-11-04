@@ -175,6 +175,7 @@ function astToBytecodeForFunction( functionAst ){
 		name:functionAst.name,
 		paramNames:functionAst.params,
 		statements: code,
+		accessibleScopes:functionAst.availableScopes//TODO have these be the same name
 	}
 }
 

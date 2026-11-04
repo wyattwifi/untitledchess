@@ -187,8 +187,7 @@ let BUILT_IN_API = [
 					let instruction = t.getBytecodeWrapperOfFunction( thisFrame.functionName).statements[ thisFrame.instructionPointer]
 					let localVars = thisFrame.localVariables
 					
-					localVars[instruction.lval] = i + 1
-					
+					this.setVariable( instruction.lval, i + 1)					
 					thisFrame.instructionPointer++
 					
 					if( t.returnIfReachedEnd() == "finished running program"){
@@ -299,6 +298,12 @@ class Universe{
 		
 		localVariables["state"] = this.state // there is not a built-in way to handle global variables, so we just set it here
 		
+		
+		
+		
+		
+		
+		
 		this.stack.push({
 			functionName:functionName,
 			 instructionPointer: 0,
@@ -324,11 +329,11 @@ class Universe{
 			
 			let thisFrame = this.stack[this.stack.length - 1] // the top function call in the stack
 			let instruction = this.getBytecodeWrapperOfFunction( thisFrame.functionName).statements[ thisFrame.instructionPointer] // look at the top frame in the stack to see the name of the function we are supposed to be in. Then, use that to get the bytecode stuff for that function, including the list of instructions. Then, look at the frame to see which instruction we are on, and get that from the bytecode
-			
+			//let localVars = thisFrame.localVariables
 			
 			switch (instruction.type){
 				case "assignFromVariable":{
-					let localVars = thisFrame.localVariables
+					
 					
 					// Currently, the only lval that this accepts is an expression of a variable
 					//TODO do this better
@@ -337,21 +342,19 @@ class Universe{
 						throw new InternalCompilerError("Invalid Assignment LVal!")
 					}
 					
-					localVars[lval] = localVars[instruction.rval]
+					this.setVariable(lval, this.getVariable(instruction.rval))
 					thisFrame.instructionPointer++
 					break}
 				case "assignToHeap":{
-					let localVars = thisFrame.localVariables
-					let address = localVars[instruction.localVarHoldingAddress]
-					this.heap[address] = localVars[instruction.localVarHoldingValue]
+					let address = this.getVariable(instruction.localVarHoldingAddress)
+					this.heap[address] = this.getVariable(instruction.localVarHoldingValue)
 					thisFrame.instructionPointer++
 					break}
 				case "assignFromHeap":{
 					// {type:"assignFromHeap", lvalLocalVarName:stringOfVarName, localVarHoldingAddress:stringOfVarName}
-					let localVars = thisFrame.localVariables
-					let address = localVars[instruction.localVarHoldingAddress]
+					let address = this.getVariable(instruction.localVarHoldingAddress)
 					
-					localVars[instruction.lvalLocalVarName] = this.heap[address]
+					this.setVariable( instruction.lvalLocalVarName, this.heap[address])
 					thisFrame.instructionPointer++
 					break}
 				
@@ -362,34 +365,30 @@ class Universe{
 // 					let localVars = thisFrame.localVariables
 // 					let objectValue = localVars[nameOfVarHoldingObject]
 // 					
-// 					localVars[instruction.lval] = theArrayItself[indexValue]
-// 					thisFrame.instructionPointer++
+// 					this.setVariable( instruction.lval, theArrayItself[indexValue])// 					thisFrame.instructionPointer++
 // 					break}
 // 					
 				
 				case "assignFromLiteral":{
-					let localVars = thisFrame.localVariables
-					localVars[instruction.lval] = instruction.rval
+					this.setVariable(instruction.lval, instruction.rval)
 					thisFrame.instructionPointer++
 					break}
 				case "nop":{
 					thisFrame.instructionPointer++
 					break}
 				case "assignFromLiteralString":{
-					let localVars = thisFrame.localVariables
-					localVars[instruction.lval] = instruction.rval
+					this.setVariable(instruction.lval, instruction.rval)
 					thisFrame.instructionPointer++
 					break}
 				case "malloc":{
 					
 					// {type:"malloc", amount:intAmount, placeToStoreAddress:nameOfLocalVar}
-					let localVars = thisFrame.localVariables
-					localVars[instruction.placeToStoreAddress] = this.heapEnd
+					//TODO have actual memory management
+					this.setVariable( instruction.placeToStoreAddress, this.heapEnd)
 					this.heapEnd += instruction.amount
 					thisFrame.instructionPointer++
 					break}
 				case "assignFromFunctionCall":{
-					let localVars = thisFrame.localVariables
 					
 					let isDoneAlready = false
 					
@@ -398,15 +397,15 @@ class Universe{
 					
 					// first, we need to check if it is one of the built-in API functions
 					for( let i = 0; i < BUILT_IN_API.length; i++){
-						if(BUILT_IN_API[i].name == localVars[instruction.varHoldingFunctionName]){
-							localVars[instruction.lval] = await BUILT_IN_API[i].effect(...instruction.parameters.map(i=>localVars[i]))
+						if(BUILT_IN_API[i].name == this.getVariable(instruction.varHoldingFunctionName)){
+							this.setVariable( instruction.lval, await BUILT_IN_API[i].effect(...instruction.parameters.map(i=>this.getVariable(i))))
 							thisFrame.instructionPointer++ // we need to do this now because there is not all that interesting instruction pointer stack stuff as with a normal function call. instead it is just like a normal statement
 							isDoneAlready = true
 						}
 					}
 					for( let i = 0; i < BUILT_IN_API.length; i++){
 						if(BUILT_IN_API[i].name == instruction.varHoldingFunctionName){
-							localVars[instruction.lval] = await BUILT_IN_API[i].effect(...instruction.parameters.map(i=>localVars[i]))
+							this.setVariable( instruction.lval, await BUILT_IN_API[i].effect(...instruction.parameters.map(i=>this.getVariable(i))))
 							thisFrame.instructionPointer++ // we need to do this now because there is not all that interesting instruction pointer stack stuff as with a normal function call. instead it is just like a normal statement
 							isDoneAlready = true
 						}
@@ -418,11 +417,11 @@ class Universe{
 					
 					// now we know that it is not a built in api function
 					
-					if( localVars[instruction.varHoldingFunctionName]){
+					if( this.getVariable( instruction.varHoldingFunctionName)){
 						
-						this.jumpToFunction(localVars[instruction.varHoldingFunctionName], instruction.parameters.map(i=>localVars[i]))// jumpToFunction expects the literal values of the parameters, while the bytecode instruction gives the variable names
+						this.jumpToFunction(this.getVariable(instruction.varHoldingFunctionName), instruction.parameters.map(i=>this.getVariable(i)))// jumpToFunction expects the literal values of the parameters, while the bytecode instruction gives the variable names
 					} else {
-						this.jumpToFunction(instruction.varHoldingFunctionName, instruction.parameters.map(i=>localVars[i]))
+						this.jumpToFunction(instruction.varHoldingFunctionName, instruction.parameters.map(i=>this.getVariable(i)))
 					}
 					
 					// setting the variable to the return value will be handled when the function returns
@@ -432,37 +431,37 @@ class Universe{
 					let localVars = thisFrame.localVariables
 					switch( instruction.operation){
 						case "+":
-							localVars[instruction.lval] = localVars[instruction.lOperand] + localVars[instruction.rOperand]
+							this.setVariable( instruction.lval, this.getVariable( instruction.lOperand) + this.getVariable( instruction.rOperand))
 							break
 						case "-":
-							localVars[instruction.lval] = localVars[instruction.lOperand] - localVars[instruction.rOperand]
+							this.setVariable( instruction.lval, this.getVariable( instruction.lOperand) - this.getVariable( instruction.rOperand))
 							break
 						case "TESTLESSTHAN":
-							localVars[instruction.lval] = localVars[instruction.lOperand] < localVars[instruction.rOperand]
+							this.setVariable( instruction.lval, this.getVariable( instruction.lOperand) < this.getVariable( instruction.rOperand))
 							break
 						case "TESTGREATERTHAN":
-							localVars[instruction.lval] = localVars[instruction.lOperand] > localVars[instruction.rOperand]
+							this.setVariable( instruction.lval, this.getVariable( instruction.lOperand) > this.getVariable( instruction.rOperand))
 							break
 						case "TESTLESSTHANOREQUALTO":
-							localVars[instruction.lval] = localVars[instruction.lOperand] <= localVars[instruction.rOperand]
+							this.setVariable( instruction.lval, this.getVariable( instruction.lOperand) <= this.getVariable( instruction.rOperand))
 							break
 						case "TESTGREATERTHANOREQUALTO":
-							localVars[instruction.lval] = localVars[instruction.lOperand] >= localVars[instruction.rOperand]
+							this.setVariable( instruction.lval, this.getVariable( instruction.lOperand) >= this.getVariable( instruction.rOperand))
 							break
 						case "OR":
-							localVars[instruction.lval] = localVars[instruction.lOperand] || localVars[instruction.rOperand]
+							this.setVariable( instruction.lval, this.getVariable( instruction.lOperand) || this.getVariable( instruction.rOperand))
 							break
 						case "AND":
-							localVars[instruction.lval] = localVars[instruction.lOperand] && localVars[instruction.rOperand]
+							this.setVariable( instruction.lval, this.getVariable( instruction.lOperand) && this.getVariable( instruction.rOperand))
 							break
 						case "TESTEQUAL":
-							localVars[instruction.lval] = localVars[instruction.lOperand] == localVars[instruction.rOperand]
+							this.setVariable( instruction.lval, this.getVariable( instruction.lOperand) == this.getVariable( instruction.rOperand))
 							break
 						case "ASTERISK":
-							localVars[instruction.lval] = localVars[instruction.lOperand] * localVars[instruction.rOperand]
+							this.setVariable( instruction.lval, this.getVariable( instruction.lOperand) * this.getVariable( instruction.rOperand))
 							break
 						case "SLASH":
-							localVars[instruction.lval] = localVars[instruction.lOperand] / localVars[instruction.rOperand]
+							this.setVariable( instruction.lval, this.getVariable( instruction.lOperand) / this.getVariable( instruction.rOperand))
 							break
 						default:
 							throw new Error("invalid opcode math operation: " + instruction.operation)
@@ -476,7 +475,7 @@ class Universe{
 							// it simply sets the instructionPointer
 							// note that we should not increment the instructionPointer in this case
 							// instruction format: {type:"jumpIf",condition:nameString,destination:integer}
-							if( thisFrame.localVariables[instruction.condition]){
+							if( this.getVariable( instruction.condition)){
 								thisFrame.instructionPointer = instruction.destination
 							} else {
 								// if we did not jump then we still need to increment the instruction pointer
@@ -494,7 +493,7 @@ class Universe{
 							// it simply sets the instructionPointer
 							// note that we should not increment the instructionPointer in this case
 							// instruction format: {type:"jumpIf",condition:nameString,destination:integer}
-							if( !thisFrame.localVariables[instruction.condition]){
+							if( !this.getVariable(instruction.condition)){
 								thisFrame.instructionPointer = instruction.destination
 							} else {
 								// if we did not jump then we still need to increment the instruction pointer
@@ -502,8 +501,7 @@ class Universe{
 							}
 							break}
 						case "return":{
-							let localVars = thisFrame.localVariables
-							localVars["r"] = localVars[instruction.value]
+							this.setVariable( "r", this.getVariable(instruction.value))
 							thisFrame.instructionPointer = this.getBytecodeWrapperOfFunction( thisFrame.functionName).statements.length
 							break}
 						default:
@@ -525,6 +523,34 @@ class Universe{
 		
 	}
 	
+	// these are needed because it can be setting a variable from a lower scope
+	setVariable( name, value){
+		let thisFrame = this.stack[this.stack.length - 1]
+		let localVars = thisFrame.localVariables
+		localVars[name] = value
+	}
+	getVariable( name){
+		// if it is in the current scope, return that
+		let thisFrame = this.stack[this.stack.length - 1]
+		let localVars = thisFrame.localVariables
+		if( localVars[name]){
+			return localVars[name]
+		}
+		
+		let accessibleScopes = this.getBytecodeWrapperOfFunction( thisFrame.functionName).accessibleScopes
+		
+		// now, it must be in an outer scope that this has access to. So, we just go down the stack, making sure it has access
+		for( let i = this.stack.length - 1; i >= 0; i--){
+			let thatFrame = this.stack[i]
+			if( accessibleScopes.includes(thatFrame.functionName) && thatFrame.localVariables[name]){
+				return thatFrame.localVariables[name]
+			}
+		}
+		
+		// we could not find it anywhere
+		return undefined
+		
+	}
 	
 	returnIfReachedEnd(){
 		
@@ -556,8 +582,7 @@ class Universe{
 			let instructionWeReturnTo = this.getBytecodeWrapperOfFunction( newFrame.functionName).statements[ newFrame.instructionPointer]
 			
 			
-			localVars[instructionWeReturnTo.lval] = returnValue
-			
+			this.setVariable( instructionWeReturnTo.lval, returnValue)			
 			newFrame.instructionPointer++
 			
 			if( this.returnIfReachedEnd() == "finished running program"){ // we need to call this again since we just incremented the instructionPointer again
@@ -583,7 +608,7 @@ export async function interpretChessLang( bytecode){
 	
 	let a = new Universe( bytecode, getStartingState())
 	a.amIASim = false
-	await a.beASim("main",[])
+	await a.beASim("__main",[])
 	
 	
 }

@@ -3,7 +3,7 @@
 
 
 
-import {InternalCompilerError} from "./compiler-utils.js"
+import {InternalCompilerError, doForEachStatementArray} from "./compiler-utils.js"
 
 
 
@@ -50,6 +50,8 @@ export function verifyAllVarsDeclared( ast){
 		scopes[scopes.length - 1].push(name)
 	}
 	
+	
+	
 	let scopes = []
 	
 	function verifyForStatementArray( arrayOfStatements, varsToDeclareRightOffTheBat = []){
@@ -85,6 +87,9 @@ export function verifyAllVarsDeclared( ast){
 				case "if":
 				case "while":
 					verifyForStatementArray( statement.contents)
+					break
+				case "functionDefinition":
+					verifyForStatementArray( statement.statements, statement.params)
 					break
 				default:
 					throw "still need to account for " + JSON.stringify(arrayOfStatements[i])
@@ -154,10 +159,7 @@ export function verifyAllVarsDeclared( ast){
 		
 	}
 	
-	for( let fundef of ast){
-		verifyForStatementArray(fundef.statements, fundef.params)
-	}
-	
+	verifyForStatementArray(ast)
 }
 
 
@@ -168,53 +170,20 @@ export function removeVariableDeclarations( ast){
 	// at first, the AST only has Assignements and combined DeclarationAssignments.
 	// This desugars the DeclarationAssignments into Declarations and Assignments
 	
-	function desugarForStatementArray( arrayOfStatements){
+	doForEachStatementArray(ast, ( arrayOfStatements, scopeIdentifier) => {
 		
 		for( let i = 0; i < arrayOfStatements.length; i++){
 			
-			switch( arrayOfStatements[i].type){
-				case "declaration":
-					
-					arrayOfStatements.splice( i, 1)
-					i-- // to account for the element being removed
-					continue
-					// now, we need to take care of non-lowest-level statements too
-				case "if":
-				case "for":
-				case "while":
-					desugarForStatementArray( arrayOfStatements[i].contents)
+			if( arrayOfStatements[i].type == "declaration"){
+				
+				arrayOfStatements.splice( i, 1)
+				i-- // to account for the element being removed
 			}
 		}
-	}
-	
-	
-	for( let fundef of ast){
-		desugarForStatementArray( fundef.statements)
-	}
+	})
 	
 }
 
 
 
-
-/*
-function verifyAllVarsDeclared(ast){
-	for( let functionDefinition of ast){
-		verifyAllVarsDeclaredInFunctionDefinition(functionDefinition)
-	}
-}
-function verifyAllVarsDeclaredInFunctionDefinition(functionDefinition){
-	let scopes = []
-	
-	function isVariableDefined()
-	
-	for( let statement of functionDefinition.statements){
-		
-	}
-	
-	// each scope should be able to read variables declared in itself and in scopes above it.
-	// function declarations make new scopes, as well as if, for, and while blocks
-	
-	
-}*/
 

@@ -19,8 +19,8 @@ export function compileChessCode( sourceCodeString){
 	let tokens = lexer(sourceCodeString)
 	// console.log( tokens)
 	let ast = parse(tokens)
-	console.log( JSON.stringify(ast))
 	ast = desugarAST( ast)
+	console.log( JSON.stringify(ast))
 	
 	// console.log(JSON.stringify(ast))
 	verifyAllVarsDeclared(ast)
@@ -28,7 +28,7 @@ export function compileChessCode( sourceCodeString){
 	// pruneAST(ast)
 	
 	//TODO make sure all vars declared before doing type stuff
-	// inferTypes(ast)
+	inferTypes(ast)
 	rearrangeFunctions(ast)
 	
 	
@@ -78,15 +78,15 @@ class Dog inherits Animal,Trustable:
 	let weight = 100 #default initialization
 	let name = "fido"
 	private let ssn = 123456
-	static let isLiked = True #classwide property
+#	static let isLiked = True #classwide property
 	def init( name):
-		selfname = name
+		self.name = name
 	def bark():
-		print(selfname)
+		print(self.name)
 	private def leakSSN():
-		print(selfssn)
-	static def becomeWolves():
-		staticisLiked = False
+		print(self.ssn)
+#	static def becomeWolves():
+#		staticself.isLiked = False#TODO support static stuff later maybe?
 
 
 let hohoho = 37

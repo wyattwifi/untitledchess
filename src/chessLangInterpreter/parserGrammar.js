@@ -161,7 +161,6 @@ export let grammar = {
 			]},
 		],
 		polish: rawParse => {
-			console.log(rawParse)
 			
 			let visibility = "PUBLIC" // the default
 			if( rawParse[1] != null){
@@ -199,7 +198,7 @@ export let grammar = {
 			]},
 		],
 		polish: rawParse => {
-			throw new InternalCompilerError("Not needed this shouldnt ever get called")
+			throw new InternalCompilerError("Not needed this shouldn't ever get called")
 		}
 	},
 	

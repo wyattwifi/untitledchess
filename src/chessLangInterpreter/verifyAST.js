@@ -91,6 +91,11 @@ export function verifyAllVarsDeclared( ast){
 				case "functionDefinition":
 					verifyForStatementArray( statement.statements, statement.params)
 					break
+				case "classDefinition":
+					for( let method of statement.methods){
+						verifyForStatementArray( method.statements, ["self", ...method.params])
+					}
+					break
 				default:
 					throw "still need to account for " + JSON.stringify(arrayOfStatements[i])
 			}

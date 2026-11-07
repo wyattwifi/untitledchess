@@ -20,7 +20,7 @@ export function compileChessCode( sourceCodeString){
 	// console.log( tokens)
 	let ast = parse(tokens)
 	ast = desugarAST( ast)
-	console.log( JSON.stringify(ast))
+	// console.log( JSON.stringify(ast))
 	
 	// console.log(JSON.stringify(ast))
 	verifyAllVarsDeclared(ast)
@@ -28,6 +28,7 @@ export function compileChessCode( sourceCodeString){
 	// pruneAST(ast)
 	
 	//TODO make sure all vars declared before doing type stuff
+	console.log(structuredClone(ast))
 	inferTypes(ast)
 	rearrangeFunctions(ast)
 	

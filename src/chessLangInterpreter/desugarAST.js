@@ -3,12 +3,14 @@
 
 
 
-import {InternalCompilerError, doForEachStatementArray, doForEachStatement, getScopeFromScopeIdentifier, compilerWarn, doForEachExpression} from "./compiler-utils.js"
+import {InternalCompilerError, doForEachStatementArray, doForEachStatement, getScopeFromScopeIdentifier, compilerWarn, doForEachExpression, doForThisScopeArrayAndAllScopeArraysUnderIt, getFunctionThisIsIn, getStatementsInNode} from "./compiler-utils.js"
+import {importedFunctionDeclarations} from "./type-stuff.js"
 
 import {getNewUniqueIdentifier} from "./astToBytecode.js"
 
 
 export function desugarAST( ast){
+	desugarFunctionsIntoVariables(ast)
 	putMethodsAndPropertiesInProperPlace(ast)
 	desugarForLoops(ast) // we need to do this before desugaring declarationAssignments because this adds new declarationAssignments
 	desugarDeclarationAssignments(ast)
@@ -22,7 +24,7 @@ function desugarDeclarationAssignments( ast){
 	// This desugars the DeclarationAssignments into Declarations and Assignments
 	
 	
-	doForEachStatementArray(ast, ( arrayOfStatements, scopeIdentifier) => {
+	doForEachStatementArray(ast, ( arrayOfStatements) => {
 		
 		for( let i = 0; i < arrayOfStatements.length; i++){
 			
@@ -60,7 +62,7 @@ function desugarForLoops( ast){
 	
 	
 	
-	doForEachStatementArray(ast, ( arrayOfStatements, scopeIdentifier) => {
+	doForEachStatementArray(ast, ( arrayOfStatements) => {
 		
 		
 		for( let i = 0; i < arrayOfStatements.length; i++){
@@ -163,19 +165,21 @@ function desugarForLoops( ast){
 
 function markAccessableScopesForFunctions(ast){
 	// nested functions can use the scope of the function(s) they are nested in. However, currently we rearrange the AST so that by the end the functions are all on the lowest level, so you cannot tell what scopes they used to have access to. This marks which scopes they can access so we can know after they are rearranged
+	//WARNING I dont know if this works with vars declared in if or for statements
 	
-	// note:scopeIdentifier is the scope that I am in, not the scope that I am
 	
-	doForEachStatement(ast, (statement, scopeIdentifier) => {
+	
+	doForEachStatement(ast, (statement, nodeIdentifier) => {
 		
-		scopeIdentifier = structuredClone(scopeIdentifier)
+		nodeIdentifier = structuredClone(nodeIdentifier)
 		
 		if(statement.type == "functionDefinition"){
+			
 			statement.availableScopes = ["__main"] // all the other functions are nested in that function. It is not yet collected into a fundef, that will happen later
 			
-			// now, we just go back up the scope identifier and see which ones are a function
+			// now, we just go back up the node identifier and see which ones are a function that this can reach
 			while( scopeIdentifier.length){
-				let thatStatement = getScopeFromScopeIdentifier( ast, structuredClone(scopeIdentifier))
+				let thatStatement = getNodeFromNodeIdentifier( ast, structuredClone(nodeIdentifier))
 				if( thatStatement.type == "functionDefinition"){
 					statement.availableScopes.push(thatStatement.name)
 				}
@@ -253,9 +257,10 @@ function moveTopLevelCodeIntoFunction(ast){
 
 
 // at first, the methods and properties might be mixed together, and also they are not in quite the format we want. They are currently like a wrapper saying what it is and if it is stacic and its visibility and then just the parse for as if it were a normal function or declaration
+// this groups them together into an array of properties and an array of methods
 function putMethodsAndPropertiesInProperPlace(ast){
 	
-	doForEachStatement(ast, (statement, scopeIdentifier) => {
+	doForEachStatement(ast, (statement) => {
 		
 		let wasThereAMethodYet = false // we want to issue a warning if there is a property declared after a method
 		
@@ -305,7 +310,7 @@ function pointVariablesToSymbols(ast){
 
 	
 	// first, turn the parameters to symbols
-	doForEachStatement(ast, (statement, scopeIdentifier) => {
+	doForEachStatement(ast, (statement) => {
 		
 		if( statement.type == "functionDefinition"){
 			statement.paramSymbols = []
@@ -316,7 +321,7 @@ function pointVariablesToSymbols(ast){
 	})
 	
 	// now, turn the vardecs to symbols
-	doForEachStatement(ast, (statement, scopeIdentifier) => {
+	doForEachStatement(ast, (statement) => {
 		
 		if( statement.type == "declaration"){
 			statement.symbol = {name:statement.name, type:null}
@@ -326,68 +331,94 @@ function pointVariablesToSymbols(ast){
 	
 	// now, go through all the vars and link them to the appropriate symbol
 	//TODO doesnt deal with classes
-	doForEachExpression(ast, (expression, scopeIdentifier) => {
+	doForEachExpression(ast, (expression, nodeIdentifier) => {
 		
 		if( expression.op == "variable"){
 			// it is a variable. Find the parameter symbol or 
-			expression.symbol = getSymbolForName( expression.contents, scopeIdentifier)
+			expression.symbol = getSymbolForName( expression.contents, nodeIdentifier)
 		}
 	})
 	
-	// NOTE by itself, this could get a declaration after a variable is used, but that should have been verified away by this point
-	function getSymbolForName( name, scopeIdentifier){
+	// NOTE by itself, this could get a declaration that occurs after a variable is used, but that should have been verified away by this point
+	function getSymbolForName( name, nodeIdentifier){
 		
-		// first, check to see if it is a parameter for this scope
-		if( scopeIdentifier.length){ // if it is on the lowest level, then it is not in a function, so we should not check parameters
-			let scope = getScopeFromScopeIdentifier( ast, scopeIdentifier)
-			if( scope.type == "functionDefinition"){
-				// we are in fact in a function definition
-				for( let paramSymbol of scope.paramSymbols){
-					if( paramSymbol.name == name){ // we found it!
-						return paramSymbol
-					}
+		// first, see if it is a variable holding an imported function:
+		for( let fun of importedFunctionDeclarations){
+			// console.log(fun.name, name)
+			if( fun.name == name){
+				return fun.symbol
+			}
+		}
+		
+		
+		
+		// now, check to see if it is a parameter for the scope this is in
+		let myFundef = getFunctionThisIsIn( nodeIdentifier, ast)
+		if( myFundef != null){
+			for( let paramSymbol of myFundef.paramSymbols){
+				if( paramSymbol.name == name){
+					return paramSymbol
 				}
 			}
 		}
 		
 		
 		// now, see if it is defined as a variable in this scope
-		let scopeStatements
-		if( scopeIdentifier.length){
-			let scope = getScopeFromScopeIdentifier( ast, scopeIdentifier)
-			switch( scope.type){
-				case "functionDefinition":
-					scopeStatements = scope.statements
-					break
-				case "if":
-				case "while":
-				case "for":
-					scopeStatements = scope.contents
-					break
-				default:
-					throw new InternalCompilerError("Invalid Scope identifier!")
-			}
-		} else {
-			// if it is on the lowest level
-			scopeStatements = ast
-		}
+		let nodeIdentifierOfMyParent = structuredClone(nodeIdentifier)
+		nodeIdentifierOfMyParent.pop() // to make it actually live up to its name
+		let arrayOfStatementsIAmIn = getStatementsInNode( nodeIdentifierOfMyParent, ast)
 		
-		for( let statement of scopeStatements){
+		
+		
+		for( let statement of arrayOfStatementsIAmIn){
 			if( statement.type == "declaration" && statement.symbol.name == name){
 				return statement.symbol// we found it!
 			}
 		}
 		
 		// it was not in this scope. Try the scope one lower, if we can
-		if( scopeIdentifier.length == 0){
+		if( nodeIdentifier.length == 0){
 			throw "err cant find symbol"
 		}
-		let newScopeIdentifier = structuredClone(scopeIdentifier)
-		newScopeIdentifier.pop()
-		return getSymbolForName( name, newScopeIdentifier)
+		
+		let newNodeIdentifier = structuredClone(nodeIdentifier)
+		newNodeIdentifier.pop()
+		return getSymbolForName( name, newNodeIdentifier)
 	}
 	
 }
+
+
+// basically this makes the name of each function be a variable pointer to that function. That way, we do not need to worry about functions as their own thing, they are just a type of variable
+function desugarFunctionsIntoVariables( ast){
+	
+	
+	doForEachStatement(ast, (statement, nodeIdentifier, fnToReplaceNode) => {
+		
+		if( statement.type == "functionDefinition"){
+			// it is a function definition. We need to do the thing for it
+			// replace the node with its variable declaration and then the original node itself
+			let declarationStatement = {type:"declarationAssignment", lVal:statement.name, rVal: {op:"createPointerToFunction", functionNode:statement}}
+			fnToReplaceNode( nodeIdentifier, [declarationStatement, statement])
+			
+			
+		}
+	})
+	
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

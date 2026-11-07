@@ -132,6 +132,7 @@ export function verifyAllVarsDeclared( ast){
 				break
 			case "number":
 			case "stringLiteral":
+			case "createPointerToFunction":
 				break
 			case "memberAccess":
 				// member access

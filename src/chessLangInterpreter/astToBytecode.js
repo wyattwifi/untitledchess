@@ -32,7 +32,9 @@ function astToBytecodeForArrayOfStatements( statements){
 		
 		switch( statement.type){
 			
-			case "declarationAssignment":
+			case "classDefinition":
+				//TODO do nothing for now
+				break
 			case "assignment":{
 				// take {type:"assignment", lVal:tokens[0].contents, rVal: expression}
 				// ...to {type:"assignFromVariable", lval:stringName, rval:variableName }
@@ -326,6 +328,12 @@ function getBytecodeOfExpression( expressionAst){
 			return {bytecodeInstructions:[],resultVariableName:expressionAst.object}// I know this isnt right TODO
 			throw "TODO"
 			
+		case "createPointerToFunction":
+			let name = getNewUniqueIdentifier()
+			return {
+				bytecodeInstructions: [{type:"assignFromLiteralString", lval:name, rval:expressionAst.functionNode.name}],
+				resultVariableName: name,
+			}
 		case "PLUS":
 		case "MINUS":
 		case "ASTERISK":
@@ -369,7 +377,8 @@ function getBytecodeOfExpression( expressionAst){
 			return {bytecodeInstructions:resultCode,resultVariableName:resultName}
 			
 		default:
-			throw new InternalCompilerError("An unknown expression operation was given to the astToBytecode stuff. The expression is: " + JSON.stringify(expressionAst))
+			console.log(expressionAst)
+			throw new InternalCompilerError("An unknown expression operation was given to the astToBytecode stuff")
 	}
 	
 	function get_result_for_binary_op( expressionAst){

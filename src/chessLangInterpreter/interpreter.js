@@ -22,7 +22,7 @@ function fixStateRefrences(thread){
 }
 
 
-let BUILT_IN_API = [
+export let BUILT_IN_API = [
 	{
 		name:"print",
 		argTypes:["string"],

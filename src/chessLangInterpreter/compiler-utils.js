@@ -253,43 +253,38 @@ export function doForThisScopeArrayAndAllScopeArraysUnderIt( ast, scopeIdentifie
 
 
 export function doForEachExpression( ast, fnToDo){
-	doForEachStatementArray(ast,( arrayOfStatements, nodeIdentifier) => {
-		for( let i = 0; i < arrayOfStatements.length; i++){
-			
-			let statement = arrayOfStatements[i]
-			let myNodeIdentifier = structuredClone(nodeIdentifier)
-			myNodeIdentifier.push(i) // make it live up to its name
-			
-			switch( arrayOfStatements[i].type){
-				case "assignment":
-					helperDoForExpressionRecursively( statement.lVal, fnToDo, myNodeIdentifier)
-					helperDoForExpressionRecursively( statement.rVal, fnToDo, myNodeIdentifier)
-					
-					break
-				case "returnStatement":
-					helperDoForExpressionRecursively( statement.value, fnToDo, myNodeIdentifier)
-					break
-					
-				case "declaration":
-				case "functionDefinition":
-				case "classDefinition":
-					break
-				case "standaloneFuncall":
-					helperDoForExpressionRecursively( statement.expression, fnToDo, myNodeIdentifier)
-					break
-					
-				case "for":{
-					helperDoForExpressionRecursively( statement.iterable, fnToDo, myNodeIdentifier)
-					break}
-					
-				case "if":
-				case "while":{
-					helperDoForExpressionRecursively( statement.condition, fnToDo, myNodeIdentifier)
-					break}
-				default:
-					throw "still need to account for " + JSON.stringify(arrayOfStatements[i])
-			}
-			fnToDo( arrayOfStatements[i], myNodeIdentifier)
+	doForEachStatement(ast,( statement, nodeIdentifier) => {
+		
+		let myNodeIdentifier = structuredClone(nodeIdentifier)
+		
+		switch( statement.type){
+			case "assignment":
+				helperDoForExpressionRecursively( statement.lVal, fnToDo, myNodeIdentifier)
+				helperDoForExpressionRecursively( statement.rVal, fnToDo, myNodeIdentifier)
+				
+				break
+			case "returnStatement":
+				helperDoForExpressionRecursively( statement.value, fnToDo, myNodeIdentifier)
+				break
+				
+			case "declaration":
+			case "functionDefinition":
+			case "classDefinition":
+				break
+			case "standaloneFuncall":
+				helperDoForExpressionRecursively( statement.expression, fnToDo, myNodeIdentifier)
+				break
+				
+			case "for":{
+				helperDoForExpressionRecursively( statement.iterable, fnToDo, myNodeIdentifier)
+				break}
+				
+			case "if":
+			case "while":{
+				helperDoForExpressionRecursively( statement.condition, fnToDo, myNodeIdentifier)
+				break}
+			default:
+				throw "still need to account for " + JSON.stringify(arrayOfStatements[i])
 		}
 	})
 	function helperDoForExpressionRecursively( expression, fnToDo, nodeIdentifier){

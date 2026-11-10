@@ -3,7 +3,7 @@
 
 
 
-import {InternalCompilerError, doForEachStatementArray, doForEachStatement, getScopeFromScopeIdentifier, compilerWarn, doForEachExpression, doForThisScopeArrayAndAllScopeArraysUnderIt, getFunctionThisIsIn, getStatementsInNode} from "./compiler-utils.js"
+import {InternalCompilerError, doForEachStatementArray, doForEachStatement, getScopeFromScopeIdentifier, compilerWarn, doForEachExpression, doForThisScopeArrayAndAllScopeArraysUnderIt, getFunctionThisIsIn, getStatementsInNode, getNodeFromNodeIdentifier} from "./compiler-utils.js"
 import {importedFunctionDeclarations} from "./type-stuff.js"
 
 import {getNewUniqueIdentifier} from "./astToBytecode.js"
@@ -35,7 +35,7 @@ function desugarDeclarationAssignments( ast){
 				oldStatement.type = "assignment"
 				
 				// now, put in the declaration just before the assignment
-				let declarationStatement = {type:"declaration", name:oldStatement.lVal, variableType:null}
+				let declarationStatement = {type:"declaration", name:oldStatement.lVal, symbol:{name:oldStatement.lVal, type:null}}
 				arrayOfStatements.splice( i, 0, declarationStatement)
 				i++ // to account for the new element
 				
@@ -167,8 +167,8 @@ function markAccessableScopesForFunctions(ast){
 	// nested functions can use the scope of the function(s) they are nested in. However, currently we rearrange the AST so that by the end the functions are all on the lowest level, so you cannot tell what scopes they used to have access to. This marks which scopes they can access so we can know after they are rearranged
 	//WARNING I dont know if this works with vars declared in if or for statements
 	
-	
-	
+	//TODO the order of availableScopes is all messed up for now
+	// for each node, if it is a function definition give it an availableScopes property that lists all the functions it is nested in, plus/including __main
 	doForEachStatement(ast, (statement, nodeIdentifier) => {
 		
 		nodeIdentifier = structuredClone(nodeIdentifier)
@@ -178,12 +178,12 @@ function markAccessableScopesForFunctions(ast){
 			statement.availableScopes = ["__main"] // all the other functions are nested in that function. It is not yet collected into a fundef, that will happen later
 			
 			// now, we just go back up the node identifier and see which ones are a function that this can reach
-			while( scopeIdentifier.length){
+			while( nodeIdentifier.length){
 				let thatStatement = getNodeFromNodeIdentifier( ast, structuredClone(nodeIdentifier))
 				if( thatStatement.type == "functionDefinition"){
 					statement.availableScopes.push(thatStatement.name)
 				}
-				scopeIdentifier.pop()
+				nodeIdentifier.pop()
 			}
 		}
 	})
@@ -321,12 +321,13 @@ function pointVariablesToSymbols(ast){
 	})
 	
 	// now, turn the vardecs to symbols
-	doForEachStatement(ast, (statement) => {
-		
-		if( statement.type == "declaration"){
-			statement.symbol = {name:statement.name, type:null}
-		}
-	})
+	// this is handled when the declarations are declared
+// 	doForEachStatement(ast, (statement) => {
+// 		
+// 		if( statement.type == "declaration"){
+// 			statement.symbol = {name:statement.name, type:null}
+// 		}
+// 	})
 	
 	
 	// now, go through all the vars and link them to the appropriate symbol
@@ -336,6 +337,7 @@ function pointVariablesToSymbols(ast){
 		if( expression.op == "variable"){
 			// it is a variable. Find the parameter symbol or 
 			expression.symbol = getSymbolForName( expression.contents, nodeIdentifier)
+			expression.contents = undefined // we are done with that now
 		}
 	})
 	

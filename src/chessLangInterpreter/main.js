@@ -7,6 +7,7 @@ import {interpretChessLang} from "./interpreter.js"
 import {desugarAST, rearrangeFunctions} from "./desugarAST.js"
 import {verifyAST, removeVariableDeclarations, verifyAllVarsDeclared} from "./verifyAST.js"
 import {inferTypes} from "./type-stuff.js"
+import {checkTypes} from "./type-checker.js"
 import {pruneAST} from "./pruneAST.js"
 
 // returns the array of the bytecode
@@ -28,10 +29,13 @@ export function compileChessCode( sourceCodeString){
 	// pruneAST(ast)
 	
 	//TODO make sure all vars declared before doing type stuff
-	console.log(structuredClone(ast))
 	inferTypes(ast)
+	console.log(safeStringify(ast))
+	// checkTypes(ast)
+	
 	rearrangeFunctions(ast)
 	
+	console.log(structuredClone(ast))
 	
 	// console.log(JSON.stringify(ast))
 	
@@ -83,7 +87,7 @@ class Dog inherits Animal,Trustable:
 	def init( name):
 		self.name = name
 	def bark():
-		print(self.name)
+		#print(self.name)
 	private def leakSSN():
 		print(self.ssn)
 #	static def becomeWolves():
@@ -94,11 +98,11 @@ let hohoho = 37
 
 def test():
 	for i in range(10):
-		#print(i)
+		print(i)
 
 
 def main2():
-	#print(factorial(5))
+	print(factorial(5))
 	test()
 	
 	let c = [1,2,3]
@@ -106,7 +110,7 @@ def main2():
 	print(c[2])
 	
 	def abc():
-		print("im imbedded")
+		#print("im imbedded")
 		print( hohoho + 3)
 	
 	abc()
@@ -123,9 +127,9 @@ def factorial(a):
 	let k = j
 	
 	
-	if a:
+	if a == 1:
 		return a * factorial(a - 1)
-	if !a:
+	if !(a == 1):
 		return 1
 `
 

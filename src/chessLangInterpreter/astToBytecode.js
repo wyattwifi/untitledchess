@@ -41,21 +41,61 @@ function astToBytecodeForArrayOfStatements( statements){
 				
 				let expressionLowered = getBytecodeOfExpression( statement.rVal)
 				
-				resultCode.push(...expressionLowered.bytecodeInstructions)
+				resultCode.push(...expressionLowered.bytecodeInstructions) // Evaluate the right-hand side.
 				
 				
 				//TODO this should be done better. The AST should not be so complicated that we need to do this
-				let lvalName
-				if( statement.lVal.name){
-					lvalName = statement.lVal.contents.contents
+				if( statement.lVal.op =="variable"){ // if it is assigning to a normal local variable
+					
+					resultCode.push({type:"assignFromVariable", lval:statement.lVal.birthplace.name, rval:expressionLowered.resultVariableName })//TODO don't know the format have in right format if not string or whatever
+					break
+					
+				} else if (statement.lVal.op === "arrayAccess") {
+					// Calculate the address of the array element.
+					let arrayExpression = getBytecodeOfExpression(statement.lVal.array);
+					let indexExpression = getBytecodeOfExpression(statement.lVal.index);
+					
+					let addressVariable = getNewUniqueIdentifier();
+					
+					// Evaluate the array and index.
+					resultCode.push(...arrayExpression.bytecodeInstructions);
+					resultCode.push(...indexExpression.bytecodeInstructions);
+					
+					// Copy the array's starting address.
+					resultCode.push({
+						type: "assignFromVariable",
+						lval: addressVariable,
+						rval: arrayExpression.resultVariableName
+					});
+					
+					// Calculate the address of the requested element.
+					// This assumes one byte per element.
+					resultCode.push({
+						type: "assignMath",
+						lval: addressVariable,
+						lOperand: addressVariable,
+						operation: "+",
+						rOperand: indexExpression.resultVariableName
+					});
+					
+					
+					// Store the value at the calculated heap address.
+					resultCode.push({
+						type: "assignToHeap",
+						localVarHoldingAddress: addressVariable,
+						localVarHoldingValue: expressionLowered.resultVariableName
+					});
+					
 				} else {
-					lvalName = statement.lVal
+					throw new InternalCompilerError(
+						"Unsupported assignment target: " + statement.lVal.op
+					);
 				}
 				
+				break;
 				
 				
-				resultCode.push({type:"assignFromVariable", lval:lvalName, rval:expressionLowered.resultVariableName })//TODO don't know the format have in right format if not string or whatever
-				break
+				
 			}
 			case "if":{
 				
@@ -138,9 +178,8 @@ function astToBytecodeForArrayOfStatements( statements){
 	}
 	
 	return resultCode
-	
-	
 }
+
 
 
 function astToBytecodeForFunction( functionAst ){
@@ -175,7 +214,7 @@ function astToBytecodeForFunction( functionAst ){
 	
 	return {
 		name:functionAst.name,
-		paramNames:functionAst.params,
+		paramNames:functionAst.paramDeclarations.map(f=>f.name),
 		statements: code,
 		accessibleScopes:functionAst.availableScopes//TODO have these be the same name
 	}
@@ -195,7 +234,7 @@ function getBytecodeOfExpression( expressionAst){
 	
 	switch (expressionAst.op) {
 		case "variable":
-			return {bytecodeInstructions:[],resultVariableName:expressionAst.contents}
+			return {bytecodeInstructions:[],resultVariableName:expressionAst.birthplace.name}
 		case "functionCall":{
 			
 			let resultVariableName = getNewUniqueIdentifier()
@@ -261,7 +300,7 @@ function getBytecodeOfExpression( expressionAst){
 			// we have the pointer to the array now. Now, we just add the offset to get to the element that we want
 			// we store the address in a new var so we do not modify the original array position var
 			let addressVarName = getNewUniqueIdentifier()
-			resultBytecode.push({type:"assignFromVariable", lval:{op:"variable", contents:addressVarName}, rval:stuffToGetArrayName.resultVariableName })
+			resultBytecode.push({type:"assignFromVariable", lval:addressVarName, rval:stuffToGetArrayName.resultVariableName })
 			
 			resultBytecode.push({type:"assignMath", lval:addressVarName, lOperand:addressVarName, operation:"+", rOperand:indexExpressionLowered.resultVariableName})
 			
@@ -356,7 +395,7 @@ function getBytecodeOfExpression( expressionAst){
 			resultCode.push({type:"malloc", amount:expressionAst.elements.length * expressionAst.bytesPerElement, placeToStoreAddress:resultName})
 			
 			let localVarHoldingAddress = getNewUniqueIdentifier() // this will start out at the location we got from the heap. Then, we will increase it as we go along to set all the elements
-			resultCode.push({type:"assignFromVariable", lval:{op:"variable", contents:localVarHoldingAddress}, rval:resultName })
+			resultCode.push({type:"assignFromVariable", lval:localVarHoldingAddress, rval:resultName })
 			
 			
 			let localVarHoldingElementSize = getNewUniqueIdentifier()
@@ -417,7 +456,6 @@ function getBytecodeOfExpression( expressionAst){
 	
 	
 }
-
 
 
 // often, the compiler will need to have a new variable that the user did not add themselves. This gives a new, unique, name for that variable for the compiler to use

@@ -9,6 +9,9 @@ import {importedFunctionDeclarations} from "./type-stuff.js"
 import {getNewUniqueIdentifier} from "./astToBytecode.js"
 
 
+// a declaration is of the form {name:string, type:type}
+
+
 export function desugarAST( ast){
 	desugarFunctionsIntoVariables(ast)
 	putMethodsAndPropertiesInProperPlace(ast)
@@ -35,7 +38,7 @@ function desugarDeclarationAssignments( ast){
 				oldStatement.type = "assignment"
 				
 				// now, put in the declaration just before the assignment
-				let declarationStatement = {type:"declaration", name:oldStatement.lVal, symbol:{name:oldStatement.lVal, type:null}}
+				let declarationStatement = {type:"declaration", name:oldStatement.lVal, theType:null}
 				arrayOfStatements.splice( i, 0, declarationStatement)
 				i++ // to account for the new element
 				
@@ -231,8 +234,7 @@ function moveTopLevelCodeIntoFunction(ast){
 	let newFunction = {
 		type:"functionDefinition",
 		name:"__main",
-		params: [],
-		paramTypes: [],
+		paramDeclarations: [],
 		statements:[],
 		returnType:null,
 		availableScopes:[],//it isn't even nested in itself
@@ -310,15 +312,16 @@ function pointVariablesToSymbols(ast){
 
 	
 	// first, turn the parameters to symbols
-	doForEachStatement(ast, (statement) => {
-		
-		if( statement.type == "functionDefinition"){
-			statement.paramSymbols = []
-			for( let i = 0; i < statement.params.length; i++){
-				statement.paramSymbols[i] = {name:statement.params[i], type:null}
-			}
-		}
-	})
+	// this is handled earlier now
+// 	doForEachStatement(ast, (statement) => {
+// 		
+// 		if( statement.type == "functionDefinition"){
+// 			statement.paramSymbols = []
+// 			for( let i = 0; i < statement.params.length; i++){
+// 				// statement.paramSymbols[i] = {name:statement.params[i], type:null}
+// 			}
+// 		}
+// 	})
 	
 	// now, turn the vardecs to symbols
 	// this is handled when the declarations are declared
@@ -336,19 +339,19 @@ function pointVariablesToSymbols(ast){
 		
 		if( expression.op == "variable"){
 			// it is a variable. Find the parameter symbol or 
-			expression.symbol = getSymbolForName( expression.contents, nodeIdentifier)
+			expression.birthplace = getDeclarationForName( expression.contents, nodeIdentifier)
 			expression.contents = undefined // we are done with that now
 		}
 	})
 	
 	// NOTE by itself, this could get a declaration that occurs after a variable is used, but that should have been verified away by this point
-	function getSymbolForName( name, nodeIdentifier){
+	function getDeclarationForName( name, nodeIdentifier){
 		
 		// first, see if it is a variable holding an imported function:
 		for( let fun of importedFunctionDeclarations){
 			// console.log(fun.name, name)
 			if( fun.name == name){
-				return fun.symbol
+				return fun
 			}
 		}
 		
@@ -357,9 +360,9 @@ function pointVariablesToSymbols(ast){
 		// now, check to see if it is a parameter for the scope this is in
 		let myFundef = getFunctionThisIsIn( nodeIdentifier, ast)
 		if( myFundef != null){
-			for( let paramSymbol of myFundef.paramSymbols){
-				if( paramSymbol.name == name){
-					return paramSymbol
+			for( let paramDec of myFundef.paramDeclarations){
+				if( paramDec.name == name){
+					return paramDec
 				}
 			}
 		}
@@ -373,8 +376,8 @@ function pointVariablesToSymbols(ast){
 		
 		
 		for( let statement of arrayOfStatementsIAmIn){
-			if( statement.type == "declaration" && statement.symbol.name == name){
-				return statement.symbol// we found it!
+			if( statement.type == "declaration" && statement.name == name){
+				return statement// we found it!
 			}
 		}
 		
@@ -385,7 +388,7 @@ function pointVariablesToSymbols(ast){
 		
 		let newNodeIdentifier = structuredClone(nodeIdentifier)
 		newNodeIdentifier.pop()
-		return getSymbolForName( name, newNodeIdentifier)
+		return getDeclarationForName( name, newNodeIdentifier)
 	}
 	
 }

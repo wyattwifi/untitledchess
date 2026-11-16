@@ -24,7 +24,7 @@ export function compileChessCode( sourceCodeString){
 	// console.log( JSON.stringify(ast))
 	
 	// console.log(JSON.stringify(ast))
-	verifyAllVarsDeclared(ast)
+	// verifyAllVarsDeclared(ast)
 	
 	// pruneAST(ast)
 	
@@ -78,25 +78,10 @@ let simpleTestCode = `
 
 
 
-#TODO declarations without defaults not allowed yet
-class Dog inherits Animal,Trustable:
-	let weight = 100 #default initialization
-	let name = "fido"
-	private let ssn = 123456
-#	static let isLiked = True #classwide property
-	def init( name):
-		self.name = name
-	def bark():
-		#print(self.name)
-	private def leakSSN():
-		print(self.ssn)
-#	static def becomeWolves():
-#		staticself.isLiked = False#TODO support static stuff later maybe?
-
-
 let hohoho = 37
 
 def test():
+	print(range(10))
 	for i in range(10):
 		print(i)
 
@@ -106,7 +91,7 @@ def main2():
 	test()
 	
 	let c = [1,2,3]
-	#c[2] = 4
+	c[2] = 411
 	print(c[2])
 	
 	def abc():

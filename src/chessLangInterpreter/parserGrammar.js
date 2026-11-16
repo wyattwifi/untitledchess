@@ -83,12 +83,19 @@ export let grammar = {
 			if( rawParse[6]){ // remember that the function body can be empty
 				statements = polishParse( rawParse[6])
 			}
+			
+			let paramDeclarations = []
+			for( let i = 0; i < params.length; i++){
+				paramDeclarations.push({type:"declaration", name:params[i], theType:null})
+			}
+			
 			return {
 				type:"functionDefinition",
 				name:rawParse[1],
-				params: params,
-				paramTypes: params.map(a=>null),
+				// params: params,
+				// paramTypes: params.map(a=>null),
 				statements:statements,
+				paramDeclarations:paramDeclarations,
 				returnType:null,
 			}
 		}

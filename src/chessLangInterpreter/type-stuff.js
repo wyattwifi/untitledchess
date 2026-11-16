@@ -22,18 +22,24 @@ mainType:theThing.
 */
 
 
+
+
 export let importedFunctionDeclarations = [ // actually, now changing it to be an array of symbols
 	{
 		name:"print",
-		mainType:"function",
-		paramTypes:[new Type("int")],
-		returnType: new Type("exe"),
+		theType:{
+			mainType:"function",
+			paramTypes:[new Type("int")],
+			returnType: new Type("exe"),
+		}
 	},
 	{
 		name:"range",
-		mainType:"function",
-		paramTypes:[new Type("int")],
-		returnType: {mainType:"array", elementType: new Type("int")},
+		theType:{
+			mainType:"function",
+			paramTypes:[new Type("int")],
+			returnType: {mainType:"array", elementType: new Type("int")},
+		}
 	},
 	/*{
 		name:"getUserChoice",
@@ -97,9 +103,11 @@ export let importedFunctionDeclarations = [ // actually, now changing it to be a
 	},*/
 	{
 		name:"length",
-		paramTypes:[{mainType:"array", elementType: new Type("int")}], //TODO support other than just ints
-		returnType: new Type("exe"),
-		symbol:{name:"blank", type:{mainType:"function", paramTypes:[{mainType:"array", elementType: new Type("int")}], returnType: new Type("int")}}
+		theType:{
+			mainType:"function",
+			paramTypes:[{mainType:"array", elementType: new Type("int")}], //TODO support other than just ints
+			returnType: new Type("exe"),
+		}
 	},
 ]
 
@@ -312,13 +320,20 @@ function inferForExpression( expression, scopeIdentifier, ast){
 			}
 			break
 		case "UNARYMINUS":
+			setTypeOfExpression( expression.operand, ast, new Type("int"))
+			break
 		case "NOT":
+			setTypeOfExpression( expression.operand, ast, new Type("bool"))
+			break
 		case "number":
 		case "stringLiteral":
 		case "createPointerToFunction":
 			return
 		case "AND":
 		case "OR":
+			setTypeOfExpression( expression.left, ast, new Type("bool"))
+			setTypeOfExpression( expression.right, ast, new Type("bool"))
+			break
 		case "PLUS":
 		case "MINUS":
 		case "ASTERISK":
@@ -328,8 +343,10 @@ function inferForExpression( expression, scopeIdentifier, ast){
 		case "TESTLESSTHAN":
 		case "TESTGREATERTHANOREQUALTO":
 		case "TESTLESSTHANOREQUALTO":
-			//TODO implement
-			return
+			//TODO be able to compare and add things other than ints
+			setTypeOfExpression( expression.left, ast, new Type("int"))
+			setTypeOfExpression( expression.right, ast, new Type("int"))
+			break
 		default:
 			throw new InternalCompilerError("Expression OP not supported. Here is the expression: " + JSON.stringify(expression))
 	}
@@ -347,6 +364,17 @@ export function inferTypes(ast){
 		typesInferredByLastPass = numOfTypesInferred
 		doPassOfInferingTypes( ast)
 	}
+	
+	
+	// now, lets go through and set the return type to "exe" for all functions where there is nothing returned. Those functions execute code, not return a result
+	//TODO do that
+	/*
+	doForEachStatement(ast, ( statement, nodeIdentifier) => {
+		if( statement.type == "functionDefinition"){
+			
+		}
+	})
+	*/
 }
 
 
@@ -361,7 +389,7 @@ function getTypeOfExpression( expression, ast){
 	switch( expression.op){
 		
 		case "variable":
-			return expression.symbol.type
+			return expression.birthplace.theType
 		case "functionCall":
 			if( getTypeOfExpression( expression.theFunction) == null){ return null}
 			return getTypeOfExpression( expression.theFunction).returnType
@@ -419,7 +447,7 @@ function getTypeOfExpression( expression, ast){
 		case "createPointerToFunction":
 			return {
 				mainType:"function",
-				paramTypes:expression.functionNode.paramTypes,
+				paramTypes:expression.functionNode.paramDeclarations.map(a=>a.theType),
 				returnType:expression.functionNode.returnType
 			}
 		default:
@@ -451,10 +479,10 @@ function setTypeOfExpression( expression, ast, theType){
 	switch( expression.op){
 		
 		case "variable":
-			if( expression.symbol.type == null && theType != null){
+			if( expression.birthplace.theType == null && theType != null){
 				numOfTypesInferred++
 			}
-			expression.symbol.type = theType
+			expression.birthplace.theType = theType
 			break
 		case "functionCall":
 			// we now know the return type of the function
@@ -486,11 +514,11 @@ function setTypeOfExpression( expression, ast, theType){
 			}
 			
 			expression.functionNode.returnType = theType.returnType
-			for( let i = 0; i < expression.functionNode.params.length; i++){
-				if( expression.functionNode.paramTypes[i] == null && theType.paramTypes[i] != null){
+			for( let paramDec of expression.functionNode.paramDeclarations.length){
+				if( paramDec.theType == null && theType.paramTypes[i] != null){
 					numOfTypesInferred++
+					paramDec.theType = theType.paramTypes[i]
 				}
-				expression.functionNode.paramTypes[i] = theType.paramTypes[i]
 			}
 			break
 		case "UNARYMINUS":
@@ -536,6 +564,16 @@ function setFunctionReturnType(functionExpression, returnType, ast) {
 		numOfTypesInferred++
 	}
 }
+
+
+
+
+
+
+
+
+
+
 
 
 function safeStringify(value, indent = 2) {

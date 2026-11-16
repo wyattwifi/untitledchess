@@ -334,17 +334,15 @@ class Universe{
 			switch (instruction.type){
 				case "assignFromVariable":{
 					
-					
-					// Currently, the only lval that this accepts is an expression of a variable
-					//TODO do this better
-					let lval = instruction.lval.contents
-					if( lval === undefined || instruction.lval.op != "variable"){
+					// This only assigns to local variables. This takes the string name of the variable
+					if( instruction.lval === undefined){
 						throw new InternalCompilerError("Invalid Assignment LVal!")
 					}
 					
-					this.setVariable(lval, this.getVariable(instruction.rval))
+					this.setVariable( instruction.lval, this.getVariable(instruction.rval))
 					thisFrame.instructionPointer++
 					break}
+				
 				case "assignToHeap":{
 					let address = this.getVariable(instruction.localVarHoldingAddress)
 					this.heap[address] = this.getVariable(instruction.localVarHoldingValue)

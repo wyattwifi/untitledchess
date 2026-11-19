@@ -213,7 +213,6 @@ export let grammar = {
 	
 	
 	//TODO in classes and in general support declaring without assignment
-	//TODO potentially support defining types within classes for use within that class only
 	
 	
 	

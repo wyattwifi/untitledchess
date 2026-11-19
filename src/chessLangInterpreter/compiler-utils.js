@@ -294,6 +294,7 @@ export function doForEachExpression( ast, fnToDo){
 		switch( expression.op){
 			
 			case "variable":
+			case "createNewObject":
 				return
 			case "functionCall":
 				
@@ -320,6 +321,10 @@ export function doForEachExpression( ast, fnToDo){
 			case "number":
 			case "stringLiteral":
 			case "createPointerToFunction":
+				return
+			case "memberAccess":
+				helperDoForExpressionRecursively( expression.object, fnToDo, nodeIdentifier)
+				// expression.member is a string, not an expression
 				return
 			case "AND":
 			case "OR":

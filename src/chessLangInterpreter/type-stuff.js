@@ -19,6 +19,7 @@ Here are the types
 mainType:theThing.
 	if == "array", then elementType = aType
 	if == "function", then returnType = aType and paramTypes = []
+	if == "object", then classDeclaration=ASTNode
 */
 
 
@@ -123,7 +124,6 @@ export let importedFunctionDeclarations = [ // actually, now changing it to be a
 // we have a thing that we do to try to infer types. We will repeat it over and over until it stops infering any new types. This is because knowing one type can let us know another type
 
 let numOfTypesInferred = 0 // we keep track of this. If we do a pass of infering and it does not increase, then we know that we have either finished or cannot complete it
-
 
 
 
@@ -252,6 +252,7 @@ function inferForExpression( expression, scopeIdentifier, ast){
 	switch( expression.op){
 		
 		case "variable":
+		case "createNewObject":
 			return
 		case "functionCall":{
 			
@@ -328,6 +329,7 @@ function inferForExpression( expression, scopeIdentifier, ast){
 		case "number":
 		case "stringLiteral":
 		case "createPointerToFunction":
+		case "memberAccess":
 			return
 		case "AND":
 		case "OR":
@@ -390,6 +392,8 @@ function getTypeOfExpression( expression, ast){
 		
 		case "variable":
 			return expression.birthplace.theType
+		case "createNewObject":
+			return {mainType:"object", classDeclaration: expression.theClass}
 		case "functionCall":
 			if( getTypeOfExpression( expression.theFunction) == null){ return null}
 			return getTypeOfExpression( expression.theFunction).returnType

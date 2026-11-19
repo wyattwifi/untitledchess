@@ -11,7 +11,6 @@ class ChessLangStandardLibraryError extends Error{
 	}
 }
 
-//TODO chessLang does not support assigning to arrays
 
 
 function fixStateRefrences(thread){
@@ -32,9 +31,9 @@ export let BUILT_IN_API = [
 		}
 	},
 	{
-		name:"length",
+		name:"length", //TODO does not work with the new format of arrays stored on the heap
 		effect: async function(a){
-			return a.length
+			return 10//TODO do right
 		}
 	},
 	{
@@ -46,11 +45,14 @@ export let BUILT_IN_API = [
 	{
 		name:"range",
 		effect: async function(a){
-			let result = []
+			// create a new range that ranges from 0 (inclusive) to a (exclusive)
+			let valueToReturn = currentRunningUniverse.heapEnd // where the new array will start
+			
 			for( let i = 0; i < a; i++){
-				result.push(i)
+				currentRunningUniverse.heap[currentRunningUniverse.heapEnd] = i
+				currentRunningUniverse.heapEnd++
 			}
-			return result
+			return valueToReturn
 		}
 	},
 	{

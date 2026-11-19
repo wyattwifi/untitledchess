@@ -86,6 +86,64 @@ function astToBytecodeForArrayOfStatements( statements){
 						localVarHoldingValue: expressionLowered.resultVariableName
 					});
 					
+				} else if (statement.lVal.op === "memberAccess") {
+					
+					// TODO The class lookup assumes expressionAst.object is a variable. Your current code uses expressionAst.object.birthplace, which won't work for something like getPerson().name or people[0].name. You should eventually get the type from the expression's inferred type instead.
+					
+					
+					// Calculate the address of the member
+					// remember, all objects are stored on the heap
+					let objectExpression = getBytecodeOfExpression(statement.lVal.object);
+					let memberStringName = statement.lVal.member
+					let classDeclaration = statement.lVal.object.birthplace.theType.classDeclaration// the declaration of the class of which this object is an instance
+					let index
+					
+					// we need to find the "index" of the element
+					for( let i = 0; i < classDeclaration.properties.length; i++){
+						if( classDeclaration.properties[i].name == memberStringName){
+							// we found it!
+							index = i
+							break
+						}
+					}
+					
+					if( index === undefined){
+						throw "member not found"
+					}
+					
+					let addressVariable = getNewUniqueIdentifier();
+					let indexVariable = getNewUniqueIdentifier();
+					
+					resultCode.push({type:"assignFromLiteral", lval:indexVariable, rval:index})
+					
+					// Evaluate the code to get the object
+					resultCode.push(...objectExpression.bytecodeInstructions);
+					
+					// Copy the array's starting address.
+					resultCode.push({
+						type: "assignFromVariable",
+						lval: addressVariable,
+						rval: objectExpression.resultVariableName
+					});
+					
+					// Calculate the address of the requested element.
+					// This assumes one byte per element.
+					resultCode.push({
+						type: "assignMath",
+						lval: addressVariable,
+						lOperand: addressVariable,
+						operation: "+",
+						rOperand: indexVariable
+					});
+					
+					
+					// Store the value at the calculated heap address.
+					resultCode.push({
+						type: "assignToHeap",
+						localVarHoldingAddress: addressVariable,
+						localVarHoldingValue: expressionLowered.resultVariableName
+					});
+					
 				} else {
 					throw new InternalCompilerError(
 						"Unsupported assignment target: " + statement.lVal.op
@@ -362,12 +420,72 @@ function getBytecodeOfExpression( expressionAst){
 			}
 			
 		}
-		case "memberAccess":
-			// member access
-			return {bytecodeInstructions:[],resultVariableName:expressionAst.object}// I know this isnt right TODO
-			throw "TODO"
+		case "memberAccess": {
 			
+			let resultVariableName = getNewUniqueIdentifier()
+			let resultBytecode = []
+			
+			// Get the object.
+			let objectExpression = getBytecodeOfExpression(expressionAst.object)
+			resultBytecode.push(...objectExpression.bytecodeInstructions)
+			
+			// Find the member's index in the class.
+			let classDeclaration = expressionAst.object.birthplace.theType.classDeclaration
+			let memberName = expressionAst.member
+			let memberIndex
+			
+			for(let i = 0; i < classDeclaration.properties.length; i++){
+				if(classDeclaration.properties[i].name == memberName){
+					memberIndex = i
+					break
+				}
+			}
+			
+			if(memberIndex === undefined){
+				throw new InternalCompilerError(
+					"Member '" + memberName + "' was not found in class '" + classDeclaration.name + "'"
+				)
+			}
+			
+			// Calculate the address of the member.
+			let addressVariable = getNewUniqueIdentifier()
+			
+			resultBytecode.push({
+				type: "assignFromVariable",
+				lval: addressVariable,
+				rval: objectExpression.resultVariableName
+			})
+			
+			let indexVariable = getNewUniqueIdentifier()
+			
+			resultBytecode.push({
+				type: "assignFromLiteral",
+				lval: indexVariable,
+				rval: memberIndex
+			})
+			
+			resultBytecode.push({
+				type: "assignMath",
+				lval: addressVariable,
+				lOperand: addressVariable,
+				operation: "+",
+				rOperand: indexVariable
+			})
+			
+			// Read the value at that heap address.
+			resultBytecode.push({
+				type: "assignFromHeap",
+				lvalLocalVarName: resultVariableName,
+				localVarHoldingAddress: addressVariable
+			})
+			
+			return {
+				bytecodeInstructions: resultBytecode,
+				resultVariableName: resultVariableName,
+			}
+		}
 		case "createPointerToFunction":
+			// the interpeter handles it if the variable just stores the name of the function as a string. So, we just need to store the string name of the function into a variable and return that
 			let name = getNewUniqueIdentifier()
 			return {
 				bytecodeInstructions: [{type:"assignFromLiteralString", lval:name, rval:expressionAst.functionNode.name}],
@@ -386,7 +504,7 @@ function getBytecodeOfExpression( expressionAst){
 		case "AND":
 			return get_result_for_binary_op( expressionAst)
 			
-		case "arrayDeclaration":
+		case "arrayDeclaration":{
 			
 			let resultName = getNewUniqueIdentifier()
 			
@@ -414,6 +532,41 @@ function getBytecodeOfExpression( expressionAst){
 				resultCode.push({type:"assignMath", lval:localVarHoldingAddress, lOperand:localVarHoldingAddress, operation:"+", rOperand:localVarHoldingElementSize})
 			}
 			return {bytecodeInstructions:resultCode,resultVariableName:resultName}
+			}
+		case "createNewObject":{ // this returns a pointer to the object, not the object itself
+			
+			// NOTE this is similar to array declaration
+			let resultName = getNewUniqueIdentifier()
+			
+			let resultCode = []
+			
+			resultCode.push({type:"malloc", amount:expressionAst.theClass.properties.length * 1, placeToStoreAddress:resultName})
+			
+			let localVarHoldingAddress = getNewUniqueIdentifier() // this will start out at the location we got from the heap. Then, we will increase it as we go along to set all the elements
+			
+			resultCode.push({type:"assignFromVariable", lval:localVarHoldingAddress, rval:resultName })
+			
+			
+			let localVarHoldingElementSize = getNewUniqueIdentifier()
+			resultCode.push({type:"assignFromLiteral", lval:localVarHoldingElementSize, rval:1})
+			
+			// now that we have gotten the memory we need, we just go along and fill in the default values
+			//NOTE as of now they should all have default values
+			for( let i = 0; i < expressionAst.theClass.properties.length; i++){
+				let property = expressionAst.theClass.properties[i]
+				
+				let stuffToGetPropertyDefaultValue = getBytecodeOfExpression(property.defaultValue)
+				
+				// first, we assign it
+				resultCode.push(...stuffToGetPropertyDefaultValue.bytecodeInstructions)
+				resultCode.push({type:"assignToHeap", localVarHoldingAddress:localVarHoldingAddress, localVarHoldingValue:stuffToGetPropertyDefaultValue.resultVariableName})
+				
+				// then, we increase the pointer to where to put the next thing
+				resultCode.push({type:"assignMath", lval:localVarHoldingAddress, lOperand:localVarHoldingAddress, operation:"+", rOperand:localVarHoldingElementSize})
+			}
+			return {bytecodeInstructions:resultCode,resultVariableName:resultName}
+			
+		}
 			
 		default:
 			console.log(expressionAst)
